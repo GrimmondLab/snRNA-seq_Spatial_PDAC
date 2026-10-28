@@ -1,0 +1,21 @@
+# Container paths, local CellBender input (the original output folders, for the reproducibility test).
+# Mount your data to these locations (see README.md). The original HPC paths are in config_hpc.yml.
+input_mode: local
+cellbender_dir: /data/cellbender/
+sample_meta_csv: /data/meta/SG_sample_meta.csv
+output_dir: /output
+seed: 1234
+workers: 12
+dbl_workers: 4
+low_q_samples:
+- 2057-V1
+- '2179'
+- '2210'
+- '2911'
+- '2221'
+- '2946'
+- '2212'
+section2_rename:
+  sample: '2302'
+  pattern: 190819_A00130_0114
+  new: 2302-section-2

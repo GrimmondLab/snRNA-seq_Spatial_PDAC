@@ -1,0 +1,38 @@
+R version 4.3.0 (2023-04-21)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 20.04.6 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.9.0 
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.9.0
+
+locale:
+ [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C               LC_TIME=en_AU.UTF-8        LC_COLLATE=en_AU.UTF-8     LC_MONETARY=en_AU.UTF-8    LC_MESSAGES=en_AU.UTF-8    LC_PAPER=en_AU.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_AU.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] bluster_1.10.0              pheatmap_1.0.12             BiocNeighbors_1.18.0        batchelor_1.16.0            scran_1.28.1                BiocParallel_1.34.2         BiocSingular_1.16.0         scDblFinder_1.14.0         
+ [9] scater_1.28.0               scuttle_1.10.1              DropletUtils_1.20.0         SingleCellExperiment_1.22.0 SummarizedExperiment_1.30.2 Biobase_2.60.0              GenomicRanges_1.52.0        GenomeInfoDb_1.36.1        
+[17] IRanges_2.34.1              S4Vectors_0.38.1            BiocGenerics_0.46.0         MatrixGenerics_1.12.2       matrixStats_1.2.0           openxlsx_4.2.5.2            patchwork_1.1.2             ggplot2_3.4.2              
+[25] tidyverse_2.0.0             workflowr_1.7.0            
+
+loaded via a namespace (and not attached):
+  [1] RColorBrewer_1.1-3        jsonlite_1.8.7            rstudioapi_0.14           magrittr_2.0.3            ggbeeswarm_0.7.2          farver_2.1.1              rmarkdown_2.23            fs_1.6.2                 
+  [9] BiocIO_1.10.0             zlibbioc_1.46.0           vctrs_0.7.3               Rsamtools_2.16.0          DelayedMatrixStats_1.22.1 RCurl_1.98-1.12           htmltools_0.5.5           S4Arrays_1.0.4           
+ [17] xgboost_1.7.5.1           Rhdf5lib_1.22.0           rhdf5_2.44.0              ResidualMatrix_1.10.0     GenomicAlignments_1.36.0  whisker_0.4.1             igraph_1.4.3              lifecycle_1.0.5          
+ [25] pkgconfig_2.0.3           rsvd_1.0.5                Matrix_1.5-4.1            R6_2.5.1                  fastmap_1.1.1             GenomeInfoDbData_1.2.10   digest_0.6.32             ps_1.7.5                 
+ [33] rprojroot_2.0.3           dqrng_0.3.0               irlba_2.3.5.1             beachmat_2.16.0           fansi_1.0.4               httr_1.4.6                compiler_4.3.0            withr_2.5.0              
+ [41] S7_0.2.2                  viridis_0.6.3             HDF5Array_1.28.1          R.utils_2.12.2            MASS_7.3-60               DelayedArray_0.26.6       rjson_0.2.21              tools_4.3.0              
+ [49] vipor_0.4.5               beeswarm_0.4.0            zip_2.3.0                 httpuv_1.6.11             R.oo_1.25.0               glue_1.6.2                restfulr_0.0.15           callr_3.7.3              
+ [57] rhdf5filters_1.12.1       promises_1.2.0.1          grid_4.3.0                getPass_0.2-2             cluster_2.1.8.2           generics_0.1.3            gtable_0.3.6              R.methodsS3_1.8.2        
+ [65] data.table_1.14.8         ScaledMatrix_1.8.1        metapod_1.8.0             utf8_1.2.3                XVector_0.40.0            ggrepel_0.9.8             pillar_1.9.0              stringr_1.5.0            
+ [73] limma_3.56.2              later_1.3.1               dplyr_1.1.2               lattice_0.21-8            renv_0.17.3               rtracklayer_1.60.0        tidyselect_1.2.1          locfit_1.5-9.8           
+ [81] Biostrings_2.68.1         knitr_1.43                git2r_0.32.0              gridExtra_2.3             edgeR_3.42.4              xfun_0.39                 statmod_1.5.0             stringi_1.7.12           
+ [89] yaml_2.3.7                evaluate_0.21             codetools_0.2-19          tibble_3.2.1              cli_2.5.0                 processx_3.8.2            dichromat_2.0-0.1         Rcpp_1.0.14              
+ [97] XML_3.99-0.14             parallel_4.3.0            sparseMatrixStats_1.12.2  bitops_1.0-7              viridisLite_0.4.2         scales_1.4.0              crayon_1.5.2              rlang_1.3.0 

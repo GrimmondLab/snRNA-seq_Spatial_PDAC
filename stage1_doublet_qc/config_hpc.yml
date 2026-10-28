@@ -1,0 +1,18 @@
+sample_meta_csv: SG_sample_meta.csv
+cellbender_dir: /data/gpfs/projects/punim0010/projects/PDAC_Atlas_GTX/data/cellBender/samples/
+output_dir: /home/<you>/projects/PDAC_non_malignant_cell_types/analysis/postCellBender_QCs/Docker_test
+seed: 1234
+workers: 12
+dbl_workers: 4
+low_q_samples:
+- 2057-V1
+- '2179'
+- '2210'
+- '2911'
+- '2221'
+- '2946'
+- '2212'
+section2_rename:
+  sample: '2302'
+  pattern: 190819_A00130_0114
+  new: 2302-section-2

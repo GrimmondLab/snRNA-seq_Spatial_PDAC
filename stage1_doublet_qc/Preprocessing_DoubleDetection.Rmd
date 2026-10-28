@@ -1,0 +1,392 @@
+---
+title: "Preprocessing_DoubleDetection.Rmd"
+author: "Mai La"
+date: "2024-08-08"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+# Background.
+
+Doublet detection on Cellbender output on all samples.
+Code run as described [here] and downstream analysis based on a tutorial from [`scCustomise`](https://samuel-marsh.github.io/scCustomize/articles/Cell_Bender_Functions.html) and a tutorial from [`10X`](https://www.10xgenomics.com/cn/resources/analysis-guides/background-removal-guidance-for-single-cell-gene-expression-datasets-using-third-party-tools). 
+
+Codes adapted from Fer's 'QC_Doublet_Detection.Rmd' code
+All paths and settings are read from `config.yml` (passed in by `run_stage1.R`).
+
+# Prepare environment
+```{r global-options, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T)
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage1.R so that params are passed
+
+bpp <- BiocParallel::MulticoreParam(workers = cfg$workers, 
+                                    RNGseed = cfg$seed,
+                                    progressbar = TRUE)
+options(future.globals.maxSize= 1048576000)
+```
+
+## Libraries.
+
+```{r import_libraries, include = TRUE, echo=TRUE, results='hide', message=FALSE}
+library("dplyr")
+library("purrr")
+library("patchwork")   # needed for the `plotUMAP() + plotUMAP()` panels
+library("RColorBrewer")
+library("SingleCellExperiment")
+library("DropletUtils")
+library("scuttle")
+library("scater")
+library("scran")
+library("scDblFinder")
+library("BiocParallel")
+```
+
+# Samples list and metadata.
+```{r sample_metadata}
+sample.metadata <- read.csv(cfg$sample_meta_csv, header = T, stringsAsFactors = F)
+
+sts.samples <- dplyr::filter(sample.metadata, LTS != "Yes", Atlas == "Yes")
+
+print(sts.samples)
+```
+
+# Load matrices
+## Read sample files
+Two input modes (`input_mode` in `config.yml`), both reading the same CellBender counts:
+
+- `local`: the original CellBender output folders (`*_cellbender_filtered.h5`).
+- `geo`: the GEO processed files (10x matrix files per sample), linked to sample names by `geo_samples.csv`.
+
+```{r load_sce_object}
+input.mode <- if (is.null(cfg$input_mode)) "local" else cfg$input_mode
+stopifnot(input.mode %in% c("local", "geo"))
+
+if (input.mode == "local") {
+  cellbender.out <- list.files(path = cfg$cellbender_dir,
+             pattern = "_cellbender_filtered.h5",
+             full.names = T,
+             recursive = T
+              )
+
+  names(cellbender.out) <- cellbender.out %>% gsub(".*/|_cellbender_filtered.h5|-GEX", "", .)
+} else {
+  source("geo_input.R")
+  geo.samples <- read.csv(cfg$geo_samples_csv, stringsAsFactors = FALSE)
+  cellbender.out <- stage_geo_samples(geo.samples, cfg$geo_dir,
+                                      file.path(params$step_dir, "geo_input"))
+}
+```
+
+## Discard low Q samples and LTS samples
+
+```{r discard_low_q_samples}
+sts.samples.names <- sapply(sts.samples$Case, function(x)
+  grep(x, names(cellbender.out), value = T)) %>% unlist() %>% as.character() %>% unique()
+
+# Post-filtering low quality cells and discarding lowly expressed genes (see below), sample 2057-V1 only had 389 genes that were expressed in at least 25 cells and will be discarded. 
+# Also, samples 2179, 2210, 2911 2221 and 2946.
+# Patient #2212 has no malignant epithelial, also removed
+# IPMN is from the Avner's cohort, also removed
+
+low.q.samples <- cfg$low_q_samples
+intersect(low.q.samples, sts.samples.names)
+
+sts.samples.names <- sts.samples.names[!sts.samples.names %in% low.q.samples]
+
+cellbender.out <- cellbender.out[names(cellbender.out) %in% sts.samples.names]
+
+# Please note that sample 2302 was run twice (different sections?) on runs STTM_110319, run on march 2019 (run 190322_A00130_0097) and STTM_14082019, run in August 2019 (190819_A00130_0114_AHMCLHDSX).
+# As previously done, sample from run 190819_A00130_0114_AHMCLHDSX will be renamed as section 2.
+# (the file is identified by its run ID in the path, not by its position in the list)
+# The GEO files are already named 2302-section-2, so this only applies to local input.
+if (input.mode == "local") {
+  rn  <- cfg$section2_rename
+  idx <- which(names(cellbender.out) == rn$sample & grepl(rn$pattern, cellbender.out))
+  stopifnot(length(idx) == 1)   # stops here if the pattern in config.yml does not match exactly one file
+  names(cellbender.out)[idx] <- rn$new
+} else {
+  # every GEO sample must survive the filters above, in geo_samples.csv order
+  stopifnot(identical(names(cellbender.out),
+                      geo.samples$sample[order(geo.samples$order)]))
+}
+
+# Sample order sets the cell ID prefixes (1_, 2_, ...) used by later steps.
+# A local-mode run records it here; copy it into the `order` column of geo_samples.csv.
+write.csv(data.frame(order = seq_along(cellbender.out),
+                     sample = names(cellbender.out),
+                     path = unname(cellbender.out)),
+          file.path(params$step_dir, "sample_order.csv"), row.names = FALSE)
+
+sts.sce <-
+  read10xCounts(
+    samples = cellbender.out,
+    sample.names = names(cellbender.out),
+    col.names = TRUE
+  ) # should have 30 samples total
+stopifnot(length(unique(sts.sce$Sample)) == 30)
+
+## Additional step to check that there no negative values or NAs
+## (sparse-safe: as.matrix() on ~140k cells would need a very large amount of memory)
+cnt  <- counts(sts.sce)
+vals <- if (methods::is(cnt, "dgCMatrix")) cnt@x else as.matrix(cnt)
+stopifnot(!any(vals < 0), !anyNA(vals))   # confirm no negative value and no NAs
+rm(cnt, vals)
+```
+
+# Discard samples where the majority of genes are not expressed.
+```{r discard_samples_low_no_genes_expressed}
+nexprs.list <- lapply(sts.sce$Sample %>% unique(),
+                      function(x)
+                        table(nexprs(sts.sce[, sts.sce$Sample == x], byrow = T) >= 25))
+
+names(nexprs.list) <- sts.sce$Sample %>% unique()
+
+nexprs.discard <- sapply(names(nexprs.list),
+                         function(x)
+                           nexprs.list[[x]][2] < 2500,
+                         USE.NAMES = T)
+
+# No samples to discard
+print(names(which(nexprs.discard)) %>% gsub(".TRUE", "", .))
+```
+
+Without gene prefiltering none of the samples were discarded based on the criteria described above.
+
+# Doublet detection
+Doublet detection and conceptual framework adapted from [OSCA advanced chapter 8](http://bioconductor.org/books/3.13/OSCA.advanced/doublet-detection.html#further-comments-3).
+Doublet detection could also be performed on a split object (see addendum).
+
+## Preprocessing
+### QC
+Discard only very low quality cells. According to `scDblFinder` vignette discarding cells with < 200 UMIs is reasonable as an initial qc (more [here](https://bioconductor.org/packages/release/bioconductor/vignettes/scDblFinder/inst/doc/scDblFinder.html#usage)). 
+
+```{r scater_QA_QC}
+
+qc.dbl.df <- perCellQCMetrics(sts.sce)
+
+qc.dbl.sum <- qc.dbl.df$sum < 200
+
+table(qc.dbl.sum)
+#qc.dbl.sum
+# FALSE   TRUE 
+#135982   4752 
+
+#dim(sts.sce)
+#36601 140734
+
+# Oct26 second run: same numbers (135982 / 4752; dim 36601 x 140734)
+```
+
+
+### Discard low quality cells.
+```{r discard_lowq_cells}
+fltrd.sts.sce <- sts.sce[, !qc.dbl.sum]
+
+# Keep expressed genes only.
+set.seed(1234)
+non.zero.features <- nexprs(fltrd.sts.sce, byrow = T, BPPARAM = bpp) > 0
+table(non.zero.features)
+#non.zero.features
+#FALSE  TRUE 
+# 2725 33876
+
+fltrd.sts.sce <- fltrd.sts.sce[non.zero.features, ]
+```
+
+### Discard samples with low no. of cells (~500 cells).
+Discard samples with low no. of cells post initial QC.
+
+```{r low_cell_samples_discard }
+print(as.data.frame(colData(fltrd.sts.sce)) %>% dplyr::count(Sample) %>% dplyr::arrange(n))
+# No samples with less than 500 cells.
+
+saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.RDS"))
+```
+
+### Normalisation
+```{r normalisation}
+set.seed(1234)
+dbl.clusters.samples <- scran::quickCluster(fltrd.sts.sce,
+                                            BPPARAM = bpp,
+                                            block=fltrd.sts.sce$Sample
+                                            )
+
+# Notes on clustering within block: "We can break up the dataset by specifying block to cluster cells, usually within each batch or run. This generates clusters within each level of block, which is entirely adequate for applications like computeSumFactors where the aim of clustering is to separate dissimilar cells rather than group together all similar cells. Blocking reduces computational work considerably by allowing each level to be processed independently, without compromising performance provided that there are enough cells within each batch.
+#Indeed, for applications like computeSumFactors, we can use block even in the absence of any known batch structure. Specifically, we can set it to an arbitrary factor such as block=cut(seq_len(ncol(x)), 10) to split the cells into ten batches of roughly equal size. This aims to improve speed, especially when combined with block.PARAM to parallelize processing of the independent levels" https://rdrr.io/bioc/scran/man/quickCluster.html
+
+#More discussion here: https://support.bioconductor.org/p/9155953
+
+saveRDS(dbl.clusters.samples, file = file.path(params$step_dir, "dbl.clusters.samples.RDS"))
+
+fltrd.sts.sce <-
+  computeSumFactors(fltrd.sts.sce,
+                    clusters = dbl.clusters.samples,
+                    BPPARAM = bpp)
+
+print(sizeFactors(fltrd.sts.sce) %>% head(n = 10))
+# [1] 20.654276 12.916691 16.909326 13.964262  5.749571  6.198304  6.194301  7.970234  6.053636  5.061844
+# (same values in the October reruns)
+
+fltrd.sts.sce <-
+  logNormCounts(fltrd.sts.sce)
+
+saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.samples.RDS"))
+```
+
+### Variance modelling
+```{r variance_modelling} 
+set.seed(1234)
+dec.dbl <-
+  modelGeneVarByPoisson(fltrd.sts.sce,
+                        BPPARAM = bpp)
+top.dec.dbl <-
+  getTopHVGs(dec.dbl, n = 5000)
+
+saveRDS(top.dec.dbl, file = file.path(params$step_dir, "top.dec.dbl.RDS"))
+saveRDS(dec.dbl,     file = file.path(params$step_dir, "dec.dbl.RDS"))
+saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.samples.RDS"))
+```
+
+### Dimensionality reduction.
+```{r pca}
+set.seed(1234)
+fltrd.sts.sce <-
+  denoisePCA(fltrd.sts.sce,
+             technical = dec.dbl,
+             subset.row = top.dec.dbl) #this step take some time 1h30
+
+reducedDimNames(fltrd.sts.sce)
+#[1] "PCA"
+
+sample.no <- length(unique(fltrd.sts.sce$Sample))
+sample.colours  <- colorRampPalette(brewer.pal(11, "Spectral"))
+
+plotReducedDim(fltrd.sts.sce, colour_by = "Sample", dimred = "PCA") + scale_color_manual(values = sample.colours(sample.no))
+
+set.seed(1234)
+fltrd.sts.sce <- runUMAP(
+  fltrd.sts.sce,
+  dimred = "PCA"
+)
+ 
+reducedDimNames(fltrd.sts.sce)
+
+plotReducedDim(fltrd.sts.sce,
+               colour_by = "Sample",
+               dimred = "UMAP"
+               ) + scale_color_manual(values = sample.colours(sample.no))
+
+plotReducedDim(fltrd.sts.sce,
+               colour_by = "MUC2",
+               swap_rownames = "Symbol",
+               dimred = "UMAP",
+               text_by = "Sample"
+               )
+# Both 2302 and IPMN highly express MUC2
+saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.samples.RDS"))
+```
+
+### Clustering
+
+```{r clustering}
+set.seed(1234)
+
+fltrd.sts.sce$fastClusters <-
+  fastcluster(fltrd.sts.sce, rdname = "PCA") %>% as.factor()
+
+colLabels(fltrd.sts.sce) <- fltrd.sts.sce$fastClusters
+
+table(colLabels(fltrd.sts.sce))
+ #   1     2     3     4     5     6     7     8     9    10    11    12    13    14    15    16    17    18    19    20    21    22    23 
+ # 1744  6642  7266  3800  9777 10125  4693 12366  5823 11761  3238  4218  4506  2006  4409  8993  1818  9001  9667  4946  5223  2089  1871 
+
+fltrd.sts.sce$Sample <- factor(fltrd.sts.sce$Sample, levels = fltrd.sts.sce$Sample %>% unique())
+
+plotUMAP(fltrd.sts.sce, colour_by = "label") 
+plotUMAP(fltrd.sts.sce, colour_by = "Sample")  + scale_color_manual(values = sample.colours(sample.no))
+
+# this version is the basis for doublet removal
+saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.samples.RDS"))
+```
+
+## scDblFinder
+### Run scDblFinder
+
+Reproducibility notes (from the earlier tests): `set.seed()` alone does not make `scDblFinder` reproducible. 
+The seed must be set through `MulticoreParam(RNGseed = ...)`. Using 4 workers with `RNGseed = 1234` gave identical results 
+across repeated runs and across sessions (129,115 singlets / 6,867 doublets). With 12 workers the run failed 
+(`error writing to connection`), so `dbl_workers` is set separately in `config.yml`.
+
+```{r scDblFinder}
+set.seed(cfg$seed)
+bpp.dbl <- BiocParallel::MulticoreParam(workers = cfg$dbl_workers, RNGseed = cfg$seed)
+
+fltrd.sts.sce <-
+  scDblFinder(
+    fltrd.sts.sce,
+    samples = "Sample",
+    clusters = "fastClusters",
+    BPPARAM = bpp.dbl
+  )
+
+saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.samples_dbl.RDS"))
+```
+
+Sanity check: expected 129,115 singlets and 6,867 doublets.
+```{r dbl_class_check, results="markup"}
+table(fltrd.sts.sce$scDblFinder.class)
+# singlet doublet 
+#  129115    6867 
+
+plotUMAP(fltrd.sts.sce, colour_by="scDblFinder.class") +
+  plotUMAP(fltrd.sts.sce, colour_by="Sample")
+```
+
+### Doublet detection metrics.
+```{r dbl_metrics, results="markup"}
+dbl.class.table.list <-
+  lapply(fltrd.sts.sce$Sample %>% unique(), function(x)
+    fltrd.sts.sce[, fltrd.sts.sce$Sample == x, ]$scDblFinder.class %>% tibble::as_tibble() %>%
+      group_by(value) %>% tally()
+    )
+
+names(dbl.class.table.list) <- fltrd.sts.sce$Sample %>% unique()
+
+dbl.tibble <- map_dfr(dbl.class.table.list, bind_rows, .id = "Sample")
+dbl.tibble <- dbl.tibble %>% group_by(Sample) %>% mutate( percentage = 100 * n /sum(n)) %>% ungroup()
+
+dbl.tibble %>%
+  filter(value == "doublet") %>%
+  arrange(desc(percentage)) %>% 
+  print(n=30)
+# Highest: 2052-084 (7.18%), 2285 (6.98%), 2153-section-2 (6.93%); lowest: 2925 (1.60%)
+
+print(as.data.frame(colData(fltrd.sts.sce)) %>%
+        dplyr::count(Sample) %>%
+        dplyr::arrange(desc(n)))
+# Largest: 2153-section-2 (9411 cells); smallest: 1993 (1478 cells)
+```
+
+# Discard doublets
+```{r discard_doublets, results="markup"}
+dbl.fltrd.sts.sce <-
+  fltrd.sts.sce[, fltrd.sts.sce$scDblFinder.class == "singlet"]
+
+print(as.data.frame(colData(dbl.fltrd.sts.sce)) %>%
+        dplyr::count(scDblFinder.class) %>%
+        dplyr::arrange(desc(n)))
+#   scDblFinder.class      n
+# 1           singlet 129115
+
+saveRDS(dbl.fltrd.sts.sce, file = file.path(params$step_dir, "dbl.fltrd.sts.sce.RDS"))
+```
+
+# Session info
+```{r session_info, results="markup"}
+sessionInfo()
+```

@@ -1,0 +1,11 @@
+# Only the code goes into the image; data and metadata are mounted at run time.
+*
+!Dockerfile
+!install_packages.R
+!run_stage1.R
+!Preprocessing_DoubleDetection.Rmd
+!Preprocessing_QC.Rmd
+!geo_input.R
+!geo_samples.csv
+!config.yml
+!config_local.yml

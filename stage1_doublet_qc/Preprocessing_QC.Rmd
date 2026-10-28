@@ -1,0 +1,283 @@
+---
+title: "Preprocessing_QC.Rmd"
+author: "Mai La"
+date: "2024-08-11"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+# Preamble
+Based on the approach described [here](https://satijalab.org/seurat/articles/integration_introduction.html), example described in this [manuscript](https://www.cell.com/cell/fulltext/S0092-8674(19)30559-8)
+Cluster specific responses to genoytpe?
+
+Input: output of `Preprocessing_DoubleDetection.Rmd` (`dbl.fltrd.sts.sce.RDS`). All paths and settings are read from `config.yml` (passed in by `run_stage1.R`).
+
+# Prepare environment
+```{r global-options, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T)
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage1.R so that params are passed
+
+# On reproducibility and BiocParallel
+#https://support.bioconductor.org/p/9140202/
+bpp <- BiocParallel::MulticoreParam(workers = cfg$workers, RNGseed = cfg$seed)
+options(future.globals.maxSize= 1048576000)
+```
+
+## Libraries
+```{r import_libraries, include = TRUE, echo=TRUE, results='hide', message=FALSE}
+library("dplyr")
+library("patchwork")
+library("SingleCellExperiment")
+library("scuttle")
+library("scater")
+library("BiocParallel")
+```
+
+# Load SCE object with doublets removed.
+```{r read_object}
+dbl.fltrd.sts.sce <- readRDS(file.path(params$out_root,
+                                       "Preprocessing_DoubleDetection",
+                                       "dbl.fltrd.sts.sce.RDS"))
+
+diet.dbl.fltrd.sts.sce <-
+  SingleCellExperiment(
+    assays = list(counts = counts(dbl.fltrd.sts.sce)),
+    colData = colData(dbl.fltrd.sts.sce),
+    rowData = rowData(dbl.fltrd.sts.sce)
+  )
+
+# The counts must be unchanged; colData/rowData are only compared (not blocking)
+stopifnot(identical(counts(dbl.fltrd.sts.sce),
+                    counts(diet.dbl.fltrd.sts.sce)))
+identical(colData(dbl.fltrd.sts.sce), colData(diet.dbl.fltrd.sts.sce))
+identical(rowData(dbl.fltrd.sts.sce), rowData(diet.dbl.fltrd.sts.sce))
+
+rm(dbl.fltrd.sts.sce)
+gc()
+
+diet.dbl.fltrd.sts.sce$sizeFactor <- NULL
+diet.dbl.fltrd.sts.sce$fastClusters <- NULL
+diet.dbl.fltrd.sts.sce$label <- NULL
+```
+
+# QC
+```{r scater_QA_QC}
+mito.genes <- grep("^MT-", rowData(diet.dbl.fltrd.sts.sce)$Symbol)
+ribo.genes <- grep("^RP[SL]", rowData(diet.dbl.fltrd.sts.sce)$Symbol)
+mito.genes.names <- grep("^MT-", rowData(diet.dbl.fltrd.sts.sce)$Symbol, value = T)
+ribo.genes.names <- grep("^RP[SL]", rowData(diet.dbl.fltrd.sts.sce)$Symbol, value = T)
+
+mito.genes.ids <- dplyr::filter(rowData(diet.dbl.fltrd.sts.sce) %>% as.data.frame(), Symbol %in% mito.genes.names) %>% pull(ID)
+ribo.genes.ids <- dplyr::filter(rowData(diet.dbl.fltrd.sts.sce) %>% as.data.frame(), Symbol %in% ribo.genes.names) %>% pull(ID)
+
+
+cell.qc.df <-
+  perCellQCMetrics(diet.dbl.fltrd.sts.sce,
+                   subsets = list(mito = mito.genes,
+                                  ribo = ribo.genes))
+
+colData(diet.dbl.fltrd.sts.sce) <- cbind(colData(diet.dbl.fltrd.sts.sce), cell.qc.df)
+colData(diet.dbl.fltrd.sts.sce)$aggregation_order <- gsub("_.*", "", rownames(colData(diet.dbl.fltrd.sts.sce)))
+
+# Nuclei like processing http://bioconductor.org/books/3.13/OSCA.advanced/single-nuclei-rna-seq-processing.html
+summary(diet.dbl.fltrd.sts.sce$subsets_mito_percent == 0)
+#   Mode   FALSE    TRUE 
+# logical   13274  115841  # Oct26
+```
+
+## Adaptative thresholds - NOT USED
+The chunk below is kept for reference only and is not run (`eval=FALSE`).
+
+```{r adaptive_not_used, eval=FALSE}
+
+qc.mito <- isOutlier(cell.qc.df$subsets_mito_percent,
+                     nmads = 5,
+                     type = "higher",
+                     min.diff = 1)
+
+attr(qc.mito, "thresholds")
+table(qc.mito)
+# qc.mito
+#  FALSE   TRUE 
+# 128644    490 
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="subsets_mito_percent",
+    colour_by=I(qc.mito))
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="subsets_ribo_percent")
+
+qc.ribo <- isOutlier(cell.qc.df$subsets_ribo_percent, 
+                     type = "higher",
+                     nmads = 5)
+attr(qc.ribo, "thresholds")
+table(qc.ribo)
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="subsets_ribo_percent",
+    colour_by=I(qc.ribo))
+
+
+table(cell.qc.df$detected > 500)
+
+qc.detected <-
+  isOutlier(cell.qc.df$detected,
+            nmads = 2,
+            type = "lower",
+            log = T
+            )
+            
+table(qc.detected)
+attr(qc.detected, "thresholds")
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="detected",
+    colour_by=I(qc.detected))
+
+# Calculate median per samples  and identify those samples were the median is more than 2500 
+table(cell.qc.df$sum > 750)
+
+colData(diet.dbl.fltrd.sts.sce) %>% as.data.frame() %>% group_by(Sample) %>%
+  summarise(median = median(sum, na.rm = TRUE)) %>% arrange(median)
+
+samples.sum <- colData(diet.dbl.fltrd.sts.sce) %>% as.data.frame() %>% group_by(Sample) %>%
+  summarise(median = median(sum, na.rm = TRUE)) %>% filter(median > 2500) %>% pull(Sample)
+
+qc.sum.batch  <-
+  isOutlier(
+    diet.dbl.fltrd.sts.sce$sum,
+    nmads = 3,
+    type = "lower",
+    log = T,
+    batch = diet.dbl.fltrd.sts.sce$Sample,
+    subset = diet.dbl.fltrd.sts.sce$Sample %in% samples.sum,
+    share.mads = T
+  )
+
+attr(qc.sum.batch, "thresholds")
+table(qc.sum.batch)
+
+ attr(qc.sum.batch, "thresholds") %>%
+  t() %>%
+  tibble::as_tibble(rownames = "Sample") %>% arrange(lower)
+   
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="sum",
+    colour_by=I(qc.sum.batch))
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="sum",
+    colour_by=I(qc.sum.batch)) + 
+  plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="detected",
+    colour_by=I(qc.detected))
+
+```
+
+## Fixed thresholds
+```{r fixed_thresholds}
+fixed.mito <- diet.dbl.fltrd.sts.sce$subsets_mito_percent > 5
+table(fixed.mito)
+# FALSE    TRUE 
+# 129077     38 
+
+fixed.ribo <-  diet.dbl.fltrd.sts.sce$subsets_ribo_percent > 10
+table(fixed.ribo)
+# FALSE   TRUE 
+#129073     42 
+
+fixed.detected <- diet.dbl.fltrd.sts.sce$detected < 250 
+table(fixed.detected)
+# FALSE   TRUE 
+#124856   4259 
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="sum")
+
+fixed.sum <- diet.dbl.fltrd.sts.sce$sum < 500 
+table(fixed.sum)
+# FALSE   TRUE 
+#115350  13765   
+
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="sum",
+    colour_by=I(fixed.sum)) 
+plotColData(diet.dbl.fltrd.sts.sce, x="Sample", y="detected",
+    colour_by=I(fixed.detected))
+
+table(fixed.mito | fixed.ribo |fixed.detected | fixed.sum)
+# FALSE   TRUE 
+#115293  13822 
+```
+
+# Discard low quality cells.
+```{r qc_discard, results="markup"}
+cells.discard <- fixed.mito | fixed.ribo | fixed.detected | fixed.sum 
+table(cells.discard)
+# FALSE   TRUE 
+#115293  13822  
+
+qc.dbl.fltrd.sts.sce <- diet.dbl.fltrd.sts.sce[, !cells.discard]
+
+plotColData(
+  qc.dbl.fltrd.sts.sce,
+  x = "Sample",
+  y = "detected"
+)
+
+colData(qc.dbl.fltrd.sts.sce) %>% as.data.frame() %>% group_by(Sample) %>%
+  summarise(median = median(sum, na.rm = TRUE)) %>% arrange(median)
+
+summary(qc.dbl.fltrd.sts.sce$subsets_ribo_percent)
+ #   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ # 0.0000  0.1787  0.3185  0.4299  0.5099  9.7944
+```
+
+# Discard samples with low no. of cells.
+```{r discard_samples_low, results="markup"}
+as.data.frame(colData(qc.dbl.fltrd.sts.sce)) %>%
+  group_by(Sample) %>%
+  dplyr::count() %>% arrange(n) %>% print(n=30)
+
+low.cell.no.samples <- as.data.frame(colData(qc.dbl.fltrd.sts.sce)) %>% 
+  group_by(Sample) %>% 
+  dplyr::count() %>% 
+  filter(n < 500) %>% pull("Sample")
+
+# Discard sample with less than < 500 cells.
+# No samples with less than 500 cells (this check stops the run if that changes)
+stopifnot(length(low.cell.no.samples) == 0)
+```
+
+# Discard lowly expressed, mitochondrial and ribosomal genes.
+```{r discard_genes, results="markup"}
+set.seed(1234)
+keep.features <- nexprs(qc.dbl.fltrd.sts.sce, byrow = T, BPPARAM = bpp) >= 25
+
+table(keep.features)
+#FALSE  TRUE 
+# 7006 26870  
+
+mito.genes.names <- grep("^MT-", rowData(qc.dbl.fltrd.sts.sce)$Symbol, value = T)
+ribo.genes.names <- grep("^RP[SL]", rowData(qc.dbl.fltrd.sts.sce)$Symbol, value = T)
+
+no.mito.ribo.genes <- !rowData(qc.dbl.fltrd.sts.sce)$Symbol %in% c(mito.genes.names, ribo.genes.names)
+
+table(no.mito.ribo.genes & keep.features)
+#FALSE  TRUE 
+# 7119 26757 
+
+qc.dbl.fltrd.sts.sce <-
+  qc.dbl.fltrd.sts.sce[no.mito.ribo.genes &
+                          keep.features,]
+
+dim(qc.dbl.fltrd.sts.sce)
+#[1]  26774 115301 # from Rerun_Aug24
+#[1]  26757 115293 # from Rerun_Oct26
+
+saveRDS(qc.dbl.fltrd.sts.sce, file = file.path(params$step_dir, "qc.dbl.fltrd.sts.sce.RDS"))
+# Notes: the rerun object is comparable to previously processed data 26788 x 115221, for the efficiency of the reprocessing, we will keep using the previously run object that have seen stored in pdac24_atlas VM for further processing
+```
+
+# Session info
+```{r session_info, results="markup"}
+sessionInfo()
+```
+

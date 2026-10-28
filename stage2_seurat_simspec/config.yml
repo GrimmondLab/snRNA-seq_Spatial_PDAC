@@ -1,0 +1,6 @@
+# Container paths. Mount your data to these locations (see README.md).
+# Input: the original post-QC object deposited with the manuscript (26,788 genes x 115,221 cells).
+qc_object: /data/input/qc.dbl.fltrd.sts.sce.RDS
+output_dir: /output
+seed: 1234
+workers: 28
