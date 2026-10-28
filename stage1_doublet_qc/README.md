@@ -41,7 +41,7 @@ The input is the CellBender-filtered counts for 30 samples. The stage can read t
 
 | Mode | Config | Input | Use |
 |---|---|---|---|
-| `geo` | `config.yml` (default) | GEO processed files, **GSE_TBD**: `<sample>_cellbender_filtered.h5` per sample (default), or `<sample>_barcodes.tsv.gz`, `<sample>_features.tsv.gz`, `<sample>_matrix.mtx.gz` | Public reproduction |
+| `geo` | `config.yml` (default) | GEO processed files, [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918): `<sample>_cellbender_filtered.h5` per sample (default), or `<sample>_barcodes.tsv.gz`, `<sample>_features.tsv.gz`, `<sample>_matrix.mtx.gz` | Public reproduction |
 | `local` | `config_local.yml` | Original CellBender folders (`*_cellbender_filtered.h5`) | Reproducibility test against the original run |
 
 **GEO mode.** Download all processed files for the series into one folder; subfolders and a `GSM…_` prefix on the file names are fine. `geo_samples.csv` links each GEO entry (`geo_title`, `file_prefix`) to the sample name used in the analysis (`sample`). `geo_format` in `config.yml` chooses which files are read: `h5` (default) reads `<file_prefix>_cellbender_filtered.h5`, the same file the original run read; `mtx` reads the three matrix files. All samples use the same format, and only that format needs to be downloaded. The run stops if any sample's file is missing or matches more than one file.
