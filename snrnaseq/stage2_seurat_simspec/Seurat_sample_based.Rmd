@@ -242,7 +242,7 @@ DimPlot(
 ) +
 DimPlot(sts.seurat, reduction = "umap", group.by = 'Sample', raster =F)
 
-saveRDS(sts.seurat, file = file.path(params$step_dir, "sts.seurat.Aug24.RDS"))
+saveRDS(sts.seurat, file = file.path(params$step_dir, "sts.seurat.clustered.RDS"))
 ```
 
 # Manual annotation based on marker gene expression

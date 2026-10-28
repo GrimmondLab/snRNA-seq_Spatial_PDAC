@@ -52,7 +52,7 @@ This is a newer environment than Stages 1–2 (Bioconductor 3.17, Seurat 4). Ver
 
 | File | Source |
 |---|---|
-| `sts.simspec_css.sample.sct.Aug24.RDS` | annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, **DOI_TBD**); mounted at run time |
+| `sts.simspec_css.sample.sct.RDS` | annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, **DOI_TBD**); mounted at run time |
 | `gene_positions.txt` | gene positions (36,590 genes), included in this folder and in the image |
 
 `gene_positions.txt` was made once from the 10x Genomics GRCh38 reference GTF (`refdata-gex-GRCh38-2020-A`, `genes.gtf`) with inferCNV's [`gtf_to_position_file.py`](https://github.com/broadinstitute/infercnv/blob/master/scripts/gtf_to_position_file.py):
@@ -85,7 +85,7 @@ docker build -t pdac-stage3:1.0 .
 
 | Container path | Mount | Mode |
 |---|---|---|
-| `/data/input` | folder containing `sts.simspec_css.sample.sct.Aug24.RDS` | read-only |
+| `/data/input` | folder containing `sts.simspec_css.sample.sct.RDS` | read-only |
 | `/output` | where results go | read-write |
 
 ```bash

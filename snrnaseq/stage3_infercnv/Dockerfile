@@ -45,7 +45,7 @@ RUN Rscript install_packages.R && rm -rf /tmp/downloaded_packages
 COPY run_stage3.R InferCNV.Rmd infercnv_samples.csv gene_positions.txt config.yml ./
 
 # Data is mounted at run time, not stored in the image:
-#   /data/input   folder containing sts.simspec_css.sample.sct.Aug24.RDS (read-only)
+#   /data/input   folder containing sts.simspec_css.sample.sct.RDS (read-only)
 #   /output       results
 VOLUME ["/output"]
 

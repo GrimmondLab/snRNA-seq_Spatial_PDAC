@@ -133,48 +133,11 @@ library(clustree)
 clustree::clustree(sts.simspec_css.sample.sct)
 
 DimPlot(sts.simspec_css.sample.sct, raster = F, group.by = "SCT_snn_res.1.1", label = T) + DimPlot(sts.simspec_css.sample.sct, group.by = "cell_class",label = T, repel =T, raster = F)
-saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.Aug24.RDS"))
+saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.clustered.RDS"))
 
 Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" # this defines FRCs and correlate quite well with cell classes defined by non-integrated method
 sts.simspec_css.sample.sct$seurat_clusters <- NULL 
 sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn_res.1.1
-```
-
-## Plotting
-TODO (to revisit): this chunk uses `sts.simspec_css.Pat.sct`, which is not created in this file, so it is switched off for now.
-```{r plotting, eval=FALSE}
-pat.col <- c("#6DE8B7","#D741E1","#B4E1CF","#DEB8E0","#DD4A8C","#7F9F32","#C3EAB4" ,"#7B67E0" ,"#D8E746" ,"#CEE982" ,"#DE73DA" ,"#92A36F" ,"#67C0D8" ,"#E1A497" ,"#E76356" ,"#62A4DB", "#D79655" ,"#8966AA", "#6E33E0" ,"#6EE9E7","#76E74A" ,"#E4C751" , "#74DDB6","#82CCDE","#8D747A" )
-#"#E7E3DA" ,"#9899E8" ,"#B8C9E4" ,"#E08FC1" ,"#7AE07E" ,,"#67B39D" ,"#E7D59B")
-col <- c("#D7B9D0","#E1DF5F","#B549DC","#8FE46E","#E27258","#74DDB6","#82CCDE","#C8AF7C","#D9E7CA","#DF649A","#778CD3","#CA86DB","#FDB462","#377EB8",  "#E1A497")
-#'#c5b0d5',"#74A3DA",'#d5eae7',
-
-col <- c('#ff7f0e',"#C8AF7C",'#aa40fc','#d5eae7', #'#aec7e8',
-         '#279e68',"#92A36F" ,'#e377c2','#d62728','#17becf','#8c564b',
-         '#ff9896', '#98df8a','#ffbb78', '#1f77b4',
-         "#979D60","#6E33E0" ,"#D5DB46","#8D747A",
-         "#E27258"
-         )
-
-color <- setNames(object = col, nm=c("Acinar","Malignant acinar","B","CAFs",
-           "Ductal_epithelial", "Ductal_MUC5B+","Endocrine","Endothelial","Macrophages","PDAC",
-           "Mast","Plasma","Pericytes","T/NK",
-           "FRCs","Tuft","PDA_OLGC","Intestinal IPMN",
-           "Acinar & Malignant_acinar"
-           ))
-
-Seurat::DimPlot(sts.simspec_css.Pat.sct, raster = F, group.by = "SCT_snn_res.0.8", label = T)  + Seurat::DimPlot(sts.simspec_css.Pat.sct, group.by = "cell_class", label = T, repel = T, raster = F) 
-
-DimPlot(sts.simspec_css.Pat.sct, group.by = "simspec_cell_class", raster = F, cols = color) 
-
-sts.simspec_css.Pat.sct@meta.data%>%
-  ggplot(aes(x=Patient_ID, fill = simspec_cell_class)) +
-  geom_bar(position = "fill")  + scale_fill_manual(values = color) + RotatedAxis()
-
-# Reorder the level
-sts.simspec_css.Pat.sct$simspec_cell_class <- factor(sts.simspec_css.Pat.sct$simspec_cell_class, levels = c("Acinar","Ductal_epithelial","Tuft",
-                                                                                                            "Malignant acinar","PDA_OLGC","PDAC",
-                                                                                                            "Endocrine","Endothelial","CAFs","Pericytes", "FRCs",
-                                                                                                            "Macrophages","Mast","B","Plasma","T/NK"))
 ```
 
 ## Annotation - Sample SCT -> 'orig.ident' CSS integration
@@ -219,7 +182,15 @@ DimPlot(sts.simspec_css.sample.sct,
         group.by = "simspec_cell_class", raster = F, label = T) +
   DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "seurat_clusters") + 
   DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "cell_class") 
-saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.Oct26.RDS"))
+
+### Adding sample details
+replicate.id <- FetchData(sts.seurat, vars = c("Sample", "Cell_Ids"))
+replicate.id <- dplyr::mutate(replicate.id, Patient_ID = gsub("\\-.*", "", Sample))
+patient.id <- replicate.id$Patient_ID
+names(patient.id) <- replicate.id$Cell_Ids
+
+stopifnot(identical(names(patient.id), colnames(sts.seurat)))
+sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
 ```
 
 ```{r}
@@ -245,5 +216,5 @@ marker.sets <- list(Malignant_PDAC = c("KRT19","MUC1","KRT17","ACTN4","LMO7"),
                     Macrophages = c("CSF1R","SIGLEC1", "CD163", "MS4A6A"))
 
 DotPlot(sts.simspec_css.sample.sct, features = marker.sets, group.by = "simspec_cell_class")  + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high = "darkred") # r
-saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.Aug24.RDS"))
+saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.RDS"))  # annotated object: input to Stage 3
 ```

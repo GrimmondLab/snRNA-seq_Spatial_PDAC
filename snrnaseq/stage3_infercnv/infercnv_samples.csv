@@ -1,0 +1,31 @@
+sample,subset_by,cell_classes,ref_groups,leiden_resolution,up_to_step,out_name,annotation_file,note
+1993,Sample,PDAC;Pericytes;Endothelial;T/NK;Ductal_epithelial,Pericytes;Endothelial;T/NK;Ductal_epithelial,0.01,,P1993.out,sample_annotation.P1993.tsv,
+2156,Sample,PDAC;Pericytes;T/NK;Endothelial,Pericytes;T/NK;Endothelial,0.003,,P2156.out,sample_annotation.P2156.tsv,
+2285,Sample,PDAC;Endothelial;T/NK;Pericytes;Plasma,Endothelial;T/NK;Pericytes;Plasma,0.008,,P2285.out,sample_annotation.P2285.tsv,
+2353,Sample,PDAC;Endothelial;T/NK,Endothelial;T/NK,0.005,,P2353.out,sample_annotation.P2353.tsv,
+3513,Sample,PDAC;Endothelial;Pericytes;Plasma,Endothelial;Pericytes;Plasma,0.005,,P3513.out,sample_annotation.P3513.tsv,
+2215,Sample,PDAC;Endothelial;T/NK;Ductal_epithelial,Endothelial;T/NK;Ductal_epithelial,0.002,,P2215.out,sample_annotation.P2215.tsv,full run (the original code had up_to_step = 15 left on); non-malignant cells from subcluster PDAC_s4 were relabelled downstream
+2215-section-2,Sample,PDAC;Endocrine;T/NK;Ductal_epithelial,Endocrine;T/NK;Ductal_epithelial,0.001,,P2215-section-2.out,sample_annotation.P2215.2.tsv,
+2057-V2,Sample,PDAC;Pericytes;Plasma;T/NK,Pericytes;Plasma;T/NK,0.002,,P2057.out.v2,sample_annotation.P2057.tsv,
+2041,Sample,PDAC;Pericytes;Endothelial;Endocrine;Acinar,Pericytes;Endothelial;Endocrine;Acinar,0.001,,P2041.out,sample_annotation.P2041.tsv,
+2129,Sample,PDAC;Endothelial;Pericytes;Endocrine,Endothelial;Pericytes;Endocrine,0.0005,,P2129.out,sample_annotation.P2129.tsv,
+2925,Sample,PDAC;T/NK;CAFs;Macrophages;Mast,T/NK;CAFs;Macrophages;Mast,0.0002,,P2925.out,sample_annotation.P2925.tsv,
+2302,Sample,PDAC;Endothelial;T/NK;Pericytes,Endothelial;T/NK;Pericytes,0.0005,,P2302.out,sample_annotation.P2302.tsv,
+2302-section-2,Sample,PDAC;Endothelial;T/NK;Pericytes;Plasma,Endothelial;T/NK;Pericytes;Plasma,0.0005,,P2302-section-2.out,sample_annotation.P2302.2.tsv,
+2935,Sample,PDAC;T/NK;Plasma;Endothelial,T/NK;Plasma;Endothelial,0.001,,P2935.out,sample_annotation.P2935.tsv,
+1959,Patient_ID,PDA_OLGC;Pericytes;Endothelial;T/NK,Pericytes;Endothelial;T/NK,0.0005,,P1959.out,sample_annotation.P1959.tsv,
+1971,Patient_ID,Malignant acinar;PDAC;Pericytes;Endothelial;T/NK,Pericytes;Endothelial;T/NK,0.0003,,P1971.out,sample_annotation.P1971.tsv,Acinar cell carcinoma
+2001,Sample,PDAC;Pericytes;Endothelial;T/NK,Pericytes;Endothelial;T/NK,0.0005,,P2001.out,sample_annotation.P2001.tsv,
+2023,Sample,PDAC;Endothelial;T/NK;Ductal_epithelial,Endothelial;T/NK;Ductal_epithelial,0.001,,P2023.out,sample_annotation.P2023.tsv,
+2023-section-2,Sample,PDAC;Pericytes;Endothelial;T/NK,Pericytes;Endothelial;T/NK,0.001,,P2023-section-2.out,sample_annotation.P2023-section-2.tsv,
+2052-084,Sample,PDAC;Pericytes;Endothelial;T/NK,Pericytes;Endothelial;T/NK,0.0005,,P2052.084.out,sample_annotation.P2052.084.tsv,
+2052-089,Sample,PDAC;Pericytes;Endothelial;T/NK;Ductal_epithelial,Pericytes;Endothelial;T/NK;Ductal_epithelial,0.0003,,P2052.089.out,sample_annotation.P2052.089.tsv,
+2133,Sample,PDAC;CAFs;Endothelial;T/NK,CAFs;Endothelial;T/NK,0.001,,P2133.out,sample_annotation.P2133.tsv,
+2158,Sample,PDAC;Pericytes;T/NK;Endothelial;Plasma,Pericytes;T/NK;Endothelial;Plasma,0.001,,P2158.out,sample_annotation.P2158.tsv,
+2207,Sample,PDAC;Endothelial;CAFs;Macrophages,Endothelial;CAFs;Macrophages,0.001,,P2207.out,sample_annotation.P2207.tsv,
+2153,Sample,Malignant acinar;Ductal_epithelial;T/NK,Ductal_epithelial;T/NK,0.0005,,P2153.out,sample_annotation.P2153.tsv,
+2946-section-2,Sample,PDAC;Endothelial;CAFs;Pericytes,Endothelial;CAFs;Pericytes,0.0008,,P2946.out,sample_annotation.P2946.tsv,
+2185,Sample,PDAC;Pericytes;T/NK;Endothelial;Ductal_epithelial,Pericytes;T/NK;Endothelial;Ductal_epithelial,0.0005,,P2185.out,sample_annotation.P2185.tsv,clear cell carcinoma
+2153-section-2,Sample,Malignant acinar;T/NK;Endothelial;Plasma;Pericytes,T/NK;Endothelial;Plasma;Pericytes,0.0001,,P2153-section-2.out,sample_annotation.P2153.2.tsv,
+2992,Sample,PDAC;Endothelial;Pericytes;T/NK,Endothelial;Pericytes;T/NK,0.0035,,P2992.out,sample_annotation.P2992.tsv,rerun with the final annotated Stage 2 object
+2221-section-2,Sample,PDAC;Endothelial;T/NK;Pericytes,Endothelial;T/NK;Pericytes,0.0003,,P2221-section-2.out,sample_annotation.P2221.tsv,IPMN with invasion

@@ -1,0 +1,21 @@
+name: xenium.squidpy
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - matplotlib
+  - numpy
+  - pandas
+  - seaborn
+  - leidenalg
+  - python-igraph
+  - scanpy
+  - squidpy
+  - statsmodels
+  - plotly_express==0.4.0
+  - lifelines
+  - scikit-bio
+  - harmonypy
+  - scikit-posthocs
+  - conda-forge::muon
+  - mofapy2

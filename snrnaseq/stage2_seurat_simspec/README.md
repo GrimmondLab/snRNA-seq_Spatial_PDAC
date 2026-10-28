@@ -5,7 +5,7 @@ R 4.4.0 · Bioconductor 3.17 packages · master script `run_stage2.R`
 `run_stage2.R` renders two R Markdown files in order:
 
 1. `Seurat_sample_based.Rmd`: converts the post-QC object to Seurat, runs SCTransform (v2), PCA, UMAP and clustering, assigns `cell_class`, and writes `sts.seurat.RDS`.
-2. `PDAC_STS_simspec_integration.Rmd`: runs SCTransform per sample, integrates the samples with Cluster Similarity Spectrum (CSS, simspec), clusters at resolution 1.1, assigns `simspec_cell_class`, and writes `sts.simspec_css.sample.sct.Aug24.RDS`. Stage 3 reads this file.
+2. `PDAC_STS_simspec_integration.Rmd`: runs SCTransform per sample, integrates the samples with Cluster Similarity Spectrum (CSS, simspec), clusters at resolution 1.1, assigns `simspec_cell_class`, and writes `sts.simspec_css.sample.sct.RDS`. Stage 3 reads this file.
 
 ## Input
 
@@ -91,12 +91,12 @@ apptainer run --pwd /pipeline \
 
 | Folder | File | Contents |
 |---|---|---|
-| `Seurat_sample_based/` | `sts.seurat.Aug24.RDS` | Seurat object after clustering |
+| `Seurat_sample_based/` | `sts.seurat.clustered.RDS` | Seurat object after clustering |
 | | `sts.seurat.RDS` | adds `cell_class`, `Cell_Ids`, `S_CB`, `Patient_ID`; input to the integration step |
-| `PDAC_STS_simspec_integration/` | `sts.simspec_css.sample.sct.Aug24.RDS` | CSS-integrated object with `simspec_cell_class`; **input to Stage 3** |
-| | `sts.simspec_css.sample.sct.Oct26.RDS` | copy of the same annotated object (kept from the original code) |
+| `PDAC_STS_simspec_integration/` | `sts.simspec_css.sample.sct.clustered.RDS` | CSS-integrated object after clustering, before annotation |
+| | `sts.simspec_css.sample.sct.RDS` | CSS-integrated object with `simspec_cell_class`; **input to Stage 3** |
 
 ## Known gaps (to revisit)
 
 - **Cell-type labels depend on cluster numbers.** `cell_class` and `simspec_cell_class` are assigned by cluster number (e.g. `"41" ~ "Mast"`). If clusters come out numbered differently, the labels would be wrong without any error. Compare the labels with the original annotated object before relying on a rerun.
-- **Two chunks are switched off** (`eval=FALSE`, marked TODO): the old-vs-new object comparison at the start of `Seurat_sample_based.Rmd`, and the Plotting chunk in `PDAC_STS_simspec_integration.Rmd`, which uses an object (`sts.simspec_css.Pat.sct`) that is not created there.
+- **One chunk is switched off** (`eval=FALSE`, marked TODO): the old-vs-new object comparison at the start of `Seurat_sample_based.Rmd`.

@@ -1,0 +1,39 @@
+# Data and analysis objects live on GEO and Zenodo, not in this repository
+*.RDS
+*.rds
+*.RData
+*.Rdata
+*.h5
+*.h5ad
+*.h5mu
+*.zarr/
+*.loom
+*.mtx
+*.mtx.gz
+*.tsv.gz
+*.csv.gz
+*.parquet
+*.tar
+*.tar.gz
+*.sif
+
+# Run outputs
+output/
+outputs/
+*_files/
+*_cache/
+*.html
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
