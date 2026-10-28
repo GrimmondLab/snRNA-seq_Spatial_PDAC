@@ -3,6 +3,7 @@
 input_mode: geo
 geo_dir: /data/geo/
 geo_samples_csv: geo_samples.csv
+geo_format: h5   # h5 = <prefix>_cellbender_filtered.h5 (same file as the original run); mtx = barcodes/features/matrix files
 sample_meta_csv: /data/meta/SG_sample_meta.csv
 output_dir: /output
 seed: 1234

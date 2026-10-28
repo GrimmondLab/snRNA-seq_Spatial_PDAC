@@ -60,7 +60,7 @@ print(sts.samples)
 Two input modes (`input_mode` in `config.yml`), both reading the same CellBender counts:
 
 - `local`: the original CellBender output folders (`*_cellbender_filtered.h5`).
-- `geo`: the GEO processed files (10x matrix files per sample), linked to sample names by `geo_samples.csv`.
+- `geo`: the GEO processed files, linked to sample names by `geo_samples.csv`. `geo_format` picks the CellBender `.h5` files (`h5`, default) or the 10x matrix files (`mtx`).
 
 ```{r load_sce_object}
 input.mode <- if (is.null(cfg$input_mode)) "local" else cfg$input_mode
@@ -77,8 +77,10 @@ if (input.mode == "local") {
 } else {
   source("geo_input.R")
   geo.samples <- read.csv(cfg$geo_samples_csv, stringsAsFactors = FALSE)
+  geo.format  <- if (is.null(cfg$geo_format)) "h5" else cfg$geo_format
   cellbender.out <- stage_geo_samples(geo.samples, cfg$geo_dir,
-                                      file.path(params$step_dir, "geo_input"))
+                                      file.path(params$step_dir, "geo_input"),
+                                      format = geo.format)
 }
 ```
 
