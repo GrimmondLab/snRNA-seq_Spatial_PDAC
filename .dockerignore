@@ -1,0 +1,9 @@
+# Only the code and env lock files go into the image; data is mounted at run time.
+*
+!Dockerfile
+!run.sh
+!envs/
+!snrnaseq/
+snrnaseq/stage0_cellranger_cellbender/
+snrnaseq/*/sessionInfo/
+snrnaseq/*/original/

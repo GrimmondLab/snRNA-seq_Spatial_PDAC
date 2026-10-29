@@ -99,7 +99,7 @@ VariableFeatures(sts.simspec_css.sample.sct) <- features.ls
 sts.simspec_css.sample.sct <- RunPCA(sts.simspec_css.sample.sct, verbose = TRUE, assay = "SCT") #default npcs = 50
 
 # Run CSS ----
-# simspec is installed in the Docker image at the commit used for the manuscript
+# simspec is installed in the conda env at the commit used for the manuscript (envs/post_install.R)
 # (quadbio/simspec f4c87bfb18522d7df0110eb63843972a29415985), originally with:
 # devtools::install_github("quadbiolab/simspec")
 library(simspec)

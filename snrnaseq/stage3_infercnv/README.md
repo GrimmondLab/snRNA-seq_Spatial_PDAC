@@ -1,6 +1,6 @@
 # Stage 3: inferCNV
 
-R 4.4.0 · Bioconductor 3.19 (infercnv 1.20.0) · master script `run_stage3.R`
+R 4.3 · infercnv 1.20.0 · conda env `infercnv` · master script `run_stage3.R`
 
 `run_stage3.R` renders `InferCNV.Rmd`, which runs inferCNV separately for each sample listed in `infercnv_samples.csv`.
 
@@ -39,14 +39,9 @@ The table was extracted from the original code (`original/InferCNV_original.Rmd`
 
 ## Environment
 
-| | Version |
-|---|---|
-| R | 4.4.0 (`rocker/r-ver:4.4.0`, Ubuntu 22.04, linux/amd64) |
-| Bioconductor | 3.19 (infercnv 1.20.0, SingleCellExperiment 1.26.0), with edgeR 4.2.0, limma 3.60.3 and GenomicRanges 1.56.1 from the 3.19 archive |
-| CRAN | Posit Package Manager snapshot from 2024-07-10 (SeuratObject 5.0.2, dplyr 1.1.4, igraph 2.0.3, rjags 4-15, ggplot2 3.5.1) |
-| JAGS | 4.3 from Ubuntu 22.04 (needed by rjags) |
+Conda env `infercnv` (`../../envs/infercnv.yml`, locked in `envs/infercnv-linux-64.lock`): R 4.3, infercnv 1.20.0, Seurat 5.1.0, SeuratObject 5.0.2, dplyr 1.1.4, igraph 2.0.3, rjags 4-15, ggplot2 3.5.1, JAGS 4.3.2. This is a separate env from Stages 1–2 (which use Bioconductor 3.17 and Seurat 4).
 
-This is a newer environment than Stages 1–2 (Bioconductor 3.17, Seurat 4). Versions follow `sessionInfo/sessionInfo_inferCNV.txt`. `install_packages.R` checks about 45 package versions at the end and stops the build if any differ. It then saves the image's real `sessionInfo()`, with the JAGS version, to `/pipeline/sessionInfo_container.txt`.
+Differences from the original run (`sessionInfo/sessionInfo_inferCNV.txt`): R 4.4.0 → 4.3. bioconda built infercnv 1.20.0 for R 4.3 against Bioconductor 3.18 infrastructure, so its Bioconductor dependencies are one release older (e.g. SingleCellExperiment 1.24.0, limma 3.58.1, edgeR 4.0.16, GenomicRanges 1.54.1; originally 1.26.0, 3.60.3, 4.2.0, 1.56.1). inferCNV itself is the same version. All other recorded packages are pinned to their original versions, except base-R recommended packages whose recorded versions need R 4.4 (cluster, KernSmooth, MASS, Matrix 1.7-0 → 1.6-5, survival) and RcppParallel, spatstat.explore, stringi.
 
 ## Input
 
@@ -65,8 +60,6 @@ python gtf_to_position_file.py --attribute_name gene_name genes.gtf gene_positio
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Image definition |
-| `install_packages.R` | Installs and checks R packages (runs during build) |
 | `run_stage3.R` | Master script; `Rscript run_stage3.R [config.yml]` |
 | `InferCNV.Rmd` | Runs inferCNV for each row of `infercnv_samples.csv` |
 | `infercnv_samples.csv` | Per-sample settings |
@@ -75,13 +68,7 @@ python gtf_to_position_file.py --attribute_name gene_name genes.gtf gene_positio
 | `original/` | The original R Markdown file, unchanged, with a note on how the pipeline differs |
 | `sessionInfo/` | Session information of the original inferCNV runs |
 
-## Build
-
-```bash
-docker build -t pdac-stage3:1.0 .
-```
-
-## Run with Docker
+## Running
 
 | Container path | Mount | Mode |
 |---|---|---|
@@ -89,34 +76,10 @@ docker build -t pdac-stage3:1.0 .
 | `/output` | where results go | read-write |
 
 ```bash
-docker run --rm \
-  --cpus 4 --memory 64g \
+docker run --rm --cpus 4 --memory 64g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-stage3:1.0
-```
-
-To copy the image's session information out without running the pipeline:
-
-```bash
-docker run --rm --entrypoint cat pdac-stage3:1.0 /pipeline/sessionInfo_container.txt > sessionInfo_container.txt
-```
-
-## Run with Apptainer/Singularity
-
-```bash
-docker save pdac-stage3:1.0 -o pdac-stage3_1.0.tar
-```
-
-```bash
-apptainer build pdac-stage3_1.0.sif docker-archive://pdac-stage3_1.0.tar
-```
-
-```bash
-apptainer run --pwd /pipeline \
-  --bind /path/to/input:/data/input \
-  --bind /path/to/output:/output \
-  pdac-stage3_1.0.sif
+  pdac-snrnaseq:1.0 stage3
 ```
 
 ## Running only some samples

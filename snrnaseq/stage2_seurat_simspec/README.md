@@ -1,6 +1,6 @@
 # Stage 2: Seurat processing + Simspec integration
 
-R 4.4.0 · Bioconductor 3.17 packages · master script `run_stage2.R`
+R 4.3 · Bioconductor 3.17 · conda env `snrnaseq` · master script `run_stage2.R`
 
 `run_stage2.R` renders two R Markdown files in order:
 
@@ -13,36 +13,31 @@ The original post-QC object deposited with the manuscript (**DOI_TBD**): `qc.dbl
 
 ## Environment
 
-| | Version |
-|---|---|
-| R | 4.4.0 (`rocker/r-ver:4.4.0`, Ubuntu 22.04, linux/amd64) |
-| Bioconductor | 3.17 packages (scuttle 1.10.1, SingleCellExperiment 1.22.0, glmGamPoi 1.12.1), installed directly from the 3.17 repository |
-| Seurat | 4.3.0 (SeuratObject 4.1.3, sctransform 0.3.5) |
-| simspec | GitHub `quadbio/simspec`, commit `f4c87bfb18522d7df0110eb63843972a29415985` |
-| CRAN | Posit Package Manager snapshot from 2023-06-15 (dplyr 1.1.2, ggplot2 3.4.2), plus Matrix 1.7-5, uwot 0.1.16, RcppAnnoy 0.0.21, matrixStats 1.2.0, scales 1.3.0, clustree 0.5.1 |
+Conda env `snrnaseq` (shared with Stage 1; `../../envs/snrnaseq.yml`, locked in `envs/snrnaseq-linux-64.lock`): R 4.3, Bioconductor 3.17 (scuttle 1.10.1, SingleCellExperiment 1.22.0, glmGamPoi 1.12.2), Seurat 4.3.0 (SeuratObject 4.1.3, sctransform 0.3.5), simspec from GitHub `quadbio/simspec` at commit `f4c87bfb18522d7df0110eb63843972a29415985` (installed by `envs/post_install.R`).
 
-Versions follow `sessionInfo/`. The original environment ran Bioconductor 3.17 packages on R 4.4.0, a combination Bioconductor does not officially support, so `install_packages.R` installs them straight from the 3.17 repository rather than through BiocManager. It checks the key versions and the simspec commit at the end, and stops the build if anything differs. It then saves the image's real `sessionInfo()` to `/pipeline/sessionInfo_container.txt`.
+Differences from the original run (`sessionInfo/`):
+
+| | Original | Now | Why |
+|---|---|---|---|
+| R | 4.4.0 | 4.3 | one R version for all stages; Bioconductor 3.17 is built for R 4.3 |
+| Matrix | 1.7-5 | 1.5-4.1 (as Stage 1) | Matrix 1.7 needs R 4.4 |
+| glmGamPoi | 1.12.1 | 1.12.2 | patch release; bioconda has no 1.12.1 |
+| xgboost, digest, cli, hexbin, labeling | as recorded | nearest R 4.3 build | not used directly by this stage |
+
+All other packages recorded in `sessionInfo/` are pinned to their original versions.
+
+These can shift PCA, UMAP and clustering slightly; see **Known gaps** below.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Image definition |
-| `install_packages.R` | Installs and checks R packages (runs during build) |
 | `run_stage2.R` | Master script; `Rscript run_stage2.R [config.yml]` |
 | `Seurat_sample_based.Rmd`, `PDAC_STS_simspec_integration.Rmd` | Analysis steps |
 | `config.yml` | Input path, output folder, seed and number of workers (container paths) |
 | `sessionInfo/` | Session information of the original analysis, plus glmGamPoi and simspec details (see the note inside) |
 
-## Build
-
-```bash
-docker build -t pdac-stage2:1.0 .
-```
-
-Everything is compiled from source for R 4.4. Expect roughly 45–90 minutes.
-
-## Run with Docker
+## Running
 
 | Container path | Mount | Mode |
 |---|---|---|
@@ -50,37 +45,13 @@ Everything is compiled from source for R 4.4. Expect roughly 45–90 minutes.
 | `/output` | where results go | read-write |
 
 ```bash
-docker run --rm \
-  --cpus 28 --memory 128g \
+docker run --rm --cpus 28 --memory 128g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-stage2:1.0
+  pdac-snrnaseq:1.0 stage2
 ```
 
 Results are written to `/output/Seurat_sample_based/` and `/output/PDAC_STS_simspec_integration/` (HTML reports and `.RDS` objects).
-
-To copy the image's session information out without running the pipeline:
-
-```bash
-docker run --rm --entrypoint cat pdac-stage2:1.0 /pipeline/sessionInfo_container.txt > sessionInfo_container.txt
-```
-
-## Run with Apptainer/Singularity
-
-```bash
-docker save pdac-stage2:1.0 -o pdac-stage2_1.0.tar
-```
-
-```bash
-apptainer build pdac-stage2_1.0.sif docker-archive://pdac-stage2_1.0.tar
-```
-
-```bash
-apptainer run --pwd /pipeline \
-  --bind /path/to/input:/data/input \
-  --bind /path/to/output:/output \
-  pdac-stage2_1.0.sif
-```
 
 ## Resources
 

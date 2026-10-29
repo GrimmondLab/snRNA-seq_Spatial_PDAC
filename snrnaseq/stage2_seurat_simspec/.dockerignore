@@ -1,8 +1,0 @@
-# Only the code goes into the image; data is mounted at run time.
-*
-!Dockerfile
-!install_packages.R
-!run_stage2.R
-!Seurat_sample_based.Rmd
-!PDAC_STS_simspec_integration.Rmd
-!config.yml

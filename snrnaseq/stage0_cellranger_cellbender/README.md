@@ -1,6 +1,6 @@
 # Stage 0: Cell Ranger and CellBender
 
-This stage documents how the count matrices were produced. It is provided for transparency, not for rerunning: it has no Docker image or master script. The outputs are deposited on GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), and Stage 1 starts from the CellBender output there.
+This stage documents how the count matrices were produced. It is provided for transparency, not for rerunning: it is not part of the Docker image or `run.sh`. The outputs are deposited on GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), and Stage 1 starts from the CellBender output there.
 
 Single-nucleus RNA sequencing (snRNA-seq) samples were processed in four batches, one per sequencing run. For each batch, Cell Ranger was run first, then CellBender was run on each sample to remove ambient RNA. The scripts in this folder are the SLURM scripts used on the HPC cluster, unchanged, including their original cluster paths.
 
