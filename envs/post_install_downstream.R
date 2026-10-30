@@ -11,5 +11,5 @@ remotes::install_github(paste0("YuLab-SMU/treeio@", treeio_sha),
 remotes::install_github(paste0("quadbio/simspec@", simspec_sha),
                         dependencies = FALSE, upgrade = "never")
 stopifnot(identical(packageDescription("treeio")$RemoteSha, treeio_sha),
-          identical(as.character(packageVersion("treeio")), "1.25.0.001"),
+          packageVersion("treeio") == "1.25.0.001",  # as.character() would give "1.25.0.1"
           identical(packageDescription("simspec")$RemoteSha, simspec_sha))
