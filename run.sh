@@ -8,7 +8,8 @@ set -euo pipefail
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENVS_DIR="${MAMBA_ROOT_PREFIX:-/opt/conda}/envs"
 
-usage() { sed -n '2,5p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+# No arguments: print usage and exit 0 (the CI smoke test relies on this); bad stage: exit 1
+usage() { sed -n '2,5p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 [[ $# -ge 1 ]] || usage
 stage="$1"
 
@@ -17,7 +18,7 @@ case "$stage" in
   stage2) env=snrnaseq; dir=snrnaseq/stage2_seurat_simspec; script=run_stage2.R ;;
   stage3) env=downstream; dir=snrnaseq/stage3_malignant_nonmalignant; script=run_stage3.R ;;
   infercnv) env=infercnv; dir=snrnaseq/supplementary_infercnv; script=run_infercnv.R ;;
-  *) echo "Unknown stage: $stage" >&2; usage ;;
+  *) echo "Unknown stage: $stage" >&2; usage 1 >&2 ;;
 esac
 
 # A config that exists from the current directory (e.g. a mounted file) is made absolute;
