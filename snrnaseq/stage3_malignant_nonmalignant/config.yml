@@ -4,5 +4,5 @@
 integrated_object: /data/input/sts.simspec_css.sample.sct.RDS
 # Per-cell KRAS mutation calls for the tuft cells, deposited on Zenodo
 tuft_snv_csv: /data/input/tuft.snv.df.csv
-sample_map_csv: sample_map.csv   # shared/sample_map.csv, included in the image
+sample_map_csv: /pipeline/shared/sample_map.csv   # shared/sample_map.csv, included in the image
 output_dir: /output

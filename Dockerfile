@@ -1,6 +1,8 @@
 # PDAC snRNA-seq analysis: one image, one conda env per group of stages.
 #   snrnaseq  R 4.3, Bioconductor 3.17, Seurat 4     stages 1, 2
-#   infercnv  R 4.3, inferCNV 1.20.0, Seurat 5       stage 3
+#   downstream R 4.3, Bioconductor 3.17, Seurat 4,   stage 3
+#              ggplot2 3.5.2, edgeR, clusterProfiler
+#   infercnv  R 4.3, inferCNV 1.20.0, Seurat 5       supplementary inferCNV
 # Envs are built from the explicit lock files in envs/ (bioconda + conda-forge only).
 # Bioconda's R 4.3 builds are linux-64 only, hence linux/amd64.
 FROM --platform=linux/amd64 mambaorg/micromamba:1.5.10
@@ -22,6 +24,9 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER envs/ envs/
 RUN micromamba create -y -n snrnaseq -f envs/snrnaseq-linux-64.lock \
     && micromamba run -n snrnaseq Rscript envs/post_install.R \
     && micromamba clean -a -y
+RUN micromamba create -y -n downstream -f envs/downstream-linux-64.lock \
+    && micromamba run -n downstream Rscript envs/post_install_downstream.R \
+    && micromamba clean -a -y
 RUN micromamba create -y -n infercnv -f envs/infercnv-linux-64.lock \
     && micromamba clean -a -y
 
@@ -31,11 +36,15 @@ RUN mkdir -p sessionInfo \
          yaml rmarkdown dplyr purrr patchwork RColorBrewer ggplot2 SingleCellExperiment \
          DropletUtils scuttle scater scran scDblFinder BiocParallel Seurat tidyverse \
          BiocSingular pheatmap bluster dichromat clustree simspec glmGamPoi \
+    && micromamba run -n downstream Rscript envs/session_info.R sessionInfo/downstream.txt \
+         yaml rmarkdown Seurat ggplot2 dplyr patchwork openxlsx simspec limma edgeR tibble \
+         msigdbr clusterProfiler org.Hs.eg.db clustree readr treeio \
     && micromamba run -n infercnv Rscript envs/session_info.R sessionInfo/infercnv.txt \
          yaml rmarkdown infercnv dplyr SeuratObject rjags
 
 # Pipeline code (data is mounted at run time: /data/... read-only, /output read-write)
 COPY --chown=$MAMBA_USER:$MAMBA_USER run.sh ./
+COPY --chown=$MAMBA_USER:$MAMBA_USER shared/ shared/
 COPY --chown=$MAMBA_USER:$MAMBA_USER snrnaseq/ snrnaseq/
 
 ENTRYPOINT ["/pipeline/run.sh"]

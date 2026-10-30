@@ -4,7 +4,7 @@ Malignant cells were identified by cell annotation in Stage 2 (clustering and ma
 
 This folder records what was run, and provides a container for anyone who wants to run it. **A rerun is not expected to reproduce the original output exactly**, because inferCNV involves random steps and no seed was set (see [Randomness](#randomness)).
 
-R 4.4.0 · Bioconductor 3.19 (infercnv 1.20.0) · master script `run_infercnv.R`, which renders `InferCNV.Rmd`. `InferCNV.Rmd` runs inferCNV separately for each sample listed in `infercnv_samples.csv`.
+R 4.3 · infercnv 1.20.0 · conda env `infercnv` · master script `run_infercnv.R`, which renders `InferCNV.Rmd`. `InferCNV.Rmd` runs inferCNV separately for each sample listed in `infercnv_samples.csv`.
 
 ## Randomness
 
@@ -61,21 +61,16 @@ python gtf_to_position_file.py --attribute_name gene_name genes.gtf gene_positio
 
 ## Environment
 
-| | Version |
-|---|---|
-| R | 4.4.0 (`rocker/r-ver:4.4.0`, Ubuntu 22.04, linux/amd64) |
-| Bioconductor | 3.19 (infercnv 1.20.0, SingleCellExperiment 1.26.0), with edgeR 4.2.0, limma 3.60.3 and GenomicRanges 1.56.1 from the 3.19 archive |
-| CRAN | Posit Package Manager snapshot from 2024-07-10 (SeuratObject 5.0.2, dplyr 1.1.4, igraph 2.0.3, rjags 4-15, ggplot2 3.5.1) |
-| JAGS | 4.3 from Ubuntu 22.04 (needed by rjags) |
+Conda env `infercnv` in the project image (`../../envs/infercnv.yml`, locked in `../../envs/infercnv-linux-64.lock`): R 4.3, infercnv 1.20.0, Seurat 5.1.0, SeuratObject 5.0.2, dplyr 1.1.4, igraph 2.0.3, rjags 4-15, ggplot2 3.5.1, JAGS 4.3.2. This is a separate env from Stages 1–3 (which use Bioconductor 3.17 and Seurat 4).
 
-This is a newer environment than Stages 1–2 (Bioconductor 3.17, Seurat 4). Versions follow `sessionInfo/sessionInfo_inferCNV.txt`, the session information of the original runs. `install_packages.R` checks about 45 package versions at the end of the build and stops if any differ. It then saves the image's own `sessionInfo()`, with the JAGS version, to `/pipeline/sessionInfo_container.txt`.
+Differences from the original run (`sessionInfo/sessionInfo_inferCNV.txt`): R 4.4.0 → 4.3. bioconda built infercnv 1.20.0 for R 4.3 against Bioconductor 3.18 infrastructure, so its Bioconductor dependencies are one release older (e.g. SingleCellExperiment 1.24.0, limma 3.58.1, edgeR 4.0.16, GenomicRanges 1.54.1; originally 1.26.0, 3.60.3, 4.2.0, 1.56.1). inferCNV itself is the same version. All other recorded packages are pinned to their original versions, except base-R recommended packages whose recorded versions need R 4.4 (cluster, KernSmooth, MASS, Matrix 1.7-0 → 1.6-5, survival) and RcppParallel, spatstat.explore, stringi.
+
+The image build saves the env's own `sessionInfo()` to `/pipeline/sessionInfo/infercnv.txt`.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Image definition |
-| `install_packages.R` | Installs and checks R packages (runs during build) |
 | `run_infercnv.R` | Master script; `Rscript run_infercnv.R [config.yml]` |
 | `InferCNV.Rmd` | Runs inferCNV for each row of `infercnv_samples.csv` |
 | `infercnv_samples.csv` | Per-sample settings |
@@ -86,45 +81,32 @@ This is a newer environment than Stages 1–2 (Bioconductor 3.17, Seurat 4). Ver
 
 ## Running
 
-Build:
+Use the project image (see the top-level `README.md` to build or pull it). Mount the folder containing `sts.simspec_css.sample.sct.RDS` at `/data/input` (read-only) and an output folder at `/output`:
 
-```bash
-docker build -t pdac-infercnv:1.0 .
-```
-
-Mount the folder containing `sts.simspec_css.sample.sct.RDS` at `/data/input` (read-only) and an output folder at `/output`:
+| Container path | Mount | Mode |
+|---|---|---|
+| `/data/input` | folder containing `sts.simspec_css.sample.sct.RDS` | read-only |
+| `/output` | where results go | read-write |
 
 ```bash
 docker run --rm \
   --cpus 4 --memory 64g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-infercnv:1.0
+  pdac-snrnaseq:1.0 infercnv
 ```
 
-With Apptainer/Singularity, convert the Docker image first:
+With Apptainer/Singularity:
 
 ```bash
-docker save pdac-infercnv:1.0 -o pdac-infercnv_1.0.tar
-```
-
-```bash
-apptainer build pdac-infercnv_1.0.sif docker-archive://pdac-infercnv_1.0.tar
-```
-
-```bash
-apptainer run --pwd /pipeline \
+apptainer run \
   --bind /path/to/input:/data/input \
   --bind /path/to/output:/output \
-  pdac-infercnv_1.0.sif
+  pdac-snrnaseq.sif infercnv
 ```
 
-To copy the image's session information out without running anything:
+To run only some samples, mount a custom config and pass its path, e.g. `-v $PWD/my_config.yml:/config/infercnv.yml:ro … infercnv /config/infercnv.yml`.
 
-```bash
-docker run --rm --entrypoint cat pdac-infercnv:1.0 /pipeline/sessionInfo_container.txt > sessionInfo_container.txt
-```
-
-**Resources.** Each sample takes a long time. inferCNV uses 4 threads, and each run converts the full count matrix (about 27k genes × 115k cells) to a dense matrix, as in the original code, which needs about 25 GB of memory on top of the object; 64 GB per job is a reasonable start. To run one sample per HPC job, set `samples` in `config.yml` to a list of sample names (the default `all` runs every row).
+**Resources.** Each sample takes a long time. inferCNV uses 4 threads, and each run converts the full count matrix (about 27k genes × 115k cells) to a dense matrix, as in the original code, which needs about 25 GB of memory on top of the object; 64 GB per job is a reasonable start. To run one sample per HPC job, set `samples` in the config to a list of sample names (the default `all` runs every row).
 
 **Outputs** in `/output/InferCNV/`: `annotations/` (the cell annotation file given to inferCNV for each sample), one standard inferCNV output folder per sample (`P1993.out`, `P2215-section-2.out`, …), and `InferCNV.html` (report with the sample table and session information).

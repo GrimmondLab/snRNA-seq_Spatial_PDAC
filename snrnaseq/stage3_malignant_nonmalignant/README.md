@@ -1,6 +1,6 @@
 # Stage 3: malignant and non-malignant analysis
 
-R 4.3.0 · Bioconductor 3.17 · Seurat 4.3.0 · ggplot2 3.5.2 · master script `run_stage3.R`
+R 4.3 · Bioconductor 3.17 · Seurat 4.3.0 · ggplot2 3.5.2 · conda env `downstream` · master script `run_stage3.R`
 
 `run_stage3.R` renders two R Markdown files. Both start from the Stage 2 annotated object and do not depend on each other.
 
@@ -35,39 +35,44 @@ Figures are shown in each HTML report and also saved as PNG and PDF files, named
 |---|---|
 | `sts.simspec_css.sample.sct.RDS` | Annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, **DOI_TBD**). The original code read the same object as `sts.simspec_css.sample.sct.Aug24.RDS` |
 | `tuft.snv.df.csv` | KRAS mutation calls per tuft cell (deposited, **DOI_TBD**) |
-| `sample_map.csv` | From `shared/`, included in the image. Adds ICGC donor IDs to the figures |
+| `sample_map.csv` | `shared/sample_map.csv`, included in the image at `/pipeline/shared/`. Adds ICGC donor IDs to the figures |
 
 ## Environment
 
-| | Version |
-|---|---|
-| R | 4.3.0 (`rocker/r-ver:4.3.0`, Ubuntu 22.04, linux/amd64) |
-| Bioconductor | 3.17, with patch versions matched to `sessionInfo/` (older patches from the 3.17 archive) |
-| CRAN | Posit Package Manager snapshot from 2023-06-15 (Seurat 4.3.0, SeuratObject 4.1.3, dplyr 1.1.2), plus 23 newer versions from `sessionInfo/`, including ggplot2 3.5.2, patchwork 1.3.2, scales 1.4.0 and cli 3.6.6 |
-| GitHub | simspec at commit `f4c87bf` (as in Stage 2); treeio 1.25.0.001 at commit `7c32644` (a development version, used by clusterProfiler) |
+Conda env `downstream` in the project image (`../../envs/downstream.yml`, locked in `../../envs/downstream-linux-64.lock`): R 4.3, Bioconductor 3.17, Seurat 4.3.0, SeuratObject 4.1.3, dplyr 1.1.2, ggplot2 3.5.2, patchwork 1.3.2, scales 1.4.0, edgeR 3.42.4, limma 3.56.2, clusterProfiler 4.8.1, msigdbr 7.5.1, org.Hs.eg.db 3.17.0. `../../envs/post_install_downstream.R` adds two GitHub packages at fixed commits: simspec `f4c87bf` (as in Stage 2) and treeio 1.25.0.001 at `7c32644` (a development version, used by clusterProfiler; it replaces the conda treeio 1.24.1).
 
-This environment differs from Stages 1–2 in its newer plotting packages (ggplot2 3.5.2 instead of 3.4.2). `sessionInfo/` holds the session information of the original runs of both files; their package versions are identical. `install_packages.R` installs every package recorded there, checks all 197 versions at the end of the build, and stops if any differ. It then saves the image's own `sessionInfo()` to `/pipeline/sessionInfo_container.txt`.
+This is a separate env from Stages 1–2 because of its newer plotting packages (ggplot2 3.5.2 instead of 3.4.2). `sessionInfo/` holds the session information of the original runs of both files; their package versions are identical. Every package recorded there is pinned to its original version, except:
+
+| Package | Original | Here | Why |
+|---|---|---|---|
+| R | 4.3.0 | 4.3.3 | conda's R 4.3 builds |
+| cli | 3.6.6 | 3.6.5 | no R 4.3 conda build of the original |
+| rlang | 1.3.0 | 1.1.6 | " |
+| vctrs | 0.7.3 | 0.6.5 | " |
+| lifecycle | 1.0.5 | 1.0.4 | " (1.0.5 needs R ≥ 4.4) |
+| tidyr | 1.3.2 | 1.3.1 | " |
+| S7 | 0.2.2 | 0.2.0 | " |
+| ggrepel | 0.9.8 | 0.9.6 | " |
+| cluster | 2.1.8.2 | 2.1.8.1 | " |
+| digest | 0.6.32 | 0.6.33 | " |
+| AnnotationDbi | 1.62.1 | 1.62.2 | " |
+| glmGamPoi | 1.12.1 | 1.12.2 | " |
+| workflowr, git2r, getPass, whisker, renv, BiocManager | | not installed | attached in the original session but not used by the code |
+
+The image build saves the env's own `sessionInfo()` to `/pipeline/sessionInfo/downstream.txt`.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `Dockerfile`, `Dockerfile.dockerignore` | Image definition; built from the repository root |
-| `install_packages.R` | Installs and checks R packages (runs during build) |
 | `run_stage3.R` | Master script; `Rscript run_stage3.R [config.yml]` |
 | `STS_Malignant.Rmd`, `STS_nonMalignant_TuftADM.Rmd` | The analysis |
 | `config.yml` | Input paths and output folder (container paths) |
 | `sessionInfo/` | Session information of the original runs |
 
-## Build
+## Run
 
-Run from the repository root (not this folder), so that `shared/sample_map.csv` can be copied into the image:
-
-```bash
-docker build -f snrnaseq/stage3_malignant_nonmalignant/Dockerfile -t pdac-stage3:1.0 .
-```
-
-## Run with Docker
+Use the project image (see the top-level `README.md` to build or pull it).
 
 | Container path | Mount | Mode |
 |---|---|---|
@@ -79,30 +84,16 @@ docker run --rm \
   --cpus 8 --memory 128g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-stage3:1.0
+  pdac-snrnaseq:1.0 stage3
 ```
 
-To copy the image's session information out without running the pipeline:
+With Apptainer/Singularity:
 
 ```bash
-docker run --rm --entrypoint cat pdac-stage3:1.0 /pipeline/sessionInfo_container.txt > sessionInfo_container.txt
-```
-
-## Run with Apptainer/Singularity
-
-```bash
-docker save pdac-stage3:1.0 -o pdac-stage3_1.0.tar
-```
-
-```bash
-apptainer build pdac-stage3_1.0.sif docker-archive://pdac-stage3_1.0.tar
-```
-
-```bash
-apptainer run --pwd /pipeline \
+apptainer run \
   --bind /path/to/input:/data/input \
   --bind /path/to/output:/output \
-  pdac-stage3_1.0.sif
+  pdac-snrnaseq.sif stage3
 ```
 
 ## Outputs

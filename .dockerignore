@@ -3,6 +3,7 @@
 !Dockerfile
 !run.sh
 !envs/
+!shared/
 !snrnaseq/
 snrnaseq/stage0_cellranger_cellbender/
 snrnaseq/*/sessionInfo/

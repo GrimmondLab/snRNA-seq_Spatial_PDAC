@@ -1,9 +1,0 @@
-# Used when building with -f snrnaseq/stage3_malignant_nonmalignant/Dockerfile from the repository root.
-# Only the code and the shared sample map go into the image; data is mounted at run time.
-*
-!snrnaseq/stage3_malignant_nonmalignant/install_packages.R
-!snrnaseq/stage3_malignant_nonmalignant/run_stage3.R
-!snrnaseq/stage3_malignant_nonmalignant/STS_Malignant.Rmd
-!snrnaseq/stage3_malignant_nonmalignant/STS_nonMalignant_TuftADM.Rmd
-!snrnaseq/stage3_malignant_nonmalignant/config.yml
-!shared/sample_map.csv
