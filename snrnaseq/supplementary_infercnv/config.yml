@@ -1,0 +1,11 @@
+# Container paths. Mount your data to these locations (see README.md).
+# Input: the annotated integrated object from Stage 2 (with simspec_cell_class).
+integrated_object: /data/input/sts.simspec_css.sample.sct.RDS
+gene_order_file: gene_positions.txt   # included in the image
+samples_csv: infercnv_samples.csv
+output_dir: /output
+# "all", or a list of sample names to run only those (e.g. one sample per HPC job):
+# samples:
+#   - '1993'
+#   - 2215-section-2
+samples: all

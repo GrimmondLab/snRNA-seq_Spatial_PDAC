@@ -1,0 +1,9 @@
+# Only the code goes into the image; data is mounted at run time.
+*
+!Dockerfile
+!install_packages.R
+!run_infercnv.R
+!InferCNV.Rmd
+!infercnv_samples.csv
+!gene_positions.txt
+!config.yml

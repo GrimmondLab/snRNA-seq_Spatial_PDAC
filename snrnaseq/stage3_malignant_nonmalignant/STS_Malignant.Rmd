@@ -1,0 +1,378 @@
+---
+title: "STS_Malignant_vs_nonMalignant.Rmd"
+author: "Mai La"
+date: "2024-08-13"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+options(repr.plot.width = 5, repr.plot.height = 4)
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage3.R so that params are passed
+```
+
+# Attach libraries
+```{r Packages}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(patchwork) 
+library(rmarkdown)
+library(openxlsx)
+```
+
+# Adding metadata
+```{r}
+# this object is repeated analysis performed in August 2024. Final run to ensure everything is the same 
+# Using Fer's codes, removing samples without malignant cells and IPMN samples not belonged to APGI cohort
+# Object was annotated using simspec integration approach on sample-based 
+# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; the same object is now named sts.simspec_css.sample.sct.RDS
+sts.simspec.sct <- readRDS(cfg$integrated_object)
+```
+
+# MALIGNANT
+### inferCNV - these 'labelled PDAC' share similar profile as referecen, it could either be non-malignant or malignant cells in a particular cell cycle stage. We will exclude these cells for downstream malignant analysis
+```{r}
+non.malig <- c("8_ACTTGTTTCGAACGGA-1", "8_TTCGGTCAGAAGGTTT-1", "8_GATCGCGCAGACAGGT-1", "8_GTCGTAAAGCCACGCT-1", "8_GAATAAGCAACTGCTA-1", "8_CTGAAACGTAGCGTCC-1","8_AGGCCACCAGACAGGT-1", "8_CAGCCGAAGGTTCCTA-1", "8_ATCTGCCAGAGTAATC-1", "8_TTATGCTAGACATAAC-1", "8_GACCTGGTCTTGTCAT-1", "8_ATTTCTGTCGATAGAA-1","8_ATCCGAAAGGTGACCA-1", "8_ACCGTAAGTCCTAGCG-1", "8_CGAGAAGTCGTCGTTC-1", "8_TGACTTTCATCAGTAC-1", "8_GATCGATTCCCAAGTA-1", "8_TATCTCAGTAAGTTCC-1", "8_TAGAGCTGTCACTGGC-1", "8_AGACGTTAGGCCCGTT-1", "8_GGATGTTAGATCGATA-1","8_TTGACTTCATAGAAAC-1", "8_TATTACCAGGGTCTCC-1", "8_AGGGTGAAGCGAGAAA-1", "8_ACATACGGTACGAAAT-1", "8_GACACGCTCTCTGTCG-1", "8_TTTGGTTTCGTTACAG-1", "8_ACGGCCACACTTGGAT-1", "8_ATAGACCTCTTAGAGC-1", "8_GGGAATGAGGCTAGAC-1","8_ACACCGGGTCCGCTGA-1", "8_TAGACCAGTGATGATA-1","8_AATCGGTCAGCAGTTT-1", "8_GCTGCGAGTGACGCCT-1", "8_TACAGTGTCATAGCAC-1", "8_CCTTACGGTAGATTAG-1","8_CCTCAGTCAAACTGCT-1", "8_TCAGCAAGTAAACACA-1", "8_GTTAAGCGTCTAGGTT-1", "8_TTGGAACTCGGATGTT-1", "8_ATCGAGTGTTCAACCA-1", "8_ACGAGCCAGAATCTCC-1","8_TGACTAGGTCAGAGGT-1", "8_CATGCCTTCGAGAGCA-1", "8_GTGTTAGCACCCAGTG-1", "8_AGCATACTCAAACCGT-1", "8_GGAAAGCTCCCTCTTT-1", "8_CTCGTACTCAAACAAG-1","8_GGTGTTAGTGGCGAAT-1", "8_GGATGTTGTCGAGTTT-1", "8_GAACATCCAGTAACGG-1", "8_GTTTCTAAGAGGACGG-1", "8_TCAGGATGTACAGTTC-1", "8_CGTCCATCATTCCTCG-1","8_ACGGGTCAGAAAGTGG-1", "8_GGGCACTCACTTCGAA-1", "8_TCAATCTGTGCTCTTC-1", "8_AACCGCGCACTTCGAA-1", "8_AAATGCCTCCCTAATT-1", "8_CCACCTAGTTTGACAC-1", "8_GATTCAGTCATTCACT-1", "8_TCAGCAAAGCGATCCC-1", "8_AGTTGGTAGAGTACAT-1", "8_GTGCAGCTCTTCGAGA-1", "8_CGTGAGCAGGACGAAA-1", "8_GCTGCGAAGTACTTGC-1","8_TAAGAGAAGCGTCTAT-1", "8_TTTCCTCAGTACGATA-1", "8_CCGGTAGGTTAGAACA-1", "8_GCAGCCAGTGTCAATC-1", "8_CAGCCGAGTTACAGAA-1", "8_TCACAAGGTTACTGAC-1","8_CCGTACTAGCCCTAAT-1", "8_CGTCACTGTTTCGCTC-1", "8_CGGAGCTCATGGGACA-1", "8_AAAGTAGTCGAACTGT-1", "8_GTAACTGCACATCCGG-1", "8_ATCATCTTCCTACAGA-1","8_GAATAAGTCTTGTATC-1", "8_CGGAGTCCAAGTTGTC-1", "8_GTCGGGTGTCCCGACA-1", "8_GACAGAGAGACAAGCC-1", "8_CGACCTTAGTGCGATG-1", "8_GGCTGGTGTAGAGGAA-1")
+```
+
+## Diet Seurat
+```{r}
+# subset out rare samples: 1959-PDA_OLGC; 2185-clear cell carcinoma; 1971-Acinar cell carcinoma, 2153-Acinar cell carcinoma
+sts.malignant <- sts.simspec.sct %>% subset(subset = Patient_ID %in% c("1959","2185","1971","2153"), invert=T)
+
+# subset out the malignant
+sts.malignant <- sts.malignant %>% subset(subset = simspec_cell_class == "PDAC") #26788 x 53440 # this is the value after filtering out rare malignancies
+
+# subset out "PDAC" that didn't show changes in CNV from inferCNV analysis
+sts.malignant <- sts.malignant %>% subset(subset = Cell_Ids %in% non.malig, invert=T) # confirmed removal of unwanted cells 26788 x 53356
+
+# DietSeurat
+dim(sts.malignant) #  26788 x 53356
+DefaultAssay(sts.malignant) <- "RNA"
+sts.malignant <- Seurat::DietSeurat(sts.malignant, assays = "RNA", data = TRUE, counts = TRUE)
+colnames(sts.malignant[[]]) #check which columns to remove
+sts.malignant[["nCount_SCT"]] <- NULL
+sts.malignant[["nFeature_SCT"]] <- NULL
+sts.malignant[["seurat_clusters"]] <- NULL
+sts.malignant[["SCT_snn_res.0.8"]] <- NULL
+sts.malignant[["SCT_snn_res.0.9"]] <- NULL
+sts.malignant[["SCT_snn_res.1"]] <- NULL
+sts.malignant[["SCT_snn_res.1.1"]] <- NULL
+sts.malignant[["SCT_snn_res.1.2"]] <- NULL
+```
+
+## Normalised by SCTransform on individual sample
+```{r}
+sts.malignant <- SplitObject(sts.malignant, split.by = "Sample")
+
+# Ref: codes shared by Fernando
+for (i in names(sts.malignant)){
+  sts.malignant[[i]] <- SCTransform(sts.malignant[[i]],
+    vst.flavor = "v2",
+    method = "glmGamPoi",
+    verbose = TRUE,
+    #vars.to.regress = c("subsets_mito_percent"),
+    #ncells = ncol(sts.malignant[[i]])
+    )
+}
+```
+
+## Simspec integration 
+```{r}
+# Merge and set common features 
+int.features.split <- SelectIntegrationFeatures(object.list = sts.malignant, nfeatures = 2000)
+sts.malignant.simspec <- merge(x = sts.malignant[[1]], y = sts.malignant[2:length(sts.malignant)], 
+                         merge.data = TRUE)
+VariableFeatures(sts.malignant.simspec) <- int.features.split
+
+# PCA 
+sts.malignant.simspec <- RunPCA(sts.malignant.simspec, verbose = TRUE, assay = "SCT",
+                                  npcs = 30) #default npcs = 50
+
+# Run CSS ----
+#install.packages("devtools")
+#devtools::install_github("quadbiolab/simspec")
+library(simspec)
+
+# On running simspec_CSS on SCTranformed objects https://github.com/immunogenomics/simspec_CSS/issues/41
+sts.malignant.simspec <-
+  simspec::cluster_sim_spectrum(
+    object = sts.malignant.simspec,
+    label_tag = "orig.ident", #original sample labels from pre-processing step
+    cluster_resolution = 0.4,
+    corr_method = "pearson",
+    spectrum_type = "corr_kernel"
+  )
+
+cat("Current reductions in object:", Reductions(sts.malignant.simspec)) # pca css
+# Current reductions in object: pca css
+
+# Reference codes from:  https://doi.org/10.17632/3kthhpw2pd 
+sts.malignant.simspec <- RunUMAP(sts.malignant.simspec, reduction = "css", 
+                                   dims = 1:ncol(Embeddings(sts.malignant.simspec, "css")), #294
+                                   reduction.name="umap_css", reduction.key="UMAPCSS_")
+
+sts.malignant.simspec <- FindNeighbors(sts.malignant.simspec, reduction="css", 
+                                         dims = 1:ncol(Embeddings(sts.malignant.simspec, "css")))
+
+sts.malignant.simspec <- FindClusters(sts.malignant.simspec, algorithm = 3, resolution = 0.1)
+```
+
+## DE analysis to define malignant programs (MPs) - Pseudobulk using edgeR
+```{r}
+#Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
+DefaultAssay(sts.malignant.simspec) <- "RNA"
+
+MP <- sts.malignant.simspec
+MP$seurat_clusters <- NULL
+MP$seurat_clusters <- MP$SCT_snn_res.0.1
+MP$seurat_clusters <- as.factor(as.numeric(as.character(MP$seurat_clusters)) + 1)
+ClusterSub <- as.factor(MP@meta.data$seurat_clusters) #number of clusters
+PatClust <- paste(MP$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+
+# Pseudobulk samples by aggregrating read counts for each genes per cluster-patient
+raw.counts <- as.matrix(MP@assays$RNA@counts)#dgCMatrix
+counts <- t(rowsum(t(raw.counts), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+ncls <- length(table(ClusterSub))
+stopifnot(ncls == 6)   # the contrasts below are written for the 6 clusters at resolution 0.1
+N <- 1:ncls #focus on all clusters
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% N] 
+keep <- filterByExpr(ClstSub, min.count=5, min.total.count=10) #min=10, min.total.count=20
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+pat.col <- c("#6DE8B7","#D741E1","#B4E1CF","#DEB8E0","#DD4A8C","#7F9F32","#C3EAB4" ,"#7B67E0" ,"#D8E746" ,"#CEE982" ,"#DE73DA" ,"#92A36F" ,"#67C0D8" ,"#E1A497" ,"#E76356" ,"#62A4DB", "#D79655" ,"#8966AA", "#9899E8" ,"#6EE9E7","#E4C751" ,"#E7E3DA" ) 
+plotMDS(ClstSub, pch = 16, col = pat.col[ClstSub$samples$group], main="")
+
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~ Cls + Pat)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design)
+qfit <- glmQLFit(ClstSub, design)
+
+contr <- makeContrasts(
+    Cls1 = -(Cls2+Cls3+Cls4+Cls5+Cls6)/5, 
+    Cls2 = Cls2-(Cls3+Cls4+Cls5+Cls6)/5, 
+    Cls3 = Cls3-(Cls2+Cls4+Cls5+Cls6)/5, 
+    Cls4 = Cls4-(Cls2+Cls3+Cls5+Cls6)/5, 
+    Cls5 = Cls5-(Cls2+Cls3+Cls4+Cls6)/5, 
+    Cls6 = Cls6-(Cls2+Cls3+Cls4+Cls5)/5, 
+    levels=design)
+
+de.test <- list()
+for (i in 1:ncls) de.test[[i]] <- glmQLFTest(qfit, contrast = contr[,i])
+
+#log-CPM
+prior.count <- 1
+ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating cpm
+
+# Remove batch effect on log-CPM
+logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
+boxplot(as.data.frame(ClstSub.cpm),main="Original")
+boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+plotMDS(logCPM_no_batch, pch = 16, col = pat.col[ClstSub$samples$group], main="Pseudo-bulk samples")
+
+### Extract top significant genes
+library(tibble)
+names(de.test) <- colnames(contr)   # label each result by its contrast
+
+res_list <- lapply(names(de.test), function(cn) {
+  topTags(de.test[[cn]], n = Inf, adjust.method = "BH")$table %>%
+    rownames_to_column("gene") %>%
+    mutate(cluster = cn)
+})
+
+names(res_list) <- names(de.test)
+res_all <- bind_rows(res_list)   # one compiled table
+MP.pseudobulk <- res_all
+```
+
+### ORA
+```{r}
+# Ref codes modified from Fer's
+library("msigdbr")
+library("clusterProfiler")
+library("org.Hs.eg.db")
+Hallmark <- msigdbr(species = "Homo sapiens", category = "H")
+Hallmark.entrez <- dplyr::select(Hallmark, gs_name, entrez_gene)
+
+gene.symbols <- MP.pseudobulk$gene %>% unique()
+gene.entrez <- bitr(gene.symbols, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db", drop = F)
+colnames(gene.entrez)[1] <- "gene"
+markers.ann <- left_join(MP.pseudobulk, gene.entrez, by = "gene")
+
+dgea.ls <- split(markers.ann, f=markers.ann$cluster)
+
+#focus on all up-regulated genes
+dgea.up.filtered <- purrr::map(dgea.ls, ~ dplyr::filter(., logFC > 1 & FDR < 0.05,!is.na(ENTREZID)))
+dgea.ls.up.entrez.id <- purrr::map(dgea.up.filtered, ~ dplyr::pull(., ENTREZID))
+
+universe <- bitr(gene.symbols,
+                 fromType = "SYMBOL",
+                 toType = "ENTREZID",
+                 OrgDb = "org.Hs.eg.db")
+```
+
+```{r ext-data-fig-1c, fig.width=10, fig.height=10, dpi=300, message=FALSE, warning=FALSE}
+## Extended Data Fig 1C
+hallmark <- compareCluster(
+  geneClusters = dgea.ls.up.entrez.id,
+  fun = "enricher",
+  minGSSize = 10,
+  maxGSSize = 500,
+  universe = universe$ENTREZID,
+  TERM2GENE = Hallmark.entrez)
+dotplot(hallmark, font.size = 12, showCategory = 5, title = "Hallmark | pseudobulk RNA assay|edgeR | logFC > 1")  + RotatedAxis() + scale_colour_gradient(low="coral3", high = "steelblue")
+```
+
+# RARE MALIGNANT
+## Subset samples of interest
+```{r}
+rare <- subset(sts.simspec.sct, subset = Patient_ID %in% c("1959","2185","2207","2153","1971")) 
+# 1959 = Unidfferentiated carcinoma with osteoclast like giant cells
+# 2207 = undifferenitated anaplastic carcinoma
+# 2185 = clear cell carcinoma
+# 2153 1971 = acinar cell carcinoma
+```
+
+## DietSeurat
+```{r}
+dim(rare)
+DefaultAssay(rare) <- "RNA"
+rare <- DietSeurat(rare, assays = "RNA", data = TRUE, counts = TRUE)
+colnames(rare[[]]) #check which columns to remove
+
+rare[["nCount_SCT"]] <- NULL
+rare[["nFeature_SCT"]] <- NULL
+rare[["seurat_clusters"]] <- NULL
+rare[["SCT_snn_res.0.8"]] <- NULL
+rare[["SCT_snn_res.0.9"]] <- NULL
+rare[["SCT_snn_res.1"]] <- NULL
+rare[["SCT_snn_res.1.1"]] <- NULL
+rare[["SCT_snn_res.1.2"]] <- NULL
+
+GetAssayData(rare, slot = "counts")
+stopifnot(identical(rare@assays$RNA@counts[1:5, 1:5],
+          rare@assays$RNA@data[1:5, 1:5]))
+```
+
+## Standard processing - normalise, dimentionality reduction, clustering
+```{r}
+# SCTRANFORM
+rare <- SCTransform(rare, vst.flavor = "v2", method = "glmGamPoi", verbose = TRUE)
+
+# DIMENTIONALITY REDUCTION
+rare <- RunPCA(rare, npcs = 50, verbose = FALSE, assay = "SCT")
+ElbowPlot(rare)
+
+DimPlot(rare, label = TRUE,
+        reduction = "pca", group.by = "Patient_ID") + NoLegend()
+
+rare <- RunUMAP(rare, reduction = "pca", dims = 1:50)
+
+# CLUSTERING
+rare <- FindNeighbors(rare, reduction = "pca", dims = 1:50)
+
+# Determine cluster stability
+#rare <- FindClusters(rare, algorithm = 3,  resolution = seq(0.1,1, by = 0.1)) # SLM
+rare <- FindClusters(rare, algorithm = 3,  resolution = 0.3) # SLM
+
+library(clustree)
+clustree::clustree(rare)
+#saveRDS(rare, file="~/projects/PDAC_non_malignant_cell_types/output/cellbender/Aug24_objects/rareSamples.RDS")
+
+Idents(rare) <- "SCT_snn_res.0.3"
+rare$seurat_clusters <- NULL
+rare$seurat_clusters <- rare$SCT_snn_res.0.3
+DimPlot(rare, label = T) + NoLegend() + DimPlot(rare, group.by = "simspec_cell_class", label = T)
+```
+
+```{r}
+malignant.col <- c( "#E074C5","#D8C863","#DC7C74","#7FD3D7","#8A7AD9" )
+malignant.color <- setNames(object = malignant.col, nm=c("1959_PDA_OLGC", "1971_Malignant acinar", "2153_Malignant acinar", "2185_PDAC", "2207_Malignant:PDAC"))
+```
+
+## Transcriptomic differences between different malignant 
+```{r}
+id.map <- read.csv(cfg$sample_map_csv, stringsAsFactors = FALSE)
+id.map$Sample <- as.character(id.map$Sample)
+
+# 3. Add ICGC_ID to the Seurat metadata
+rare$ICGC_ID <- id.map$ICGC_ID[
+  match(as.character(rare$Sample), id.map$Sample)
+]
+
+malignant.subset <- subset(rare, subset = simspec_cell_class %in% c("Malignant acinar", "PDA_OLGC","PDAC"))
+malignant.subset$sample_histo <-  paste(malignant.subset$ICGC_ID, malignant.subset$simspec_cell_class, sep = "_")
+Idents(malignant.subset) <- "sample_histo"
+malignant.subset <- subset(malignant.subset, subset = sample_histo %in% c("ICGC_0009_PDA_OLGC", "ICGC_0075_Malignant acinar", "ICGC_0391_Malignant acinar", "ICGC_0055_PDAC", "ICGC_0061_PDAC"))
+malignant.markers <- FindAllMarkers(malignant.subset, assay = "SCT", logfc.threshold = 0.25, min.pct = 0.2, only.pos = T)
+```
+
+```{r ext-data-fig-1d, fig.width=10, fig.height=12, dpi=300, message=FALSE, warning=FALSE}
+malignant.markers %>%
+    group_by(cluster) %>%
+    top_n(n = 20, wt = avg_log2FC) -> top10
+DoHeatmap(malignant.subset, features = top10$gene, group.colors = malignant.color) + # NoLegend() + 
+  #scale_fill_viridis() #
+  scale_fill_gradientn(colors = c("steelblue", "white", "darkred"))
+```
+
+## ORA 
+```{r}
+library("msigdbr")
+library("clusterProfiler")
+library("org.Hs.eg.db")
+Hallmark <- msigdbr(species = "Homo sapiens", category = "H")
+Hallmark.entrez <- dplyr::select(Hallmark, gs_name, entrez_gene)
+
+gene.symbols <- malignant.markers$gene %>% unique() 
+gene.entrez <- bitr(gene.symbols, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db", drop = F)
+colnames(gene.entrez)[1] <- "gene"
+markers.ann <- left_join(malignant.markers, gene.entrez, by = "gene")
+
+dgea.ls <- split(markers.ann, f=markers.ann$cluster)
+
+#focus on up-regulated genes
+dgea.up.filtered <- purrr::map(dgea.ls, ~ dplyr::filter(., avg_log2FC >= 0.25, p_val_adj < 0.001,!is.na(ENTREZID)))
+dgea.ls.up.entrez.id <- purrr::map(dgea.up.filtered, ~ dplyr::pull(., ENTREZID)) #pulling a gene list
+
+universe <- bitr(gene.symbols,
+                 fromType = "SYMBOL",
+                 toType = "ENTREZID",
+                 OrgDb = "org.Hs.eg.db")
+```
+
+## Hallmark
+```{r ext-data-fig-1e, fig.width=7, fig.height=7, message=FALSE}
+hallmark <- compareCluster(
+  geneClusters = dgea.ls.up.entrez.id,
+  fun = "enricher",
+  minGSSize = 8,
+  maxGSSize = 500,
+  universe = universe$ENTREZID,
+  TERM2GENE = Hallmark.entrez)
+dotplot(hallmark, showCategory = 6, title="Hallmark | p_val_adj < 0.001")  + RotatedAxis() + scale_colour_gradient(low="coral3", high = "steelblue")
+```
+

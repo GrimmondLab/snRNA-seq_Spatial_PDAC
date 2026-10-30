@@ -1,0 +1,463 @@
+---
+title: "STS_nonMalignant.Rmd"
+author: "Mai La"
+date: "2024-08-13"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+options(repr.plot.width = 5, repr.plot.height = 4)
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage3.R so that params are passed
+```
+
+# Attach libraries
+```{r Packages}
+library(Seurat)
+library(ggplot2) 
+library(dplyr)
+library(patchwork)
+library(rmarkdown)
+library(openxlsx)
+```
+
+# Adding metadata
+```{r}
+# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; the same object is now named sts.simspec_css.sample.sct.RDS
+sts.simspec.sct <- readRDS(cfg$integrated_object)
+```
+
+# NON-MALIGNANT CELL
+## DietSeurat
+```{r}
+# filter out malignant cells
+sts.non.malignant <- subset(sts.simspec.sct, subset = simspec_cell_class %in% c("Malignant acinar","PDA_OLGC","PDAC"), invert = T) 
+
+# filter out rare malignant samples
+sts.non.malignant <- subset(sts.non.malignant, subset = Patient_ID %in% c("1959","2185"), invert = T) #35493 cells
+
+# DietSeurat
+dim(sts.non.malignant)
+DefaultAssay(sts.non.malignant) <- "RNA"
+sts.non.malignant <- DietSeurat(sts.non.malignant, assays = "RNA", data = TRUE, counts = TRUE)
+colnames(sts.non.malignant[[]]) #check which columns to remove
+
+sts.non.malignant[["nCount_SCT"]] <- NULL
+sts.non.malignant[["nFeature_SCT"]] <- NULL
+sts.non.malignant[["SCT_snn_res.0.8"]] <- NULL
+sts.non.malignant[["SCT_snn_res.0.9"]] <- NULL
+sts.non.malignant[["SCT_snn_res.1"]] <- NULL
+sts.non.malignant[["SCT_snn_res.1.1"]] <- NULL
+sts.non.malignant[["SCT_snn_res.1.2"]] <- NULL
+```
+
+## Normalised by SCTransform v2 as a whole -> PCA 
+```{r}
+# SCTRANFORM
+sts.non.malignant <- SCTransform(sts.non.malignant, vst.flavor = "v2", 
+                                 method = "glmGamPoi", verbose = TRUE
+                                 )
+
+# DIMENTIONALITY REDUCTION
+sts.non.malignant <- RunPCA(sts.non.malignant, npcs = 50, verbose = FALSE, assay = "SCT")
+ElbowPlot(sts.non.malignant)
+
+DimPlot(sts.non.malignant, label = TRUE,
+        reduction = "pca", group.by = "Patient_ID")# + NoLegend()
+
+sts.non.malignant <- RunUMAP(sts.non.malignant, reduction = "pca", dims = 1:50)
+
+# CLUSTERING
+sts.non.malignant <- FindNeighbors(sts.non.malignant, reduction = "pca", dims = 1:50)
+
+#sts.non.malignant <- FindClusters(sts.non.malignant, algorithm = 3,  resolution = c(0.5,0.6,0.7,0.8)) # 
+#sts.non.malignant <- FindClusters(sts.non.malignant, algorithm = 3,  resolution = c(0.9, 1, 1.1, 1.2, 1.3)) # 
+sts.non.malignant <- FindClusters(sts.non.malignant, algorithm = 3,  resolution = 0.7) # 
+
+
+library(clustree)
+clustree::clustree(sts.non.malignant) 
+
+# Decided on the resolution
+Idents(sts.non.malignant) <- "SCT_snn_res.0.7" # define FRCs as previously
+DimPlot(sts.non.malignant, group.by = "simspec_cell_class", label = T, repel = T) +
+  DimPlot(sts.non.malignant, group.by = "cell_class", label = T, repel = T) +
+  DimPlot(sts.non.malignant, label = T)
+```
+
+## FindMarkers
+```{r}
+DefaultAssay(sts.non.malignant) <- "SCT"
+Idents(sts.non.malignant) <- "SCT_snn_res.0.7"
+sts.non.malignant.markers <- FindAllMarkers(sts.non.malignant, only.pos = T, assay = "SCT",
+                                            min.pct = 0.15, logfc.threshold = 0.3)
+
+c28_all <- FindMarkers(sts.non.malignant, ident.1 = "28", assay = "SCT", min.pct = 0.1, logfc.threshold = 0.25)
+
+sts.non.malignant.markers %>%
+    group_by(cluster) %>%
+    #filter(pct.1 > 0.25) %>%
+    slice_max(n = 5, order_by = avg_log2FC) -> top5
+DotPlot(sts.non.malignant, features = unique(top5$gene)) + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high="darkred")
+```
+
+## Cell assignment 
+```{r}
+metadata <- sts.non.malignant@meta.data %>% as.data.frame() 
+metadata$S_CB <- rownames(metadata)
+metadata %>% mutate(Lv.1.Anno = case_when(SCT_snn_res.0.7 %in% c("1","19","17","20","27","28") ~ "Myeloid", #check
+                                          SCT_snn_res.0.7 %in% c("0","3","25") ~ "CAFs", #check
+                                          SCT_snn_res.0.7 == "14" ~ "Pericytes", #check
+                                          SCT_snn_res.0.7 == "24" ~ "FRCs", #check
+                                          SCT_snn_res.0.7 == "8" ~ "Endothelial", #check
+                                          SCT_snn_res.0.7 == "23" ~ "Mast", #check
+                                          SCT_snn_res.0.7 == "15" ~ "Plasma",#check
+                                          SCT_snn_res.0.7 == "21" ~ "Tuft", #check
+                                          SCT_snn_res.0.7 %in% c("4","5") ~ "Ductal epithelial", #check
+                                          SCT_snn_res.0.7 == "18" ~ "Ductal MUC5B+",#check
+                                          #seurat_clusters == "25" ~ "Acinar-Ductal",
+                                          SCT_snn_res.0.7 == "9" ~ "Acinar",
+                                          SCT_snn_res.0.7 %in% c("6","7","10") ~ "Endocrine",
+                                          SCT_snn_res.0.7 %in% c("2","11","12","16","22","26") ~ "Lymphoid", 
+                                          SCT_snn_res.0.7 == "29" ~ "Schwann",
+                                          SCT_snn_res.0.7 == "30" ~ "FDCs",
+                                          SCT_snn_res.0.7 == "13" ~ "B",
+                                          SCT_snn_res.0.7 == "31" ~ "B:GC")) -> metadata
+                                          
+metadata %>% group_by(Lv.1.Anno) %>% dplyr::count() %>% print(n=51)
+Lv.1.Anno <- metadata$Lv.1.Anno
+names(Lv.1.Anno) <- metadata$S_CB
+sts.non.malignant <- AddMetaData(object = sts.non.malignant, metadata = Lv.1.Anno, col.name = "Lv.1.Anno")
+DimPlot(sts.non.malignant, group.by = "Lv.1.Anno") + DimPlot(sts.non.malignant, group.by = "cell_class")
+```
+
+# TUFT CELL ANALYSIS
+## Reclustered of Tuft
+```{r}
+tuft <- subset(sts.non.malignant, subset = Lv.1.Anno == "Tuft")
+table(tuft$Patient_ID)
+
+# Combined samples with small Tuft < 5 cells
+# Reassign cluster names 
+metadata <- tuft@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Patient_c = case_when(Patient_ID  == "2156" ~ "2156",
+                                          Patient_ID  == "2215" ~ "2215",
+                                          Patient_ID  == "2221" ~ "2221",
+                                          Patient_ID  == "2285" ~ "2285",
+                                          Patient_ID  == "2925" ~ "2925",
+                                          TRUE ~ "4Pats" )) -> metadata
+metadata %>% group_by(Patient_ID) %>% count(Patient_c)
+Patient_c <- metadata$Patient_c 
+names(Patient_c) <- metadata$S_CB
+tuft <- AddMetaData(object = tuft, metadata = Patient_c, col.name = "Patient_c")
+
+# DietSeurat
+colnames(tuft[[]]) #check which columns to remove
+tuft[["nCount_SCT"]] <- NULL
+tuft[["nFeature_SCT"]] <- NULL
+tuft[["seurat_clusters"]] <- NULL
+tuft[["SCT_snn_res.0.6"]] <- NULL
+tuft[["SCT_snn_res.0.7"]] <- NULL
+tuft[["SCT_snn_res.0.8"]] <- NULL
+
+# Due to small number of cells < 30 -> can't do integration
+tuft <- SplitObject(tuft, split.by = "Patient_c") 
+
+tuft <- lapply(tuft, FUN= SCTransform, vst.flavor="v2", assay = "RNA", method = "glmGamPoi",
+              variable.features.n = 2000, # default, have seen range from 2000-5000
+              )
+
+features.split <- SelectIntegrationFeatures(object.list = tuft, nfeatures = 2000)
+
+tuft.merged <- merge(x=tuft[[1]], y=tuft[2:length(tuft)])
+VariableFeatures(tuft.merged) <- features.split
+
+# Dimentionality reduction
+tuft.merged <- RunPCA(tuft.merged, npcs = 30, verbose = FALSE, assay = "SCT")
+ElbowPlot(tuft.merged)
+
+DimPlot(tuft.merged, label = TRUE,
+        reduction = "pca", group.by = "Patient_c") + NoLegend()
+
+tuft.merged <- RunUMAP(tuft.merged, reduction = "pca", dims = 1:30)
+
+# Clustering
+tuft.merged <- FindNeighbors(tuft.merged, reduction = "pca", dims = 1:30)
+
+# Determine cluster stability
+tuft.merged <- FindClusters(tuft.merged, algorithm = 3,  resolution = seq(0.1, 1, by = 0.1))
+
+library(clustree)
+clustree::clustree(tuft.merged) 
+
+DimPlot(tuft.merged, group.by = "SCT_snn_res.0.9") + #DimPlot(tuft.merged, group.by = "SCT_snn_res.1") + 
+  DimPlot(tuft.merged, group.by = "Patient_c")
+```
+
+## Reclustered of Tuft based on 4 ADM samples only 
+```{r}
+# ADM samples refer to those samples with Tuft cells, acinar, ductal
+tuft.merged <- subset(tuft.merged, subset = Patient_c %in% c("4Pats","2925"), invert = T)
+table(tuft.merged$Patient_ID)
+# 2156 2215 2221 2285 
+#   10   19  323   28 
+```
+
+## Adding tuft mutation status
+```{r}
+library(readr)
+tuft.cnv <- read_csv(cfg$tuft_snv_csv)
+names(tuft.cnv)[1] <- "Barcode"
+kras.mut <- tuft.cnv %>% dplyr::select("Barcode","chr12_25245351_G","chr5_175478615_A")
+
+metadata <- tuft.merged@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata <- left_join(metadata, kras.mut, "Barcode" )
+
+metadata %>% group_by(Patient_ID) %>% count(chr12_25245351_G)
+chr12_25245351_G <- metadata$chr12_25245351_G
+names(chr12_25245351_G) <- metadata$S_CB
+tuft.merged <- AddMetaData(object = tuft.merged, metadata = chr12_25245351_G, col.name = "KRAS.mut")
+```
+
+## Tuft with CNA in 2221/ICGC_0105
+```{r}
+# Patient 2221 contain multiple cell types that could be malignant, we confirmed by inferCNV that all tuft have CNAs
+tuft.malignant <- subset(tuft.merged, subset = SCT_snn_res.0.9 %in% c("2","3"))
+tuft.malignant.BC <- tuft.malignant$Cell_Ids %>% as.character() # total 106 cells
+
+# add labelling 
+AD.cells <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.1.Anno == "Acinar" & cell_class == "Ductal_epithelial") %>% pull(Cell_Ids) %>% as.character()
+Muc5b <- sts.non.malignant@meta.data %>% dplyr::filter(SCT_snn_res.0.7 %in% c("5","18")) %>% pull(Cell_Ids) %>% as.character()
+
+# Update STS_non_malignant object
+metadata <- sts.non.malignant@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% AD.cells ~ "Acinar-Ductal", #344
+                                          Lv.1.Anno == "Acinar" ~ "Acinar", 
+                                          Lv.1.Anno == "B" ~ "B",
+                                          Lv.1.Anno == "B:GC" ~ "B:GC",
+                                          Lv.1.Anno == "CAFs" ~ "CAFs", 
+                                          Cell_Ids %in% Muc5b ~ "Ductal_MUC5B+", #2421
+                                          Lv.1.Anno %in% c("Ductal epithelial","Ductal MUC5B+") ~ "Ductal epithelial", 
+                                          Lv.1.Anno == "Endocrine" ~ "Endocrine", 
+                                          Lv.1.Anno == "Endothelial" ~ "Endothelial",
+                                          Lv.1.Anno == "FDCs" ~ "FDCs", 
+                                          Lv.1.Anno == "FRCs" ~ "FRCs",
+                                          Lv.1.Anno == "Lymphoid" ~ "Lymphoid",
+                                          Lv.1.Anno == "Mast" ~ "Mast", 
+                                          Lv.1.Anno == "Myeloid" ~ "Myeloid", 
+                                          Lv.1.Anno == "Pericytes" ~ "Pericytes", 
+                                          Lv.1.Anno == "Plasma" ~ "Plasma", 
+                                          Lv.1.Anno == "Schwann" ~ "Schwann",
+                                          Cell_Ids %in% tuft.malignant.BC ~ "Tuft.persistent",
+                                          Lv.1.Anno == "Tuft" ~ "Tuft")) -> metadata
+metadata %>% group_by(Lv.1.Anno) %>% count(Lv.2.Anno)
+Lv.2.Anno <- metadata$Lv.2.Anno
+names(Lv.2.Anno) <- metadata$S_CB
+sts.non.malignant <- AddMetaData(object = sts.non.malignant, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+# Saved once, with both Lv.1.Anno and Lv.2.Anno
+saveRDS(sts.non.malignant, file = file.path(params$step_dir, "sts.nonmalignant.RDS"))
+```
+
+# Transcriptome profiling of Tuft and ADM-derived cells
+```{r}
+ADM <- subset(sts.non.malignant, subset = Lv.2.Anno %in% c("Tuft","Acinar","Acinar-Ductal","Ductal epithelial", "Ductal_MUC5B+")) #"Tuft.persistent")) # here, we only include those tuft clusters derived from multiple patients, and are part of those ADM samples
+DimPlot(ADM, group.by = "Lv.2.Anno", label = F)
+
+ADM.col <- c("#6A3D9A","#D76C7C","#5E7D9A","#DCC179" ,"#1B9E77" )
+ADM.color <- setNames(object = ADM.col, nm=c("Tuft","Acinar", "Acinar-Ductal",
+                                             "Ductal epithelial", "Ductal_MUC5B+"))
+```
+
+## Pseudobulk - based on annotated clusters on sts.non.malignant object
+```{r}
+# Note: can't include persistent tuft in this pseudobulk as it comes from only 1 patient
+DefaultAssay(ADM) <- "RNA"
+adm <- ADM
+
+# Converting cluster name into numerical
+Idents(adm) <- "Lv.2.Anno"
+adm@meta.data$Lv.2.Anno <- as.factor(adm@meta.data$Lv.2.Anno)
+print(levels(adm@meta.data$Lv.2.Anno))
+levels(adm@meta.data$Lv.2.Anno) <- 1:length(levels(adm@meta.data$Lv.2.Anno))
+#[1] "Acinar"            "Acinar-Ductal"     "Ductal epithelial" "Ductal_MUC5B+"     "Tuft" 
+print(1:length(levels(adm$Lv.2.Anno)))
+#[1] 1 2 3 4 5
+
+ClusterSub <- as.factor(adm@meta.data$Lv.2.Anno) 
+PatClust <- paste(adm$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+
+counts <- adm@assays$RNA@counts #dgCMatrix
+counts <- as.matrix(counts)
+counts <- t(rowsum(t(counts), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+ncls <- length(table(ClusterSub))
+N <- 1:ncls #focus on all clusters
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% N] 
+keep <- filterByExpr(ClstSub, min.count=3, min.total.count=10) #min=10, min.total.count=20
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+plotMDS(ClstSub, pch = 16, col = ADM.col[ClstSub$samples$group], main="")
+ 
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~ Cls + Pat)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design)
+qfit <- glmQLFit(ClstSub, design)
+
+contr <- makeContrasts(
+    Cls1 = -(Cls2+Cls3+Cls4+Cls5)/4,
+    Cls2 = Cls2-(Cls3+Cls4+Cls5)/4,
+    Cls3 = Cls3-(Cls2+Cls4+Cls5)/4,
+    Cls4 = Cls4-(Cls2+Cls3+Cls5)/4,
+    Cls5 = Cls5-(Cls2+Cls3+Cls4)/4,
+    levels=design)
+
+ctest <- list()
+for (i in 1:ncls) ctest[[i]] <- glmQLFTest(qfit, contrast = contr[,i])
+
+#log-CPM
+prior.count <- 1
+ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating cpm
+
+# Remove batch effect on log-CPM
+logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
+plotMDS(logCPM_no_batch, pch = 16, col = ADM.col[ClstSub$samples$group], main="Pseudo-bulk samples")
+
+library(tibble)
+names(ctest) <- colnames(contr)   # Cls1 ... Cls5
+res_list <- lapply(names(ctest), function(cn) {
+  topTags(ctest[[cn]], n = Inf, adjust.method = "BH")$table %>%
+    rownames_to_column("gene") %>%
+    mutate(cluster = cn)
+})
+names(res_list) <- names(ctest)
+adm.cellnames.pseudobulk <- bind_rows(res_list)
+adm.cellnames.pseudobulk %>% mutate(cell_names = case_when(
+                                         cluster == "Cls1" ~ "Acinar",
+                                         cluster == "Cls2" ~ "Acinar-Ductal",
+                                         cluster == "Cls3" ~ "Ductal epithelial",
+                                         cluster == "Cls4" ~ "Ductal_MUC5B+",
+                                         cluster == "Cls5" ~ "Tuft",
+                                         )) ->adm.cellnames.pseudobulk
+
+### Supplementary Table 3 
+# Originally saved as Final_adm.cellnames.pseudobulk.removed.tuft.malig_revisedFDR.csv
+write.csv(adm.cellnames.pseudobulk, file = file.path(params$step_dir, "SupplementaryTable3_adm_pseudobulk.csv"), row.names = F)
+```
+
+## Subsetting ADM samples
+```{r}
+sts.simspec.sct <- readRDS(cfg$integrated_object)
+ADM.Pat <- subset(sts.simspec.sct, subset = Patient_ID %in% c("2285","2215","2221","2156") &
+                                            simspec_cell_class %in% c("Acinar","PDAC","Ductal_epithelial","Tuft"))
+
+# Transferring label from non-malignant analysis
+acinar <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Acinar") %>% pull(Cell_Ids) %>% as.character()
+ad <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Acinar-Ductal") %>% pull(Cell_Ids) %>% as.character()
+ductal <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Ductal epithelial") %>% pull(Cell_Ids) %>% as.character()
+muc5b <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Ductal_MUC5B+") %>% pull(Cell_Ids) %>% as.character()
+tuft <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Tuft") %>% pull(Cell_Ids) %>% as.character()
+tuft.malig <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Tuft.persistent") %>% pull(Cell_Ids) %>% as.character()
+
+metadata <- ADM.Pat@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% ad ~ "Acinar-Ductal", #349
+                                          Cell_Ids %in% acinar ~ "Acinar", 
+                                          Cell_Ids %in% muc5b  ~ "Ductal_MUC5B+",
+                                          Cell_Ids %in% ductal  ~ "Ductal epithelial", 
+                                          Cell_Ids %in% tuft  ~ "Tuft", 
+                                          Cell_Ids %in% tuft.malig ~ "Tuft.malignant", # to highlight that uniquely presented in sample #2221
+                                          TRUE ~ "PDAC")) -> metadata
+metadata %>% group_by(Lv.2.Anno) %>% count()
+Lv.2.Anno <- metadata$Lv.2.Anno
+names(Lv.2.Anno) <- metadata$S_CB
+ADM.Pat <- AddMetaData(object = ADM.Pat, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+
+DefaultAssay(ADM.Pat) <- "RNA"
+Idents(ADM.Pat) <- "Lv.2.Anno"
+ADM.Pat
+
+# Create another column to group all Tuft together for plotting
+ADM.Pat$broad_cell_class <- ADM.Pat$Lv.2.Anno
+ADM.Pat$broad_cell_class[ADM.Pat$broad_cell_class == "Tuft.malignant"] <- "Tuft" 
+ADM.Pat$broad_cell_class <- factor(ADM.Pat$broad_cell_class, levels = c("Acinar","Acinar-Ductal","Ductal epithelial","Ductal_MUC5B+","PDAC","Tuft"))
+```
+
+### Plotting
+```{r ext-data-fig-4a, fig.width=15, fig.height=5, dpi=300, message=FALSE, warning=FALSE}
+our <- list()
+our$acinar <- c("CPB1","CTRC","CELA3A","PNLIP","PRSS1","CUZD1","CTRB2","CPA2","SPINK1")
+our$REG <- c("REG1B","REG3A","REG3G","REG1A")
+our$acinar.ductal <- c("BNIP5","PRKD1","MECOM","OLFM4","FGD6","ABLIM2","IL32","CXCL2")
+our$ductal <- c("CFTR","SLC4A4","PKHD1","ONECUT2","BICC1","GLIS3","SCTR")
+our$ductal.like2 <- c("MUC6","MUC5B","MUC3A","TFF2","CALN1","SERPINA1","IL33")
+our$PDAC <- c("CDKN2A","SMAD4","PIK3CA","KRT7","KRT20","KRT19","KRT5","MUC1","CDH1","SDC1","FXYD3","KRT17","KRT8","EPCAM","TFF1","PPARG","CAPN8","TMC5","ACTN4","LMO7")
+our$Tuft <- c("TRPM5","POU2F3","AVIL","BMX","SH2D6","SH2D7")
+
+DefaultAssay(ADM.Pat)
+DotPlot(ADM.Pat, features = our, group.by = "broad_cell_class") + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high="darkred") #+labs(title="Expression of marker genes derived from our previous analysis")
+```
+
+```{r ext-data-fig-4c, fig.width=8, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+ADM.Pat$broad_cell_class <- factor(ADM.Pat$broad_cell_class, levels = c("Tuft","PDAC","Ductal_MUC5B+","Ductal epithelial","Acinar-Ductal","Acinar"))
+DotPlot(ADM.Pat, # to match Xenium spatial profiling
+        features = c('CUZD1','CTRC','AMY2A','REG1A','REG1B','REG3G','REG3A',
+           'CFTR','SLC4A4','ONECUT2','MUC6','MUC5B','MUC3A',
+           'KRT19','LMO7','MUC1',
+           'RGS13','AVIL','BMX'), 
+        group.by = "broad_cell_class", scale = F, col.max = 3) + RotatedAxis() + scale_color_gradient(low="white", high="darkblue")
+```
+
+```{r ext-data-fig-4g, fig.width=7, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+id.map <- read.csv(cfg$sample_map_csv, stringsAsFactors = FALSE)
+id.map$Sample <- as.character(id.map$Sample)
+
+# Add ICGC_ID
+tuft.merged$ICGC_ID <- id.map$ICGC_ID[
+  match(as.character(tuft.merged$Sample), id.map$Sample)]
+
+pat_col <- c("#DE73DA" ,"#E7E3DA" ,"#67C0D8" ,"#E1A497")
+col <- c("darkred","darkred","darkgrey","darkgrey","grey")
+DimPlot(tuft.merged, group.by = "ICGC_ID", cols = pat_col) + DimPlot(tuft.merged, group.by = "KRAS.mut", cols = col)
+# TODO: `col` was not defined in this file (it came from the original R session). Replace NULL with the
+# colour vector used for the manuscript figure; NULL uses ggplot2's default colours.
+kras.col <- NULL
+DimPlot(tuft.merged, group.by = "ICGC_ID") + DimPlot(tuft.merged, group.by = "KRAS.mut", cols = kras.col)
+```
+
+```{r ext-data-fig-4h, fig.width=6, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+genes <- c("MDK","IL15","IL19","IL17RB","IL13RA1",
+           "HCK","PVR","LGALS3","LGALS4","LGALS9")
+
+Idents(ADM) <- "Lv.2.Anno"
+DefaultAssay(ADM) <- "RNA"
+DotPlot(ADM, features = genes, group.by = "Lv.2.Anno") + RotatedAxis() + #scale_colour_gradient(high="darkred", low = "grey")
+ scale_color_gradient2(low="darkblue", mid = "white", high = "darkred")
+```
+
+```{r}
+sessionInfo()
+```
+
