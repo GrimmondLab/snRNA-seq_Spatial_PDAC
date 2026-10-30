@@ -151,7 +151,14 @@ jobs:
       - name: 🕹️ Apptainer build + smoke test
         run: |
           set -euo pipefail
-          apptainer build "${SIF}" "docker-daemon://${LOCAL_IMG}"
+          # Unprivileged builds print thousands of harmless "warn rootless{...} EPERM on
+          # setxattr" lines: keep the full output in a log artifact, show the rest here
+          log=/mnt/apptainer/apptainer-build.log
+          if ! apptainer build "${SIF}" "docker-daemon://${LOCAL_IMG}" > "${log}" 2>&1; then
+            tail -n 100 "${log}"; exit 1
+          fi
+          echo "$(grep -c 'warn rootless{' "${log}" || true) 'warn rootless{' lines hidden (see apptainer-build-log artifact)"
+          grep -v 'warn rootless{' "${log}" | tail -n 30
           ls -lh "${SIF}"
           # Same checks as the Docker smoke test, on the read-only .sif
           apptainer run "${SIF}"
@@ -162,6 +169,13 @@ jobs:
             apptainer exec "${SIF}" cat "/pipeline/sessionInfo/${env}.txt" | cmp - "sessionInfo/${env}.txt"
           done
           echo "SIF matches the Docker image."
+      - name: ⬆️ Upload Apptainer build log
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: apptainer-build-log
+          path: /mnt/apptainer/apptainer-build.log
+          if-no-files-found: ignore
       - name: 🚀 Apptainer push
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
