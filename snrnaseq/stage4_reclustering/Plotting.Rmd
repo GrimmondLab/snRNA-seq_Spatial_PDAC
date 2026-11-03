@@ -1,0 +1,294 @@
+---
+title: "Updating_snRNAseq_object_plotting"
+author: "Mai La"
+date: "2024-08-20"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dev=c('png', 'pdf'))
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+```
+
+# Installing packages
+```{r cars}
+library(Seurat)
+library(schex)
+library(ggplot2)
+library(shiny)
+library(dplyr)
+library(patchwork)
+library(rmarkdown)
+library(openxlsx)
+```
+
+# Re-annotated after completion of non-malignant analysis - Simspec
+```{r}
+lymphoid <- readRDS(file.path(params$out_root, "STS_Lymphoid_TNK", "lymphoid.simspec.RDS"))
+B <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "B") %>% pull(Cell_Ids)
+BGC <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "B:GC") %>% pull(Cell_Ids)
+CD3 <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD3+ T") %>% pull(Cell_Ids)
+Tccr7 <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD4+ T:CCR7+") %>% pull(Cell_Ids)
+Tfh <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD4+ T:CXCL13+") %>% pull(Cell_Ids)
+Treg <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD4+ T:FOXP3+") %>% pull(Cell_Ids)
+Til7r <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD4+ T:IL7R+") %>% pull(Cell_Ids)
+Teff <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD8+ T:GZMK+") %>% pull(Cell_Ids)
+CD8IL7R <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD8+ T:IL7R+") %>% pull(Cell_Ids)
+Trm <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "CD8+ T:ITGAE+") %>% pull(Cell_Ids)
+gdT <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "gdT") %>% pull(Cell_Ids)
+NK <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "NK") %>% pull(Cell_Ids)
+Plasma <- lymphoid@meta.data %>% dplyr::filter(Lv.2.Anno == "Plasma") %>% pull(Cell_Ids)
+
+myeloid <- readRDS(file.path(params$out_root, "STS_Myeloid_Mast_DCs", "myeloid.nonintegrated.RDS"))
+cDC1 <- myeloid@meta.data %>% dplyr::filter(Lv.2.Anno == "cDC1") %>% pull(Cell_Ids)
+cDC2 <- myeloid@meta.data %>% dplyr::filter(Lv.2.Anno == "cDC2") %>% pull(Cell_Ids)
+cyling <- myeloid@meta.data %>% dplyr::filter(Lv.2.Anno == "Cycling myeloid") %>% pull(Cell_Ids)
+lDC <- myeloid@meta.data %>% dplyr::filter(Lv.2.Anno == "Langerhans-like DCs") %>% pull(Cell_Ids)
+Mast <- myeloid@meta.data %>% dplyr::filter(Lv.2.Anno == "Mast") %>% pull(Cell_Ids)
+migDC <- myeloid@meta.data %>% dplyr::filter(Lv.2.Anno == "Migratory DCs") %>% pull(Cell_Ids)
+
+mac <- readRDS(file.path(params$out_root, "STS_Myeloid_Mast_DCs", "mac.only.simspec.RDS"))
+C1QC <- mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_C1QC+") %>% pull(Cell_Ids)
+Clec5a <- mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_MHC_II") %>% pull(Cell_Ids)
+olr1 <-  mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_OLR1+") %>% pull(Cell_Ids)
+spp1 <- mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_SPP1+") %>% pull(Cell_Ids)
+
+endo <- readRDS(cfg$endothelial_object)
+endothelial <- endo@meta.data %>% dplyr::filter(cell_names %in% c("Endothelial:Angiogenic tip cells","Endothelial:reactive EndMT","Endothelial:Stalk-like","Endothelial:Tip-like")) %>% pull(Cell_Ids)
+LEC <-  endo@meta.data %>% dplyr::filter(cell_names == "Lymphatic endothelial") %>% pull(Cell_Ids)
+
+sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+acinar <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Acinar") %>% pull(Cell_Ids)
+adm <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Acinar-Ductal") %>% pull(Cell_Ids)
+ductal <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Ductal epithelial") %>% pull(Cell_Ids)
+muc5b <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Ductal_MUC5B+") %>% pull(Cell_Ids)
+endocrine <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Endocrine") %>% pull(Cell_Ids)
+FDCs <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "FDCs") %>% pull(Cell_Ids)
+FRCs <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "FRCs") %>% pull(Cell_Ids)
+pericytes <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Pericytes") %>% pull(Cell_Ids)
+schwann <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Schwann") %>% pull(Cell_Ids)
+tuft <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Tuft") %>% pull(Cell_Ids)
+tuft.mal <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Tuft.persistent") %>% pull(Cell_Ids)
+
+fib.only <- readRDS(file.path(params$out_root, "STS_stromal_CAF_reclustering", "fib.only.simspec.RDS"))
+MYO <- fib.only@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "CAFs_MYO") %>% pull(Cell_Ids)
+CXCL14 <- fib.only@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "CAFs_CXCL14+") %>% pull(Cell_Ids)
+NRT <- fib.only@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "CAFs_NRT") %>% pull(Cell_Ids)
+vSMC <- fib.only@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "Vascular smooth muscle") %>% pull(Cell_Ids)
+```
+
+# Assign Lv.2.Anno into sts.object
+```{r}
+# Originally read as sts.simspec_css.sample.sct_fullworkflow.RDS
+sts.simspec_css.sample.sct <- readRDS(cfg$integrated_object)
+metadata <- sts.simspec_css.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% MYO ~ "CAFs_MYO", 
+                                          Cell_Ids %in% NRT ~ "CAFs_NRT",
+                                          Cell_Ids %in% CXCL14 ~ "CAFs_CXCL14+",
+                                          Cell_Ids %in% vSMC ~ "vSMC",
+                                          Cell_Ids %in% pericytes ~ "Pericytes",
+                                          Cell_Ids %in% schwann ~ "Schwann",
+                                          Cell_Ids %in% FDCs ~ "FDCs",
+                                          Cell_Ids %in% FRCs ~ "FRCs",
+                                          Cell_Ids %in% endocrine ~ "Endocrine",
+                                          Cell_Ids %in% tuft ~ "Tuft",
+                                          Cell_Ids %in% tuft.mal ~ "Tuft.persistent",
+                                          Cell_Ids %in% endothelial ~ "Endothelial",
+                                          Cell_Ids %in% LEC ~ "Lymphatic endothelial",
+                                          Cell_Ids %in% acinar ~ "Acinar",
+                                          Cell_Ids %in% adm ~ "Acinar-Ductal",
+                                          Cell_Ids %in% ductal ~ "Ductal",
+                                          Cell_Ids %in% muc5b ~ "Ductal MUC5B+",
+                                          Cell_Ids %in% B ~ "B",
+                                          Cell_Ids %in% BGC ~ "B:GC",
+                                          #Cell_Ids %in% Bnaive ~ "B:naive",
+                                          Cell_Ids %in% CD3 ~ "CD3+ T",
+                                          Cell_Ids %in% gdT ~ "gdT",
+                                          Cell_Ids %in% NK ~ "NK",
+                                          Cell_Ids %in% Plasma ~ "Plasma",
+                                          Cell_Ids %in% Tccr7 ~ "CD4+ T:CCR7+",
+                                          Cell_Ids %in% CD8IL7R ~ "CD8+ T:IL7R+",
+                                          Cell_Ids %in% Teff ~ "CD8+ T:GZMK+",
+                                          Cell_Ids %in% Tfh ~ "CD4+ T:CXCL13+",
+                                          Cell_Ids %in% Til7r ~ "CD4+ T:IL7R+",
+                                          Cell_Ids %in% Treg ~ "CD4+ T:FOXP3+",
+                                          Cell_Ids %in% Trm ~ "CD8+ T:ITGAE+",
+                                          Cell_Ids %in% C1QC ~ "TAMs_C1QC+",
+                                          Cell_Ids %in% cDC1 ~ "cDC1",
+                                          Cell_Ids %in% cDC2 ~ "cDC2",
+                                          Cell_Ids %in% Clec5a ~ "TAMs_MHC_II",
+                                          Cell_Ids %in% cyling ~ "Cycling myeloid",
+                                          Cell_Ids %in% lDC ~ "Langerhans-like DCs",
+                                          Cell_Ids %in% Mast ~ "Mast",
+                                          Cell_Ids %in% migDC ~ "Migratory DCs",
+                                          Cell_Ids %in% olr1 ~ "TAMs_OLR1+",
+                                          Cell_Ids %in% spp1 ~ "TAMs_SPP1+",
+                                          #Cell_Ids %in% TAMs ~ "TAMs", # remove this, patient-specific TAMs
+                                          #Cell_Ids %in% tymp ~ "TAMs_TYMP",
+                                          simspec_cell_class == "PDAC" ~ "PDAC",
+                                          simspec_cell_class == "Malignant acinar" ~ "Malignant acinar",
+                                          simspec_cell_class == "PDA_OLGC" ~ "PDA_OLGC",
+                                          TRUE ~ "unassigned")) -> metadata
+metadata %>% group_by(Lv.2.Anno) %>% count(Lv.2.Anno) %>% print(n=45)
+Lv.2.Anno <- metadata$Lv.2.Anno 
+names(Lv.2.Anno) <- metadata$Lv.2.Anno
+sts.simspec_css.sample.sct <- AddMetaData(object = sts.simspec_css.sample.sct, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+```
+
+## Lv.1.Anno
+```{r}
+# The 84 cells of sample 2215 listed in STS_Malignant.Rmd (Stage 3)
+non.malig <- c("8_ACTTGTTTCGAACGGA-1", "8_TTCGGTCAGAAGGTTT-1", "8_GATCGCGCAGACAGGT-1", "8_GTCGTAAAGCCACGCT-1", "8_GAATAAGCAACTGCTA-1", "8_CTGAAACGTAGCGTCC-1","8_AGGCCACCAGACAGGT-1", "8_CAGCCGAAGGTTCCTA-1", "8_ATCTGCCAGAGTAATC-1", "8_TTATGCTAGACATAAC-1", "8_GACCTGGTCTTGTCAT-1", "8_ATTTCTGTCGATAGAA-1","8_ATCCGAAAGGTGACCA-1", "8_ACCGTAAGTCCTAGCG-1", "8_CGAGAAGTCGTCGTTC-1", "8_TGACTTTCATCAGTAC-1", "8_GATCGATTCCCAAGTA-1", "8_TATCTCAGTAAGTTCC-1", "8_TAGAGCTGTCACTGGC-1", "8_AGACGTTAGGCCCGTT-1", "8_GGATGTTAGATCGATA-1","8_TTGACTTCATAGAAAC-1", "8_TATTACCAGGGTCTCC-1", "8_AGGGTGAAGCGAGAAA-1", "8_ACATACGGTACGAAAT-1", "8_GACACGCTCTCTGTCG-1", "8_TTTGGTTTCGTTACAG-1", "8_ACGGCCACACTTGGAT-1", "8_ATAGACCTCTTAGAGC-1", "8_GGGAATGAGGCTAGAC-1","8_ACACCGGGTCCGCTGA-1", "8_TAGACCAGTGATGATA-1","8_AATCGGTCAGCAGTTT-1", "8_GCTGCGAGTGACGCCT-1", "8_TACAGTGTCATAGCAC-1", "8_CCTTACGGTAGATTAG-1","8_CCTCAGTCAAACTGCT-1", "8_TCAGCAAGTAAACACA-1", "8_GTTAAGCGTCTAGGTT-1", "8_TTGGAACTCGGATGTT-1", "8_ATCGAGTGTTCAACCA-1", "8_ACGAGCCAGAATCTCC-1","8_TGACTAGGTCAGAGGT-1", "8_CATGCCTTCGAGAGCA-1", "8_GTGTTAGCACCCAGTG-1", "8_AGCATACTCAAACCGT-1", "8_GGAAAGCTCCCTCTTT-1", "8_CTCGTACTCAAACAAG-1","8_GGTGTTAGTGGCGAAT-1", "8_GGATGTTGTCGAGTTT-1", "8_GAACATCCAGTAACGG-1", "8_GTTTCTAAGAGGACGG-1", "8_TCAGGATGTACAGTTC-1", "8_CGTCCATCATTCCTCG-1","8_ACGGGTCAGAAAGTGG-1", "8_GGGCACTCACTTCGAA-1", "8_TCAATCTGTGCTCTTC-1", "8_AACCGCGCACTTCGAA-1", "8_AAATGCCTCCCTAATT-1", "8_CCACCTAGTTTGACAC-1", "8_GATTCAGTCATTCACT-1", "8_TCAGCAAAGCGATCCC-1", "8_AGTTGGTAGAGTACAT-1", "8_GTGCAGCTCTTCGAGA-1", "8_CGTGAGCAGGACGAAA-1", "8_GCTGCGAAGTACTTGC-1","8_TAAGAGAAGCGTCTAT-1", "8_TTTCCTCAGTACGATA-1", "8_CCGGTAGGTTAGAACA-1", "8_GCAGCCAGTGTCAATC-1", "8_CAGCCGAGTTACAGAA-1", "8_TCACAAGGTTACTGAC-1","8_CCGTACTAGCCCTAAT-1", "8_CGTCACTGTTTCGCTC-1", "8_CGGAGCTCATGGGACA-1", "8_AAAGTAGTCGAACTGT-1", "8_GTAACTGCACATCCGG-1", "8_ATCATCTTCCTACAGA-1","8_GAATAAGTCTTGTATC-1", "8_CGGAGTCCAAGTTGTC-1", "8_GTCGGGTGTCCCGACA-1", "8_GACAGAGAGACAAGCC-1", "8_CGACCTTAGTGCGATG-1", "8_GGCTGGTGTAGAGGAA-1")
+metadata <- sts.simspec_css.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata %>% mutate(Lv.1.Anno = case_when(Lv.2.Anno %in% c("TAMs_SPP1+","TAMs_OLR1+","TAMs_MHC_II","TAMs_C1QC+") ~ "Macrophages", 
+                                          Lv.2.Anno %in% c("Tuft","Tuft.persistent") ~ "Tuft",
+                                          Lv.2.Anno %in% c("Acinar","Acinar-Ductal") ~ "Acinar",
+                                          Lv.2.Anno %in% c("B","B:GC") ~ "B",
+                                          Lv.2.Anno %in% c("CAFs_CXCL14+","CAFs_MYO","CAFs_NRT") ~ "CAFs",
+                                          Lv.2.Anno %in% c("CD4+ T:CCR7+","CD4+ T:CXCL13+","CD4+ T:FOXP3+","CD4+ T:IL7R+") ~ "CD4+ T",
+                                          Lv.2.Anno %in% c("CD3+ T","gdT") ~ "CD3+ T/gdT", 
+                                          Lv.2.Anno %in% c("CD8+ T:GZMK+","CD8+ T:IL7R+","CD8+ T:ITGAE+","NK") ~ "CD8+ T/NK",
+                                          Lv.2.Anno %in% c("cDC1","cDC2","Cycling myeloid","Migratory DCs","Langerhans-like DCs") ~ "DCs",
+                                          Lv.2.Anno %in% c("Ductal","Ductal MUC5B+") ~ "Ductal epithelial",
+                                          Lv.2.Anno == "Endocrine" ~ "Endocrine",
+                                          Lv.2.Anno %in% c("Endothelial", "Lymphatic endothelial") ~ "Endothelial",
+                                          Lv.2.Anno == "Mast" ~ "Mast",
+                                          Lv.2.Anno == "Pericytes" ~ "Pericytes",
+                                          Lv.2.Anno == "vSMC" ~ "vSMC",
+                                          Lv.2.Anno == "Schwann" ~ "Schwann",
+                                          Lv.2.Anno == "Plasma" ~ "Plasma",
+                                          Cell_Ids %in% non.malig ~ "unassigned", # separating non-cancer cells identified from inferCNV
+                                          simspec_cell_class == "PDAC" ~ "PDAC",
+                                          simspec_cell_class == "Malignant acinar" ~ "Malignant acinar",
+                                          simspec_cell_class == "PDA_OLGC" ~ "PDA_OLGC",
+                                          Lv.2.Anno == "FRCs" ~ "FRCs",
+                                          Lv.2.Anno == "FDCs" ~ "FDCs",
+                                          Sample %in% c("1959", "2185") ~ "Stromal (rare subtypes)",
+                                          TRUE ~ "unassigned")) -> metadata
+                                          
+metadata %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno) %>% print(n=51)
+Lv.1.Anno <- metadata$Lv.1.Anno
+names(Lv.1.Anno) <- metadata$Cell_Ids
+stopifnot(identical(names(Lv.1.Anno), colnames(sts.simspec_css.sample.sct)))
+sts.simspec_css.sample.sct <- AddMetaData(object = sts.simspec_css.sample.sct, metadata = Lv.1.Anno, col.name = "Lv.1.Anno")
+DimPlot(sts.simspec_css.sample.sct, group.by = "Lv.1.Anno", raster =F, label = T) + DimPlot(sts.simspec_css.sample.sct, group.by = "simspec_cell_class", raster = F, label = T)
+```
+
+## Adding ICGC_label
+```{r}
+library(dplyr)
+# Read the sample map (or paste it as a data.frame)
+map <- read.csv(cfg$sample_map_csv, stringsAsFactors = FALSE)
+
+# Remove hidden spaces, e.g. "3513 " in your last row
+map$Sample <- trimws(map$Sample)
+map$ICGC_ID <- trimws(map$ICGC_ID)
+
+# Checks before mapping
+anyDuplicated(map$Sample)                                  # must be 0
+setdiff(unique(sts.simspec_css.sample.sct$Sample), map$Sample)                    # must be character(0)
+
+# Add ICGC_ID to the metadata (match keeps the cell order)
+sts.simspec_css.sample.sct$ICGC_ID <- map$ICGC_ID[match(sts.simspec_css.sample.sct$Sample, map$Sample)]
+
+# Check the result
+table(is.na(sts.simspec_css.sample.sct$ICGC_ID))                                  # no TRUE = all cells mapped
+unique(sts.simspec_css.sample.sct@meta.data[, c("orig.ident", "Sample", "ICGC_ID")])
+```
+
+
+```{r fig1b-snrnaseq-umap, fig.width=7, fig.height=7, message=FALSE}
+sts.simspec_css.sample.sct$simspec_cell_class <- factor(sts.simspec_css.sample.sct$simspec_cell_class, levels = c("Acinar","Ductal_epithelial","Tuft","Malignant acinar","PDA_OLGC","PDAC","Endocrine","Endothelial","CAFs","Pericytes","FRCs","Macrophages","Mast","B","Plasma","T/NK"))
+
+col <- c('#ff7f0e',"#C8AF7C", '#aa40fc', '#d5eae7', 
+         '#279e68','#e377c2','#d62728','#17becf','#8c564b',
+         '#ff9896','#98df8a', '#c5b0d5','#023fa5',
+         '#D8D18C', "#442883","#D5DB46"
+         )
+
+color <- setNames(object = col, nm=c("Acinar","Malignant acinar","B","CAFs",
+           "Ductal_epithelial", "Endocrine","Endothelial","Macrophages","PDAC",
+           "Mast","Plasma","Pericytes","T/NK",
+           "FRCs","Tuft","PDA_OLGC"
+           #"Intestinal IPMN", "Acinar & Malignant_acinar"
+           ))
+
+DimPlot(sts.simspec_css.sample.sct, group.by = 'simspec_cell_class', cols = color, raster = F)
+```
+
+```{r fig1b-snrnaseq-cellularcomposition, fig.width=8, fig.height=5, message=FALSE}
+sts.simspec_css.sample.sct@meta.data %>%
+  ggplot(aes(x=ICGC_ID, fill = simspec_cell_class)) + 
+  geom_bar(position = "fill") + 
+  scale_fill_manual(values = color) + RotatedAxis()
+```
+
+```{r ext-data-fig1a-snrnaseq-gex, fig.width=12, fig.height=3.5, message=FALSE}
+marker.sets <- list(Acinar_Cells = c("CPB1","CELA3A","CTRC","PNLIP","PDIA2"),
+                    Epithelium_Duct_Cells = c("CFTR","SLC4A4","PKHD1","ONECUT2","C6","CRP","MUC5B"),
+                    Tuft_Cells = c("TRPM5","POU2F3","AVIL","BMX","SH2D7"),
+                    Malignant_Acinar = c("CPA1","CPA2","PRSS1","RBPJL","CEL","REG1A","REG1B","REG3G"), # based on MUT STATUS
+                    Malignant_PDA_Osteoclast = c("DLX5","OMD","CA2"),#,"CTGF"
+                    Malignant_PDAC = c("KRT19","MUC1","KRT17","ACTN4","LMO7"),
+                    Islet_Cells = c("INS","GCG","NRG1","KCNMB2","SNTG1"),
+                    Endothelial_Cells = c("VWF","CD34","EFNB2","PLVAP","FLT1"),
+                    CAFs = c("COL1A1","CALD1", "COL6A3","COL1A2","FN1"),
+                    Mural_Cells = c("PDGFRB","RGS5","TRPC6","PLXDC1","GJC1"),
+                    Lymphoid_stromal_Cells = c("HAS1","PDPN","PLA2G2A","RAB7B","DAW1"),
+                    Macrophages = c("CSF1R","SIGLEC1", "CD163", "MS4A6A"),
+                    Mast_Cells = c("TPSAB1", "CPA3", "MS4A2","HPGDS","KIT"),
+                    B_Cells = c("FCRL1","MS4A1","PAX5"),
+                    Plasma_Cells = c("MZB1","SPAG4","PDK1","IGHG1"),
+                    T_Cells = c("CD3D","CD3E","CD96","CD2","CD247") #revised
+                    )
+DotPlot(sts.simspec_css.sample.sct, features = marker.sets, group.by = "simspec_cell_class")+ RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high = "darkred")
+```
+
+```{r ext-data-fig2a-snrnaseq-gex, fig.width=15, fig.height=4, message=FALSE}
+marker.sets <- list(Malignant_PDAC = c("KRT19","KRT7","MUC1","TFF1","TFF2"),
+                    Ductal_like_2 = c("MUC5B","MUC6","ONECUT2","CFTR","SLC4A4"),
+                    Acinar_Cells = c("REG3G","REG3A","AMY2A","CPB1","CTRC","CELA3A"),
+                    Pericytes = c("PDGFRB","RGS5","GJC1","TRPC6"),
+                    Fibroblasts = c("CALD1","COL1A1","FN1", "COL6A3","COL11A1"),
+                    Islet_Cells = c("GCG","SST","INS"),
+                    Endothelial_Cells = c("VWF","PLVAP","KDR"),
+                    B_Cells = c("MS4A1","CD19","IGHM"),
+                    Plasma_Cells = c("IGHG1","MZB1"),
+                    T_Cells = c("CD3D","CD3E","CD96","CD2"), #revised
+                    Mast_Cells = c("CPA3", "MS4A2","KIT"),
+                    Macrophages = c("CD163", "CSF1R","SIGLEC1"))
+
+sts.seurat <- sts.simspec_css.sample.sct %>% subset(subset = simspec_cell_class %in% c("Tuft","FRCs","PDA_OLGC","Malignant acinar"), invert=T)
+sts.seurat$simspec_cell_class <- factor(sts.seurat$simspec_cell_class, levels = c("Macrophages","Mast","T/NK", "Plasma","B","Endothelial","Endocrine",
+                        "CAFs","Pericytes","Acinar","Ductal_epithelial","PDAC"))
+Idents(sts.seurat) <- "simspec_cell_class"
+
+DefaultAssay(sts.seurat) <- "RNA"
+d <- DotPlot(sts.seurat, features = marker.sets, group.by = "simspec_cell_class") 
+ddata <- as.data.frame(d[["data"]])
+ddata <- ddata %>% filter(!is.na(features.plot)) # removing rows with NA
+df_spread <- tidyr::spread(ddata[,c(3,4,5)], id, avg.exp.scaled)
+rownames(df_spread) <- df_spread[,1]
+df_spread <- df_spread[,-1]
+mat <- as.matrix(df_spread)
+
+library(pheatmap)
+library(viridisLite)
+phet <- pheatmap(mat, 
+                 color = inferno(n=100), breaks=seq(0,2,length.out=101),
+                 fontsize = 9,
+                 cellheight = 9,
+                 border_color = 'lightgrey',
+                 fontsize_row = 9, cutree_cols = 1, cutree_rows =1,
+                 cellwidth = 9, scale = "none",
+                 cluster_rows = F, cluster_cols = F)
+saveRDS(sts.simspec_css.sample.sct, file.path(params$step_dir, "sts.simspec_css.sample.sct_final.RDS"))  # final annotated object: input to Stage 5
+```
+

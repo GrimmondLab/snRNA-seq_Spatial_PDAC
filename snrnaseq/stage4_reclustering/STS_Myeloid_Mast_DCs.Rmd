@@ -1,0 +1,571 @@
+---
+title: "STS_Myeloid_DCs_Mast"
+author: "Mai La"
+date: "2024-08-15"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+#options(width = 60) , cache = TRUE
+#dev = c("svg","pdf") to save figures in specified format
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+```
+
+# Installing packages
+```{r Packages}
+library(Seurat)
+library(schex)
+library(ggplot2)
+library(shiny)
+library(dplyr)
+library(patchwork)
+library(rmarkdown)
+library(openxlsx)
+```
+
+# Data loading
+```{r}
+sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+sample.high.myeloid <- as.data.frame(sts.non.malignant@meta.data) %>%
+                                  group_by(Sample) %>% 
+                                  dplyr::count(Lv.1.Anno) %>% 
+                                  dplyr::filter(Lv.1.Anno %in% c("Myeloid", "Mast"), n > 30) %>% 
+                                  pull(Sample) %>% 
+                                  as.character() %>% unique()# need minimum n=30 cells to do integration
+
+myeloid <- sts.non.malignant %>% subset(subset = Sample %in% sample.high.myeloid &
+                                                      Lv.1.Anno %in% c("Myeloid", "Mast"))
+```
+
+# MYELOID analysis
+## Normalised myeloid a whole to identify DCs
+```{r}
+# DietSeurat
+DefaultAssay(myeloid) <- "RNA"
+myeloid <- DietSeurat(myeloid, assays = "RNA", data = TRUE, counts = TRUE)
+
+# to remove additional columns & because we need to split individual samples and redo the SCT, so we need to remove the "^_SCT"
+colnames(myeloid[[]]) #check which columns to remove
+myeloid[["nCount_SCT"]] <- NULL
+myeloid[["nFeature_SCT"]] <- NULL
+myeloid[["seurat_clusters"]] <- NULL
+#myeloid[["SCT_snn_res.0.5"]] <- NULL
+#myeloid[["SCT_snn_res.0.6"]] <- NULL
+myeloid[["SCT_snn_res.0.7"]] <- NULL
+#myeloid[["SCT_snn_res.0.8"]] <- NULL
+
+#Removing outliers
+myeloid <- subset(myeloid, subset = Sample %in% c("1959","2185"), invert = T)
+#myeloid$Sample <- droplevels(myeloid$Sample)
+
+# SCTRANFORM
+myeloid.v2 <- SCTransform(myeloid, vst.flavor = "v2", method = "glmGamPoi", verbose = TRUE)
+
+# DIMENTIONALITY REDUCTION
+myeloid.v2 <- RunPCA(myeloid.v2, npcs = 50, verbose = FALSE, assay = "SCT")
+ElbowPlot(myeloid.v2)
+
+DimPlot(myeloid.v2, label = TRUE,
+        reduction = "pca", group.by = "Lv.1.Anno") + NoLegend()
+
+myeloid.v2 <- RunUMAP(myeloid.v2, reduction = "pca", dims = 1:50)
+
+# CLUSTERING
+myeloid.v2 <- FindNeighbors(myeloid.v2, reduction = "pca", dims = 1:50)
+
+# Determine cluster stability
+myeloid.v2 <- FindClusters(myeloid.v2, algorithm = 3,  resolution = seq(0.1, 1, by = 0.1))
+library(clustree)
+clustree::clustree(myeloid.v2) # most stable at 0.2 and 0.6
+
+Idents(myeloid.v2) <- "SCT_snn_res.0.8"
+DimPlot(myeloid.v2, label = T, label.size = 5) + NoLegend() 
+
+myeloid.v2$seurat_clusters <- NULL
+myeloid.v2$seurat_clusters <- myeloid.v2$SCT_snn_res.0.8
+myeloid.markers <- FindAllMarkers(myeloid.v2, assay = "SCT", only.pos = T, min.pct = 0.1, logfc.threshold = 0.25)
+markers <- myeloid.markers %>% filter(cluster %in% c(0, 5, 6, 7, 9, 10, 13, 14))
+
+top10.markers <-myeloid.markers%>% group_by(cluster) %>% slice_max(n=10, order_by = avg_log2FC) %>% pull(gene) %>% unique()
+DotPlot(myeloid.v2, features = c("CLEC10A","CD1C")) + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high="darkred")
+```
+
+## Subsetting out some mac to define Langerhans-like DCs & cDC2
+```{r}
+# myeloid.only = integrated myeloid object; myeloid.v2 = non-integrated object
+DC <- myeloid.v2 %>% subset(subset = SCT_snn_res.0.1 %in% c("6","4","2","1","5","3"))
+
+# DietSeurat
+DefaultAssay(DC) <- "RNA"
+DC <- DietSeurat(DC, assays = "RNA", data = TRUE, counts = TRUE)
+
+# to remove additional columns & because we need to split individual samples and redo the SCT, so we need to remove the "^_SCT"
+colnames(DC[[]]) #check which columns to remove
+DC[["nCount_SCT"]] <- NULL
+DC[["nFeature_SCT"]] <- NULL
+DC[["seurat_clusters"]] <- NULL
+DC[["SCT_snn_res.0.1"]] <- NULL
+DC[["SCT_snn_res.0.2"]] <- NULL
+DC[["SCT_snn_res.0.3"]] <- NULL
+DC[["SCT_snn_res.0.4"]] <- NULL
+DC[["SCT_snn_res.0.5"]] <- NULL
+DC[["SCT_snn_res.0.6"]] <- NULL
+DC[["SCT_snn_res.0.7"]] <- NULL
+DC[["SCT_snn_res.0.8"]] <- NULL
+DC[["SCT_snn_res.0.9"]] <- NULL
+DC[["SCT_snn_res.1"]] <- NULL
+
+# SCTRANFORM
+DC.v2 <- SCTransform(DC, vst.flavor = "v2", method = "glmGamPoi", verbose = TRUE)
+
+# DIMENTIONALITY REDUCTION
+DC.v2 <- RunPCA(DC.v2, npcs = 30, verbose = FALSE, assay = "SCT")
+ElbowPlot(DC.v2)
+
+DimPlot(DC.v2, label = TRUE,
+        reduction = "pca", group.by = "Lv.1.Anno") + NoLegend()
+
+DC.v2 <- RunUMAP(DC.v2, reduction = "pca", dims = 1:30)
+
+# CLUSTERING
+DC.v2 <- FindNeighbors(DC.v2, reduction = "pca", dims = 1:30)
+
+# Determine cluster stability
+DC.v2 <- FindClusters(DC.v2, algorithm = 3,  resolution = seq(0.1, 1, by = 0.1))
+library(clustree)
+clustree::clustree(DC.v2) # most stable at 0.3 and 0.4
+
+DimPlot(DC.v2, group.by = "SCT_snn_res.0.3") + 
+DotPlot(DC.v2, features = c("FCER1A","S100A8","S100A9","LST1"), group.by = "SCT_snn_res.0.3") # confirm no monocytes, so few presented
+
+DefaultAssay(DC.v2) <- "RNA"
+DotPlot(DC.v2, features = c("CLEC9A","LAMP3","KIT","CD207","TOP2A","CSF1R","CD163","MKI67"), group.by = "SCT_snn_res.0.3")
+```
+
+### Cell_Barcode for small cell class
+```{r}
+# we knew from our dataset, there are population of langerhan-like DCs
+Idents(DC.v2) <- "SCT_snn_res.0.3"
+DefaultAssay(DC.v2) <- "RNA"
+L.DCs <- subset(DC.v2, CD1A > 1 & CDH20 > 1 )
+L.DCs.CB <- L.DCs@meta.data %>% pull(Cell_Ids) # 30 cells
+
+cDC2 <- subset(DC.v2, CD1C > 1 & CLEC10A > 1 )
+cDC2.CB <- cDC2@meta.data %>% pull(Cell_Ids) # 11 cells
+
+cycling.myeloid <- subset(myeloid.v2, subset = SCT_snn_res.0.8 == "14") #MKI67+
+cycling.CB <- cycling.myeloid@meta.data %>% pull(Cell_Ids) # only 68 cells
+
+aDCs <- subset(myeloid.v2, subset = SCT_snn_res.0.8 == "17") #LAMP3+
+aDCs.CB <- aDCs@meta.data %>% pull(Cell_Ids) # only 27 cells
+
+cDC1 <- subset(myeloid.v2, subset = SCT_snn_res.0.8 == "16") #CLEC9A
+cDC1.CB <- cDC1@meta.data %>% pull(Cell_Ids) # only 36 cells
+```
+
+## Annotation - myeloid subsets - non-integrated
+```{r}
+metadata <- myeloid.v2@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Lv.2.Anno = case_when(Lv.1.Anno == "Mast" ~ "Mast",
+                                          Cell_Ids %in% L.DCs.CB ~ "Langerhans-like DCs",
+                                          Cell_Ids %in% cDC1.CB ~ "cDC1",
+                                          Cell_Ids %in% cDC2.CB ~ "cDC2",
+                                          Cell_Ids %in% aDCs.CB ~ "Migratory DCs",
+                                          Cell_Ids %in% cycling.CB ~ "Cycling myeloid",
+                                          TRUE ~ "TAMs")) -> metadata
+metadata %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
+Lv.2.Anno <- metadata$Lv.2.Anno 
+names(Lv.2.Anno) <- metadata$S_CB
+myeloid.v2 <- AddMetaData(object = myeloid.v2, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+saveRDS(myeloid.v2, file = file.path(params$step_dir, "myeloid.nonintegrated.RDS"))
+```
+
+## Plotting
+```{r myeloid-identity-plot, fig.width=10, fig.height=5, dpi=300, message=FALSE, warning=FALSE}
+to.plot <- list()
+to.plot$Mast <- c("MS4A2","TPSAB1","CPA3","SLC24A3")
+to.plot$cDC1 <- c("CLEC9A","CLNK","CADM1","IDO1","IRF8") #,"BATF3")
+to.plot$cDC2 <- c("CLEC10A","CD1C")
+to.plot$aDCs <- c("CCR7","LAMP3","IL7R","CCL22")
+to.plot$lDCs <- c("CD1A","CD207","CDH20","IL22RA2")
+to.plot$cycling <- c("MKI67", "TOP2A", "CENPF", "CENPE")
+to.plot$TAM <- c("CD163","CSF1R","SIGLEC1")
+
+table(myeloid.v2$Lv.2.Anno)
+myeloid.v2$Lv.2.Anno <- factor(myeloid.v2$Lv.2.Anno, levels = c("Mast","cDC1","cDC2","Migratory DCs","Langerhans-like DCs","Cycling myeloid","TAMs"))
+Idents(myeloid.v2) <- "Lv.2.Anno"
+
+DefaultAssay(myeloid.v2) <- "RNA"
+DotPlot(myeloid.v2, features = to.plot, group.by = "Lv.2.Anno", col.max = 5) + RotatedAxis() +
+  scale_color_gradient2(low="darkblue", mid="white", high = "darkred") +theme(axis.text.x = element_text(angle=90))
+
+# Sup Fig4b
+myeloid.col <- c("#FC913A","#8966AA", "darkgreen","#CC527A","#D3E7A9",
+                 "#77CEEA","#8E9B97")
+myeloid.color <- setNames(object = myeloid.col, nm=c("cDC1","cDC2","Migratory DCs","Langerhans-like DCs","Cycling myeloid",
+                                                     "TAMs","Mast"))
+myeloid.v2@meta.data %>%
+  ggplot(aes(x=Patient_ID, fill=Lv.2.Anno)) + geom_bar(position = "fill") +  
+  RotatedAxis() + scale_fill_manual(values = myeloid.color) 
+```
+
+# TUMOUR ASSCOIATED MACROPHAGES - reclustered
+## Normalisation by SCTransform v2 --> CSS integration
+```{r}
+mac.only <-  subset(myeloid.v2, subset = Lv.2.Anno == "TAMs")
+
+DefaultAssay(mac.only) <- "RNA"
+Idents(mac.only) <- "Lv.2.Anno" #Lv.2.Anno = has no cDC2; Lv.2.Anno_revised has cDC2 and accurate number of lDCs
+
+colnames(mac.only[[]]) #check which columns to remove
+mac.only[["nCount_SCT"]] <- NULL
+mac.only[["nFeature_SCT"]] <- NULL
+mac.only[["seurat_clusters"]] <- NULL
+mac.only[["SCT_snn_res.0.1"]] <- NULL
+mac.only[["SCT_snn_res.0.2"]] <- NULL
+mac.only[["SCT_snn_res.0.3"]] <- NULL
+mac.only[["SCT_snn_res.0.4"]] <- NULL
+mac.only[["SCT_snn_res.0.5"]] <- NULL
+mac.only[["SCT_snn_res.0.6"]] <- NULL
+mac.only[["SCT_snn_res.0.7"]] <- NULL
+mac.only[["SCT_snn_res.0.8"]] <- NULL
+mac.only[["SCT_snn_res.0.9"]] <- NULL
+mac.only[["SCT_snn_res.1"]] <- NULL
+
+# DietSeurat
+mac.only <- DietSeurat(mac.only)
+
+#Normalisation
+mac.only <- SplitObject(mac.only, split.by = "Sample")
+mac.only <- lapply(mac.only, FUN= SCTransform, 
+                              vst.flavor="v2",
+                              assay = "RNA",
+                              variable.features.n = 3000)
+
+# Merge and set common features 
+int.features.split <- SelectIntegrationFeatures(object.list = mac.only, nfeatures = 2000)
+mac.simspec.sample.sct <- merge(x = mac.only[[1]], y = mac.only[2:length(mac.only)], 
+                                  merge.data = TRUE)
+VariableFeatures(mac.simspec.sample.sct) <- int.features.split
+
+# PCA 
+mac.simspec.sample.sct <- RunPCA(mac.simspec.sample.sct, verbose = TRUE, assay = "SCT", npcs = 30) #default npcs = 50
+
+# Run CSS 
+library(simspec)
+
+# On running simspec_CSS on SCTranformed objects https://github.com/immunogenomics/simspec_CSS/issues/41
+mac.simspec.sample.sct <-
+  simspec::cluster_sim_spectrum(
+    object = mac.simspec.sample.sct,
+    label_tag = "orig.ident", #original sample labels from pre-processing step
+    cluster_resolution = 0.4,
+    corr_method = "pearson",
+    spectrum_type = "corr_kernel"
+  )
+
+cat("Current reductions in object:", Reductions(mac.simspec.sample.sct)) # pca css
+# Current reductions in object: pca css
+
+# Reference codes from:  https://doi.org/10.17632/3kthhpw2pd 
+mac.simspec.sample.sct <- RunUMAP(mac.simspec.sample.sct, reduction = "css", 
+                                   dims = 1:ncol(Embeddings(mac.simspec.sample.sct, "css")), #294
+                                   reduction.name="umap_css", reduction.key="UMAPCSS_")
+
+mac.simspec.sample.sct <- FindNeighbors(mac.simspec.sample.sct, reduction="css", 
+                                         dims = 1:ncol(Embeddings(mac.simspec.sample.sct, "css")))
+
+mac.simspec.sample.sct <- FindClusters(mac.simspec.sample.sct, algorithm = 3,resolution = seq(0.1, 1, by = 0.1))
+
+library(clustree)
+clustree::clustree(mac.simspec.sample.sct)
+
+mac.only <- mac.simspec.sample.sct
+mac.only$seurat_clusters <- NULL
+mac.only$seurat_clusters <- mac.only$SCT_snn_res.0.2 #stable clustering at res=0.1 and 0.2
+Idents(mac.only) <- 'SCT_snn_res.0.2' 
+DefaultAssay(mac.only) <- "SCT"
+mac.only <- PrepSCTFindMarkers(mac.only)
+mac.only.markers <- FindAllMarkers(mac.only, logfc.threshold = 0.20, min.pct = 0.1, only.pos = T)
+topmarkers <- mac.only.markers %>% group_by(cluster) %>% slice_max(order_by = avg_log2FC, n=15) %>% pull(gene) %>% unique()
+DotPlot(mac.only, features = topmarkers) + RotatedAxis() + scale_colour_gradient2(low = "darkblue", mid = "white", high = "darkred")
+rm(mac.only)
+```
+
+## Annotation - mac subsets - simspec integration
+```{r}
+metadata <- mac.simspec.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Lv.2.Anno = case_when(SCT_snn_res.0.2 %in% c("0","2") ~ "TAMs_SPP1+",
+                                          SCT_snn_res.0.2 == "1" ~ "TAMs_C1QC+",
+                                          SCT_snn_res.0.2 == "3" ~ "TAMs_MHC_II",
+                                          SCT_snn_res.0.2 == "4" ~ "TAMs_OLR1+")) -> metadata
+metadata %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
+Lv.2.Anno <- metadata$Lv.2.Anno 
+names(Lv.2.Anno) <- metadata$S_CB
+mac.simspec.sample.sct <- AddMetaData(object = mac.simspec.sample.sct, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+saveRDS(mac.simspec.sample.sct, file = file.path(params$step_dir, "mac.only.simspec.RDS"))
+```
+
+```{r fig-1c-tam, fig.width=6, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+mac.col <- c('#c5b0d5', "#442883","#DD51AD",'#17becf')
+DimPlot(mac.simspec.sample.sct, group.by = 'Lv.2.Anno', cols = mac.col)
+```
+
+## Pseudobulk analysis 
+### by 4 TAMs subtypes
+```{r}
+## by macrophage subsets only
+# Ref: #Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
+mac <- mac.simspec.sample.sct
+DefaultAssay(mac) <- "RNA"
+
+# Converting cluster name into numerical
+Idents(mac) <- "Lv.2.Anno"
+mac@meta.data$Lv.2.Anno <- as.factor(mac@meta.data$Lv.2.Anno)
+print(levels(mac@meta.data$Lv.2.Anno))
+#[1] "TAMs_C1QC+"  "TAMs_MHC_II" "TAMs_OLR1+"  "TAMs_SPP1+"
+levels(mac@meta.data$Lv.2.Anno) <- 1:length(levels(mac@meta.data$Lv.2.Anno))
+print(1:length(levels(mac$Lv.2.Anno)))
+#[1] 1 2 3 4
+ClusterSub <- as.factor(mac@meta.data$Lv.2.Anno) 
+
+PatClust <- paste(mac$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+counts <- mac@assays$RNA@counts #dgCMatrix
+counts <- as.matrix(counts)
+counts <- t(rowsum(t(counts), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+ncls <- length(table(ClusterSub))
+N <- 1:ncls #focus on all clusters
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% N] 
+keep <- filterByExpr(ClstSub, min.count=3, min.total.count=10) #min=10, min.total.count=20, min.count= 5 (3694 DEGs)
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+mac.col <- c("#FFAAA6","#00A9FF","#E68613", "#7CAE00")
+plotMDS(ClstSub, pch = 15, col = mac.col[ClstSub$samples$group], main="")
+
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~ Cls + Pat)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design)
+qfit <- glmQLFit(ClstSub, design)
+
+contr <- makeContrasts(
+    Cls1 = -(Cls2+Cls3+Cls4)/3,
+    Cls2 = Cls2-(Cls3+Cls4)/3,
+    Cls3 = Cls3-(Cls2+Cls4)/3,
+    Cls4 = Cls4-(Cls2+Cls3)/3,
+    levels=design)
+
+de <- list()
+for (i in 1:ncls) de[[i]] <- glmQLFTest(qfit, contrast = contr[,i])
+
+#log-CPM
+prior.count <- 1
+ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating cpm
+
+# Remove batch effect on log-CPM
+logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
+boxplot(as.data.frame(ClstSub.cpm),main="Original")
+boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+plotMDS(logCPM_no_batch, pch = 16, col = mac.col[ClstSub$samples$group], main="Pseudo-bulk samples")
+
+## Top significant genes
+names(de) <- colnames(contr)   # label each result by its contrast
+
+library(tibble)
+res_list <- lapply(names(de), function(cn) {
+  topTags(de[[cn]], n = Inf, adjust.method = "BH")$table %>%
+    rownames_to_column("gene") %>%
+    mutate(cluster = cn)
+})
+names(res_list) <- names(de)
+res_all <- bind_rows(res_list)   # one long table with all contrasts
+mac.cellnames.pseudobulk.4subtypes <- res_all %>% mutate(cell_names = case_when(
+                                         cluster == "Cls1" ~ "TAMs_C1QC+",
+                                         cluster == "Cls2" ~ "TAMs_MHC_II", 
+                                         cluster == "Cls3" ~  "TAMs_OLR1+",
+                                         cluster == "Cls4" ~ "TAMs_SPP1+",
+                                         )) 
+# Supplementary Table 5 (originally saved as mac.cellnames.pseudobulk.4subtypes_revised_FDR.csv)
+write.csv(mac.cellnames.pseudobulk.4subtypes, file.path(params$step_dir, "SupplementaryTable5_tam_pseudobulk.csv"), row.names = F)
+```
+
+```{r ext-data-fig-6a-heatmap-tam-subsets, fig.width=10, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+# Cluster number -> subtype name
+cell.map <- c("1" = "TAMs_C1QC+", "2" = "TAMs_MHC_II",
+              "3" = "TAMs_OLR1+", "4" = "TAMs_SPP1+")
+
+anno <- data.frame(
+  Patient    = factor(ClstSub$samples$Patient),
+  cell_names = factor(cell.map[as.character(ClstSub$samples$Cluster)],
+                      levels = cell.map),
+  row.names  = colnames(ClstSub)
+)
+
+# Colours: named vectors, as pheatmap requires
+pat.levels <- levels(anno$Patient)
+pat.col <- c("#6DE8B7","#D741E1","#B4E1CF","#DEB8E0","#DD4A8C","#7F9F32","#C3EAB4" ,"#7B67E0" ,"#D8E746" ,"#CEE982" ,"#DE73DA" ,"#92A36F" ,"#67C0D8" ,"#E1A497" ,"#E76356" ,"#62A4DB", "#D79655" ,"#8966AA", "#9899E8" ,"#6EE9E7","#E4C751" ,"#E7E3DA" ,"#E08FC1" ,"#8D747A") 
+ann_colors <- list(
+  cell_names = setNames(mac.col[N],
+                        c( "TAMs_C1QC+", "TAMs_MHC_II","TAMs_OLR1+", "TAMs_SPP1+")),
+  Patient    = setNames(pat.col[seq_along(pat.levels)], pat.levels)
+)
+
+top <- 25
+top.markers <- mac.cellnames.pseudobulk.4subtypes %>%
+  filter(logFC > 0) %>%                      # up-regulated only
+  group_by(cell_names) %>%
+  arrange(FDR, PValue, .by_group = TRUE) %>% # PValue breaks ties in FDR
+  slice_head(n = top) %>%
+  ungroup()
+
+Markers <- unique(top.markers$gene)          # same as !duplicated() in your old code
+table(top.markers$cell_names)  
+
+library(pheatmap)
+mat <- t(scale(t(logCPM_no_batch[Markers, ])))
+pheatmap::pheatmap(mat, color=colorRampPalette(c("steelblue","white","darkred"))(100), border_color="NA",
+    breaks=seq(-2,2,length.out=101), cluster_cols=TRUE, scale="none", fontsize_row=8, 
+    show_colnames=FALSE, treeheight_row=70, treeheight_col=70, cutree_cols=4, #cutree_rows = 4,
+    clustering_method="ward.D2",
+    annotation_col=anno, annotation_colors=ann_colors
+    )
+```
+
+## ORA analysis
+```{r ext-data-fig-6b-ORA, fig.width=10, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+library("msigdbr")
+library("clusterProfiler")
+library("org.Hs.eg.db")
+Hallmark <- msigdbr(species = "Homo sapiens", category = "H")
+Hallmark.entrez <- dplyr::select(Hallmark, gs_name, entrez_gene)
+
+gene.symbols <- mac.cellnames.pseudobulk.4subtypes$gene %>% unique() 
+gene.entrez <- bitr(gene.symbols, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db", drop = F)
+colnames(gene.entrez)[1] <- "gene"
+markers.ann <- left_join(mac.cellnames.pseudobulk.4subtypes, gene.entrez, by = "gene")
+
+dgea.ls <- split(markers.ann, f=markers.ann$cell_names)
+
+#focus on up-regulated genes
+dgea.up.filtered <- purrr::map(dgea.ls, ~ dplyr::filter(., logFC > 1 & FDR < 0.05, !is.na(ENTREZID)))
+dgea.ls.up.entrez.id <- purrr::map(dgea.up.filtered, ~ dplyr::pull(., ENTREZID)) #pulling a gene list
+
+universe <- bitr(gene.symbols,
+                 fromType = "SYMBOL",
+                 toType = "ENTREZID",
+                 OrgDb = "org.Hs.eg.db")
+```
+
+## GO BP
+```{r fig.width=8, fig.height=8, message=FALSE}
+compare.clusters.GO.bp <- compareCluster(
+  geneClusters = dgea.ls.up.entrez.id,
+  fun = "enrichGO",
+  universe = universe$ENTREZID,
+  OrgDb = org.Hs.eg.db,
+  keyType = "ENTREZID",
+  ont = "BP",
+  pAdjustMethod = "BH",
+  readable      = TRUE)
+dotplot(compare.clusters.GO.bp, showCategory =4, font.size = 11, title = "GO BP |pseudobulk RNA assay| logFC>1 & FDR<0.05") + scale_colour_gradient(low="darkgreen", high = "grey") + RotatedAxis()
+```
+
+## Hallmark
+```{r fig.width=8, fig.height=8, message=FALSE}
+hallmark <- compareCluster(
+  geneClusters = dgea.ls.up.entrez.id, 
+  fun = "enricher",
+  minGSSize = 8,
+  maxGSSize = 500,
+  universe = universe$ENTREZID,
+  TERM2GENE = Hallmark.entrez) 
+dotplot(hallmark, showCategory = 5, title="Hallmark |pseudobulk RNA assay| logFC>1 & FDR<0.05")  + RotatedAxis() + scale_colour_gradient(low="midnightblue", high = "grey") 
+```
+
+# UCELL Score against known TAM signature
+```{r ext-data-fig-6c-Ucellscore, fig.width=7, fig.height=7, dpi=300, message=FALSE, warning=FALSE}
+TAMsign <- list()
+#https://doi.org/10.1016/j.cell.2019.05.054 Jaitin et al., 
+TAMsign$LAM <- c("CTSD","APOC1","LIPA","APOE","FABP5","PLA2G7","CHIT1","SPP1","FABP4","CD36","LPL")
+
+#https://doi.org/10.1016/j.it.2022.04.008 7 TAM subsets identified in almost all cancer types
+TAMsign$angiogenesis.Z <- c("VEGFA","VCAN","FCN1","THBS1","HIF1A","INHBA","AREG","PPARG","TIMP1","SERPINB2","OLR1")
+
+#https://doi.org/10.1016/j.cell.2021.01.010 Cheng et al.,
+TAMsign$phagocytosis <- c("MRC1","CD163","MERTK","C1QB") 
+TAMsign$Angiogenesis <- c("CCND2","CCNE1","CD44","CXCR4","E2F3","EDN1","EZH2","FGF18","FGFR1","FYN","HEY1","ITGAV","JAG1","JAG2", "NOTCH1","PDGFA","PTK2","STC1","TNFAIP6","TYMP","VAV2","VCAN","VEGFA","MMP9","SPP1")
+TAMsign$M1 <- c("IL23","TNF","CXCL9","CXCL10","CXCL11","CD86","IL1A","IL1B","IL6","CCL5","IRF5","IRF1","CD40","IDO1","KYNU","CCR7")
+TAMsign$M2 <- c("IL4R","CCL4","CCL13","CCL20","CCL17","CCL18","CCL22","CCL24","LYVE1","VEGFA","VEGFB","VEGFC","VEGFD","EGF","CTSA","CTSB","CTSC","CTSD","TGFB1","TGFB2","TGFB3","MMP14","MMP19","MMP9","CLEC7A","WNT7B","FASL","TNFSF12","TNFSF8","CD276","VTCN1","MSR1","FN1","IRF4")
+
+## IL1B+ macrophages (https://doi.org/10.1038/s41586-023-06685-2)
+TAMsign$IL1B.sig <- c("IL1B","IER3","SOD2","IL1A","CXCL2","CXCL3","PTGS2","TNF","IL6","TRAF1","BCL2A1","GPR84","CXCL1","CLEC4E","GCH1") #"THBS1",
+TAMsign$MKI67.sig <- c("MKI67","PCLAF","TOP2A","TK1","TPX2","UBE2C","BIRC5","CDK1","CENPF","RRM2","KNL1","NUSAP1","STMN1","MCM7","SMC2","ATAD2")
+TAMsign$FOLR2.sig <- c("SELENOP","FOLR2","F13A1","SLCO2B1","PLTP","STAB1","LYVE1","MRC1","GPR34","TMEM176B","MS4A7","IGF1","AP2A2","TMEM176A","GAS6","MAF","SLC9A9","IGFBP4","NAAA")
+TAMsign$SPP1.sig <- c("CTSD","GPNMB","LGALS3","CD63","VAT1","SPP1","FABP5","LPL","PLPP3","CD36","PLD3","ERO1A","ANPEP","ATP6V0D2","INHBA")
+
+# UCell Scoring
+library(UCell)
+DefaultAssay(mac.simspec.sample.sct) <- "RNA"
+Idents(mac.simspec.sample.sct) <- "Lv.2.Anno"
+mac.simspec.sample.sct <- AddModuleScore_UCell(mac.simspec.sample.sct, features = TAMsign,
+                                 assay="RNA", slot = "data")
+TAMsign.names <- paste0(names(TAMsign),"_UCell")
+
+FeaturePlot(mac.simspec.sample.sct, 
+            features = TAMsign.names, 
+            max.cutoff = "q99", # q## indicates quantile 
+            ncol = 2,
+            cols = c("lightgrey", "darkred"),
+            keep.scale = "all") # to apply the same scale
+
+# Average expression from DotPlot
+d <- DotPlot(mac.simspec.sample.sct, features = TAMsign.names, scale = F)
+ddata <- as.data.frame(d[["data"]])
+df_spread <- tidyr::spread(ddata[,c(1,3,4)], id, avg.exp) # use non-scale to show 
+df_spread <- na.omit(df_spread)
+rownames(df_spread) <- df_spread[,1]
+df_spread <- df_spread[,-1]
+mat<- as.matrix(df_spread)
+sum(is.infinite(mat)) # to test that there are no infinite values
+sum(is.na(mat))
+library(viridis)
+library(pheatmap)
+phet <- pheatmap(mat, 
+                 #color = colorRampPalette(c("white","darkred"))(100), 
+                 color = mako(n=15),
+                 fontsize = 15,
+                 cellheight = 15, cluster_cols = T, cluster_rows = T,
+                 border_color = F, 
+                 fontsize_row = 12, cutree_cols = 1, cutree_rows = 3,
+                 breaks=seq(0, 0.6,length.out=15),
+                 cellwidth = 15, scale = "none")
+```
+
+```{r}
+sessionInfo()
+```
+

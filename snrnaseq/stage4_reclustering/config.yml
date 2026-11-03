@@ -1,0 +1,9 @@
+# Container paths. Mount your data to these locations (see README.md).
+# Input: the non-malignant object with Lv.1.Anno and Lv.2.Anno, from Stage 3
+nonmalignant_object: /data/input/sts.nonmalignant.RDS
+# Input to Plotting.Rmd: the annotated integrated object from Stage 2
+integrated_object: /data/input/sts.simspec_css.sample.sct.RDS
+# Input to Plotting.Rmd: endothelial subsets (cell_names). The code that makes this object is not in the repository yet
+endothelial_object: /data/input/endo.RDS
+sample_map_csv: /pipeline/shared/sample_map.csv   # shared/sample_map.csv, included in the image
+output_dir: /output

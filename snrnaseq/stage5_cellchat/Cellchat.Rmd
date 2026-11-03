@@ -1,0 +1,156 @@
+---
+title: "Cellchat analysis"
+author: "Mai La"
+date: "2026-11-02"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev=c('png', 'pdf'))
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage5.R so that params are passed
+```
+
+# CELLCHAT - Lv.1.Anno
+```{r}
+library(CellChat) # need dplyr 1.2.1
+library(patchwork)
+library(Seurat)
+options(stringsAsFactors = FALSE)
+options(future.globals.maxSize = 8000 * 1024^2)
+# CellChat requires two user inputs: one is the gene expression data of cells, and the other is the user assigned cell labels.
+# https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html
+```
+
+## Create input files 
+Ref: https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html#infer-the-cell-cell-communication-at-a-signaling-pathway-level
+```{r}
+sts.simspec_css.sample.sct <- readRDS(cfg$final_object)
+DefaultAssay(sts.simspec_css.sample.sct) <- "RNA"
+Idents(sts.simspec_css.sample.sct) <- "Lv.1.Anno"
+sts.simspec_css.sample.sct <- subset(sts.simspec_css.sample.sct, subset = Lv.1.Anno %in% c("Stromal (rare subtypes)", "unassigned","PDA_OLGC"), invert=T)
+sts.seurat <- subset(sts.simspec_css.sample.sct, downsample=500) # downsample parameter here means 500 cells per idents
+```
+
+## Creating CellChat object
+```{r}
+cellchat <- createCellChat(object = sts.seurat, group.by = "Lv.1.Anno", assay = "RNA") 
+cellchat@DB <- CellChatDB.human
+
+# Preprocessing the expression data for cell-cell communication
+cellchat <- subsetData(cellchat, features = NULL) 
+future::plan("multisession", workers = 20) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.15) # produce fewer interactions but still detecting strong interaction, trim=0.15 mean 15% of cell express
+```
+
+## TO EXAMINE PVR in all cells in PDAC
+### PVR signalling in PDAC - also driven by Tuft
+```{r fig3e-pvr, fig.width=7, fig.height=7, message=FALSE}
+pathways.show <- c("PVR")
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+```
+
+## Unbiased signalling network analysis
+```{r fig3f-pvr-signalling-network, fig.width=7, fig.height=3, message=FALSE}
+ptm = Sys.time()
+cellchat <- computeCommunProbPathway(cellchat)
+# Compute the network centrality scores
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP")
+
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 15, height = 2.5, font.size =6)
+saveRDS(cellchat, file = file.path(params$step_dir, "cellchat_lv1.RDS"))
+```
+
+# CELLCHAT - Lv.2.Anno
+```{r}
+DefaultAssay(sts.simspec_css.sample.sct) <- "RNA"
+Idents(sts.simspec_css.sample.sct) <- "Lv.2.Anno"
+sts.simspec_css.sample.sct <- subset(sts.simspec_css.sample.sct, subset = Lv.2.Anno %in% c("unassigned","PDA_OLGC"), invert=T)
+sts.seurat <- subset(sts.simspec_css.sample.sct, downsample=500) # downsample parameter here means 500 cells per idents
+```
+
+## Creating CellChat object
+```{r}
+cellchat <- createCellChat(object = sts.seurat, group.by = "Lv.2.Anno", assay = "RNA")
+cellchat@DB <- CellChatDB.human
+showDatabaseCategory(cellchat@DB)
+
+# Preprocessing
+cellchat <- subsetData(cellchat, features = NULL) 
+future::plan("multisession", workers = 10) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+```
+
+## Infer cell-cell communication network
+https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html#infer-the-cell-cell-communication-at-a-signaling-pathway-level
+```{r}
+cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.15)
+cellchat <- computeCommunProbPathway(cellchat)
+
+cellchat <- aggregateNet(cellchat)
+groupSize <- as.numeric(table(cellchat@idents))
+saveRDS(cellchat, file = file.path(params$step_dir, "cellchat_lv2.RDS"))
+```
+
+### Tumour vs TAMs_SPP1_OLR1
+```{r fig4g-LR-analysis, fig.width=6, fig.height=6, message=FALSE} 
+df.net <- subsetCommunication(cellchat, sources.use = c("TAMs_SPP1+","TAMs_OLR1+"), targets.use = c("PDAC")) 
+df.net <- df.net %>% dplyr::filter(!grepl("COLLAGEN|LAMININ|SEMA3|SEMA4", pathway_name, ignore.case=TRUE))
+
+netVisual_bubble(cellchat, sources.use = c("TAMs_SPP1+","TAMs_OLR1+"), targets.use = "PDAC",
+                 signaling = c("TGFb","ACTIVIN","EGF","SPP1","GRN","CADM","APP"),
+                 remove.isolate = FALSE)
+```
+
+### CAFs_NRT_TAMsC1QC_MHCII_Lymphoids
+```{r fig5f-LR-analysis-cd80-cd86, fig.width=6, fig.height=6, message=FALSE}
+NRT <- subsetCellChat(
+  cellchat,
+  cells.use = NULL,
+  idents.use = c("CAFs_NRT","TAMs_C1QC+","CD3+ T", "CD4+ T:IL7R+","Schwann","TAMs_MHC_II","Migratory DCs","cDC1", "cDC2", "CD8+ T:GZMK+"),
+  group.by = NULL,
+  invert = FALSE,
+  thresh = 0.05
+)
+
+df <- subsetCommunication(NRT)
+df <- df %>% dplyr::filter(!grepl("COLLAGEN|LAMININ|SEMA3|SEMA4", pathway_name, ignore.case=TRUE))
+
+pathways.show = "CD80"
+netVisual_individual(NRT, signaling = pathways.show, layout = "circle") 
+
+pathways.show = "CD86"
+netVisual_individual(NRT, signaling = pathways.show, layout = "circle")
+```
+
+### TLS 
+```{r fig6g-LR-analysis-ccl19-cxcl12, fig.width=6, fig.height=6, message=FALSE}
+TLS <- subsetCellChat(
+  cellchat,
+  cells.use = NULL,
+  idents.use = c("B","FRCs","FDCs","CD3+ T", "CD4+ T:IL7R+","Migratory DCs","cDC1", "cDC2", "CD8+ T:GZMK+","CD8+ T:ITGAE+","TAMs_C1QC+","Schwann","Endothelial","CAFs_NRT","LECs"),
+  group.by = NULL,
+  invert = FALSE,
+  thresh = 0.05
+)
+
+df <- subsetCommunication(TLS)
+df <- df %>% dplyr::filter(!grepl("COLLAGEN|LAMININ|SEMA3|SEMA4", pathway_name, ignore.case=TRUE))
+
+pathways.show = c("CCL","CXCL")
+netVisual_individual(TLS, signaling = pathways.show, layout = "circle")
+```
+
+```{r}
+sessionInfo()
+```
+

@@ -1,0 +1,4 @@
+# Container paths. Mount your data to these locations (see README.md).
+# Input: the final annotated object saved by Stage 4 (Plotting.Rmd)
+final_object: /data/input/sts.simspec_css.sample.sct_final.RDS
+output_dir: /output

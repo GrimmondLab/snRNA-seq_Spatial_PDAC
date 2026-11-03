@@ -1,0 +1,689 @@
+---
+title: "STS_CAFs_TLSs_stromal.Rmd"
+author: "Mai La"
+date: "2024-08-14"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+# Prepare environment
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, dev=c('png', 'pdf'),
+                       echo=FALSE, warning=FALSE, message=FALSE)
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+```
+
+# Packages
+```{r}
+library(Seurat)
+library(schex)
+library(ggplot2)
+library(shiny)
+library(dplyr)
+library(patchwork)
+library(rmarkdown)
+library(openxlsx)
+library(here)
+library(SingleR)
+```
+
+# Load sts.non.malignant object
+```{r}
+# this object was generated based on re-running all the QC, sample-based analysis, non-malignant components were processed using non-integrative approach 
+# this approach define small and rare cell classes that would be otherwise clustered with CAFs, eg. FRCs, Schwann and FDCs
+sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+```
+
+# STROMAL CLASSES
+```{r}
+stromal <- sts.non.malignant %>% subset(Lv.2.Anno %in% c("CAFs","Pericytes", "FRCs", "Schwann","FDCs"))
+```
+
+## DE analysis by pseudobulk, comparing different class of stromal fibroblasts
+## Stromal subsets
+```{r echo=TRUE, include=FALSE}
+#Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
+DefaultAssay(stromal) <- "RNA"
+
+# Converting cluster name into numerical
+Idents(stromal) <- "Lv.2.Anno"
+stromal@meta.data$Lv.2.Anno <- as.factor(stromal@meta.data$Lv.2.Anno)
+print(levels(stromal@meta.data$Lv.2.Anno))
+#[1] "CAFs"      "FDCs"      "FRCs"      "Pericytes" "Schwann"  
+
+levels(stromal@meta.data$Lv.2.Anno) <- 1:length(levels(stromal@meta.data$Lv.2.Anno))
+print(1:length(levels(stromal$Lv.2.Anno)))
+#[1] 1 2 3 4 5
+
+ClusterSub <- as.factor(stromal@meta.data$Lv.2.Anno) 
+PatClust <- paste(stromal$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+counts <- stromal@assays$RNA@counts #dgCMatrix
+counts <- as.matrix(counts)
+counts <- t(rowsum(t(counts), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+ncls <- length(table(ClusterSub))
+N <- 1:ncls #focus on all clusters
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% N] 
+keep <- filterByExpr(ClstSub, min.count=5, min.total.count=10) #min=10, min.total.count=20
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+# The original colours (stromal.color, stromal.col) were defined outside this file; these two MDS plots are checks only
+stromal.col <- RColorBrewer::brewer.pal(5, "Set1")
+plotMDS(ClstSub, pch = 16, col = stromal.col[ClstSub$samples$group], main="")
+
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~ Cls + Pat)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design)
+qfit <- glmQLFit(ClstSub, design)
+
+contr <- makeContrasts(
+    Cls1 = -(Cls2+Cls3+Cls4+Cls5)/4,
+    Cls2 = Cls2-(Cls3+Cls4+Cls5)/4,
+    Cls3 = Cls3-(Cls2+Cls4+Cls5)/4,
+    Cls4 = Cls4-(Cls2+Cls3+Cls5)/4,
+    Cls5 = Cls5-(Cls2+Cls3+Cls4)/4,
+    levels=design)
+
+de <- list()
+for (i in 1:ncls) de[[i]] <- glmQLFTest(qfit, contrast = contr[,i])
+
+#log-CPM
+prior.count <- 1
+ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating cpm
+
+# Remove batch effect on log-CPM
+# Ref: https://rdrr.io/github/richierocks/limma2/man/removeBatchEffect.html
+logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch = Pat, group = Cls) # following example on ?removeBatchEffect in R
+
+boxplot(as.data.frame(ClstSub.cpm),main="Original")
+boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+plotMDS(logCPM_no_batch, pch = 16, col = stromal.col[ClstSub$samples$group], main="Pseudo-bulk samples")
+
+library(tibble)
+names(de) <- colnames(contr)   # Cls1 ... Cls5
+res_list <- lapply(names(de), function(cn) {
+  topTags(de[[cn]], n = Inf, adjust.method = "BH")$table %>%
+    rownames_to_column("gene") %>%
+    mutate(cluster = cn)
+})
+names(res_list) <- names(de)
+all.stromal.pseudobulk <- bind_rows(res_list)
+all.stromal.pseudobulk %>% mutate(cell_names = case_when(cluster == "Cls1" ~ "CAFs",
+                                                     cluster == "Cls2" ~ "FDCs",
+                                                     cluster == "Cls3" ~ "FRCs",
+                                                     cluster == "Cls4" ~ "Pericytes",
+                                                     cluster == "Cls5" ~ "Schwann")) -> all.stromal.pseudobulk
+# Supplementary Table 6 (originally saved as stromal.subsets.pseudobulk_revisedFDR.csv)
+write.csv(all.stromal.pseudobulk, file = file.path(params$step_dir, "SupplementaryTable6_stromal_pseudobulk.csv"), row.names = F)
+```
+
+# CAFS - reclustering
+Simspec integrated analysis on CAFs only to define CAF subsets; SCTransform on individual samples
+```{r}
+sample.high.fib <- as.data.frame(sts.non.malignant@meta.data) %>%
+                                 group_by(Sample) %>% 
+                                 dplyr::count(Lv.2.Anno) %>% 
+                                 dplyr::filter(Lv.2.Anno == "CAFs", n > 30) %>% 
+                                 pull(Sample) %>% 
+                                 as.character()
+fib.only <- sts.non.malignant %>% subset(subset = Sample %in% sample.high.fib & 
+                             Lv.2.Anno == "CAFs") # to make sure our population of CAFs is as pure as possible
+
+fib.only <- fib.only %>% subset(subset = cell_class == "CAFs" & simspec_cell_class == "CAFs") # this extra step to ensure only reclustering fibroblasts, not lymphoid stromal or other fibroblast-like cells
+
+# DietSeurat
+DefaultAssay(fib.only) <- "RNA"
+fib.only <- DietSeurat(fib.only, assays = "RNA", data = TRUE, counts = TRUE)
+
+# to remove columns & because we need to split individual samples and redo the SCT
+colnames(fib.only[[]]) #check which columns to remove
+fib.only[["nCount_SCT"]] <- NULL
+fib.only[["nFeature_SCT"]] <- NULL
+fib.only[["seurat_clusters"]] <- NULL
+#fib.only[["SCT_snn_res.0.5"]] <- NULL
+#fib.only[["SCT_snn_res.0.6"]] <- NULL
+fib.only[["SCT_snn_res.0.7"]] <- NULL
+#fib.only[["SCT_snn_res.0.8"]] <- NULL
+
+#Removing outliers (rare cancer types)
+fib.only <- subset(fib.only, subset = Sample %in% c("1959","2185"), invert = T)
+#fib.only$Sample <- droplevels(fib.only$Sample)
+
+# SCTRANFORM
+fib.only <- SplitObject(fib.only, split.by = "Sample") 
+fib.only <- lapply(fib.only, FUN= SCTransform, vst.flavor="v2", assay = "RNA",
+              variable.features.n = 3000, # default, have seen range from 2000-5000
+              )
+
+# SIMSPEC INTEGRATION
+int.features.split <- SelectIntegrationFeatures(object.list = fib.only, nfeatures = 2000)
+fib.only.simspec_css.sample.sct <- merge(x = fib.only[[1]], y = fib.only[2:length(fib.only)], 
+                                  merge.data = TRUE)
+
+VariableFeatures(fib.only.simspec_css.sample.sct) <- int.features.split
+
+# PCA 
+fib.only.simspec_css.sample.sct <- RunPCA(fib.only.simspec_css.sample.sct, verbose = TRUE, assay = "SCT",
+                                  npcs = 30) #default npcs = 50
+
+# Run CSS ----
+library(simspec)
+
+# On running simspec_CSS on SCTranformed objects https://github.com/immunogenomics/simspec_CSS/issues/41
+fib.only.simspec_css.sample.sct <-
+  simspec::cluster_sim_spectrum(
+    object = fib.only.simspec_css.sample.sct,
+    label_tag = "orig.ident", #original sample labels from pre-processing step
+    cluster_resolution = 0.4,
+    corr_method = "pearson",
+    spectrum_type = "corr_kernel"
+  )
+
+cat("Current reductions in object:", Reductions(fib.only.simspec_css.sample.sct)) # pca css
+# Current reductions in object: pca css
+
+# Reference codes from:  https://doi.org/10.17632/3kthhpw2pd 
+fib.only.simspec_css.sample.sct <- RunUMAP(fib.only.simspec_css.sample.sct, reduction = "css", 
+                                   dims = 1:ncol(Embeddings(fib.only.simspec_css.sample.sct, "css")), #294
+                                   reduction.name="umap_css", reduction.key="UMAPCSS_")
+
+fib.only.simspec_css.sample.sct <- FindNeighbors(fib.only.simspec_css.sample.sct, reduction="css", 
+                                         dims = 1:ncol(Embeddings(fib.only.simspec_css.sample.sct, "css")))
+
+#fib.only.simspec_css.sample.sct <- FindClusters(fib.only.simspec_css.sample.sct, algorithm = 3,resolution = seq(0.1, 1, by = 0.1))
+fib.only.simspec_css.sample.sct <- FindClusters(fib.only.simspec_css.sample.sct, algorithm = 3,resolution = 0.1)
+
+# clustree needs at least two resolutions; only 0.1 is run here (the wider sweep above is commented out)
+#library(clustree)
+#clustree::clustree(fib.only.simspec_css.sample.sct)
+
+DimPlot(fib.only.simspec_css.sample.sct, group.by = "SCT_snn_res.0.1", label = T) + DimPlot(fib.only.simspec_css.sample.sct, group.by = "Lv.2.Anno",label = T)
+
+Idents(fib.only.simspec_css.sample.sct) <- "SCT_snn_res.0.1" 
+saveRDS(fib.only.simspec_css.sample.sct, file = file.path(params$step_dir, "fib.only.simspec.RDS"))
+```
+
+## DE analysis 
+```{r}
+## Assign CAF clustering
+fib.only.simspec_css.sample.sct$seurat_clusters <- NULL
+fib.only.simspec_css.sample.sct$seurat_clusters <- fib.only.simspec_css.sample.sct$SCT_snn_res.0.1
+
+metadata <- fib.only.simspec_css.sample.sct@meta.data %>% as.data.frame() 
+metadata$S_CB <- rownames(metadata)
+metadata %>% mutate(Lv.2.Anno_subset = case_when(SCT_snn_res.0.1 %in% c("0","2") ~ "CAFs_MYO", 
+                                          SCT_snn_res.0.1 == "4" ~ "Vascular smooth muscle", 
+                                          SCT_snn_res.0.1 == "3" ~ "CAFs_CXCL14+",
+                                          SCT_snn_res.0.1 == "1" ~ "CAFs_NRT", 
+                                          )) -> metadata
+metadata %>% group_by(SCT_snn_res.0.1) %>% dplyr::count(Lv.2.Anno_subset)
+Lv.2.Anno_subset <- metadata$Lv.2.Anno_subset 
+names(Lv.2.Anno_subset) <- metadata$S_CB
+fib.only.simspec_css.sample.sct <- AddMetaData(fib.only.simspec_css.sample.sct, metadata = Lv.2.Anno_subset, col.name = "Lv.2.Anno_subset")
+saveRDS(fib.only.simspec_css.sample.sct, file = file.path(params$step_dir, "fib.only.simspec.RDS"))
+
+#DE analysis on these CAF subsets 
+fib <- fib.only.simspec_css.sample.sct
+DefaultAssay(fib) <- "RNA"
+
+# Converting cluster name into numerical
+Idents(fib) <- "Lv.2.Anno_subset"
+fib@meta.data$Lv.2.Anno_subset <- as.factor(fib@meta.data$Lv.2.Anno_subset)
+print(levels(fib@meta.data$Lv.2.Anno_subset))
+#[1] "CAFs_CXCL14+"           "CAFs_MYO"               "CAFs_NRT"               "Vascular smooth muscle"
+
+levels(fib@meta.data$Lv.2.Anno_subset) <- 1:length(levels(fib))
+print(1:length(levels(fib$Lv.2.Anno_subset)))
+#[1] 1 2 3 4
+
+ClusterSub <- as.factor(fib@meta.data$Lv.2.Anno_subset) 
+PatClust <- paste(fib$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+count <- fib@assays$RNA@counts #dgCMatrix
+count <- as.matrix(count)
+counts <- t(rowsum(t(count), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+ncls <- length(table(ClusterSub))
+N <- 1:ncls #focus on all clusters
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% N] 
+keep <- filterByExpr(ClstSub, min.count=5, min.total.count=10) #min=10, min.total.count=20
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+fib.col <- c("#DA9776","#A4DBCC","#B4A4D2","#ABE171")
+plotMDS(ClstSub, pch = 16, col = fib.col[ClstSub$samples$group], main="")
+
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~ Cls + Pat)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design)
+qfit <- glmQLFit(ClstSub, design)
+
+contr <- makeContrasts(
+    Cls1 = -(Cls2+Cls3+Cls4)/3,
+    Cls2 = Cls2-(Cls3+Cls4)/3,
+    Cls3 = Cls3-(Cls2+Cls4)/3,
+    Cls4 = Cls4-(Cls2+Cls3)/3,
+    levels=design)
+
+de <- list()
+for (i in 1:ncls) de[[i]] <- glmQLFTest(qfit, contrast = contr[,i])
+
+#log-CPM
+prior.count <- 1
+ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating cpm
+
+# Remove batch effect on log-CPM
+logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
+plotMDS(logCPM_no_batch, pch = 16, col = fib.col[ClstSub$samples$group], main="")
+
+library(tibble)
+names(de) <- colnames(contr)   # Cls1 ... Cls4
+res_list <- lapply(names(de), function(cn) {
+  topTags(de[[cn]], n = Inf, adjust.method = "BH")$table %>%
+    rownames_to_column("gene") %>%
+    mutate(cluster = cn)
+})
+names(res_list) <- names(de)
+fib.subset.simspec.pseudobulk <- bind_rows(res_list)
+
+fib.subset.simspec.pseudobulk %>% mutate(cell_names = case_when(cluster == "Cls1" ~ "CAFs_CXCL14+",
+                                                                cluster == "Cls2" ~ "CAFs_MYO",
+                                                                cluster == "Cls3" ~ "CAFs_NRT",
+                                                                cluster == "Cls4" ~ "Vascular smooth muscle"
+                                                        )) -> fib.subset.simspec.pseudobulk
+
+# Supplementary Table 4 (originally saved as fib.subset.simspec_condense.pseudobulk_revisedFDR.csv)
+write.csv(fib.subset.simspec.pseudobulk, file = file.path(params$step_dir, "SupplementaryTable4_caf_pseudobulk.csv"), row.names = F)
+```
+
+# UCELL SCORING against published CAF programs in PDAC
+### Baron et al., 2016 - stellate programs
+```{r ext-data-fig-5a-Baron, fig.width=10, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+Baron.fib.markers <- list() #http://dx.doi.org/10.1016/j.cels.2016.08.011
+Baron.fib.markers$quiescent.stellates <- c("PDGFRB","SPARC","GJA4","CSPG4","EDNRB","RGS5","COL4A1")
+Baron.fib.markers$activated.stellates <- c("COL1A1","FN1","THY1","LUM","TIMP1","MMP2")
+Baron.fib.markers$immune.activated.stellates <- c("CXCL8","INHBA","FGF2","IL6","CSF3", "CXCL3","IL33")
+Baron.fib.markers$Schwann.cells <-c("SOX10", "S100B" ,"CRYAB","NGFR","PLP1","PMP22")
+library(UCell)
+DefaultAssay(fib.only.simspec_css.sample.sct) <- "RNA"
+fib.only.simspec_css.sample.sct <- AddModuleScore_UCell(fib.only.simspec_css.sample.sct,
+                                 features = Baron.fib.markers,
+                                 assay="RNA", slot = "data")
+fib.Baron.markers.names <- paste0(names(Baron.fib.markers),"_UCell")
+
+FeaturePlot(fib.only.simspec_css.sample.sct, 
+            features = fib.Baron.markers.names, 
+            max.cutoff = "q99", # q## indicates quantile 
+            ncol = 2,
+            cols = c("lightgrey", "darkred"),
+            keep.scale = "all") # to apply the same scale
+``` 
+
+### Elyada et al., 2019 - iCAFs, myCAFs and apCAFs program
+```{r ext-data-fig-5a-Elyada, fig.width=10, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+DefaultAssay(fib.only.simspec_css.sample.sct) <- "RNA"
+Elyada <- list() #doi: 10.1158/2159-8290.CD-19-094
+Elyada$iCAFs <- c("PLA2G2A","MCL1","S100A10","S100A4","LMNA","UAP1","DPT","ABL2","EFEMP1","TNFAIP6","FBLN2","CCDC80","FSTL1","PTX3","UGDH","IL8","CXCL1","CXCL2","ADH1B","CPE")
+Elyada$myCAFs <- c("HOPX","IGFBP7","COL10A1","INHBA","CALD1","BGN","CTHRC1","TPM2","ACTA2","TAGLN","POSTN","TPM1","GRP","CST1","MYL9","MMP11")
+Elyada$apCAFs <- c("CD74","SAA3","SLPI", "HLA-DQA1", "HLA-DRA","HLA-DPA1")
+
+fib.only.simspec_css.sample.sct <- AddModuleScore_UCell(fib.only.simspec_css.sample.sct, features= Elyada, 
+                                 assay= "RNA", #always use RNA even on the integrated data
+                                 slot="data")
+Elyada.fib.markers.names <- paste0(names(Elyada),"_UCell")
+
+FeaturePlot(fib.only.simspec_css.sample.sct, 
+            features = Elyada.fib.markers.names, 
+            max.cutoff = "q99", # q## indicates quantile 
+            ncol = 2,
+            cols = c("lightgrey", "darkred"),
+            keep.scale = "all") # to apply the same scale
+```
+
+### Hwang et al., 2022 - NRT program
+```{r ext-data-fig-5a-Hwang, fig.width=10, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+Hwang.fib.markers <- list() #https://www.nature.com/articles/s41588-022-01134-8 \
+Hwang.fib.markers$MYO <-c("ADAMTS12","CASC15","POSTN","NTM","LINC01429","NREP","PDGFC","LEF1","NUAK1","COL1A1","KIF26B")
+Hwang.fib.markers$NRT <- c("SCN7A","NFIA","C7","PID1","C1orf21","MAMDC2","CLMN","PREX2","MTUS1","ADAMTS9-AS2","KCNIP1","LAMA2")
+Hwang.fib.markers$ADH.F <- c("NFATC2","EMP1","MIR222HG","SAMD4A","LMNA","GPRC5A","MMP19","MEDAG","NFATC1","TSC22D2") 
+Hwang.fib.markers$IMM <- c("SLC22A3", "XKR4","ANKRD29","SLCO2B1","LAMA3","ABCC3","LAMC2","GRIN2B","RBM47","NOL4")
+
+fib.only.simspec_css.sample.sct <- AddModuleScore_UCell(fib.only.simspec_css.sample.sct,
+                                 features = Hwang.fib.markers,
+                                 assay="RNA", slot = "data")
+fib.Hwang.markers.names <- paste0(names(Hwang.fib.markers),"_UCell") 
+
+FeaturePlot(fib.only.simspec_css.sample.sct, 
+            features = fib.Hwang.markers.names, 
+            max.cutoff = "q99", # q## indicates quantile 
+            ncol = 2,
+            cols = c("lightgrey", "darkred"),
+            keep.scale = "all") # to apply the same scale
+saveRDS(fib.only.simspec_css.sample.sct, file = file.path(params$step_dir, "fib.only.simspec.RDS"))
+```
+
+## Other plotting
+```{r ext-data-fig-5b, fig.width=4, fig.height=7, dpi=300, message=FALSE, warning=FALSE}
+FeaturePlot(fib.only.simspec_css.sample.sct, features = c("PDGFRA","CXCL14","COL11A1","POSTN","C7","SCN7A"), 
+            ncol = 2, order = TRUE)
+```
+
+```{r ext-data-fig-1c-caf, fig.width=5, fig.height=5, dpi=300, message=FALSE, warning=FALSE}
+caf <- fib.only.simspec_css.sample.sct %>% subset(Lv.2.Anno_subset == "Vascular smooth muscle", invert=T)
+caf.col <- c('#FFE5A7',"#B4584D",'#FFB0A7') 
+caf.color <- setNames(object = caf.col, nm=c("CAFs_MYO", "CAFs_NRT","CAFs_CXCL14+")) 
+DimPlot(caf, cols = caf.color)
+```
+
+### IL6+ iCAF signature across fibroblast-like cells
+```{r ext-data-fig-8e-icaf-signature, fig.width=12, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+# Tuvenson's CAF program
+iCAFs.deg <- c("C3", "DUSP1", "FBLN1", "LMNA", "CLU","CCDC80","MYC", "EFEMP1","HAS1","NR4A1","CFD","ANXA1","CXCL12","FGF7","KLF4", "EMP1","GPRC5A",
+           "SRPX", "MT2A","MEDAG","IGF1","MGST1","MCL1","CEBPD","S100A10","UAP1","TNXB","CEBPB","PNRC1","SOCS3","PTGDS","FOSB","NFKBIA","CXCL2","THBS1","CCL2", "OGN","GSN","DPT","PLA2G2A","NAMPT","ITM2A","RGCC","JUND","NNMT","ZFP36","PIM1","CPE","GFPT2","SOD2","KDM6B","FSTL1","FBLN2","NR4A3","MFAP5","ABL2","SGK1","CILP","UGDH","FBLN5","ADAMTS1","ADH1B","WISP2","GPX3","S100A4","IL6","HAS2","PLAC9","IGFBP6","FBN1","BDKRB1","TPPP3","RASD1","MT1A","CXCL14","PI16","APOE","IL8","ARC","PTX3","TNFAIP6","MT1E","MT1X","CXCL1") # these are all the upDEGs
+
+myo <- fib.only.simspec_css.sample.sct@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "CAFs_MYO") %>% pull(Cell_Ids) %>% as.character()
+cxcl <-  fib.only.simspec_css.sample.sct@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "CAFs_CXCL14+") %>% pull(Cell_Ids) %>% as.character()
+nrt <- fib.only.simspec_css.sample.sct@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "CAFs_NRT") %>% pull(Cell_Ids) %>% as.character()
+vsm <- fib.only.simspec_css.sample.sct@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "Vascular smooth muscle") %>% pull(Cell_Ids) %>% as.character()
+
+stromal.subsets <- sts.non.malignant %>% subset(subset = Lv.2.Anno %in% c("CAFs","FDCs","FRCs","Pericytes","Schwann"))
+metadata <- stromal.subsets@meta.data %>% as.data.frame()
+metadata$S_CB <- rownames(metadata)
+metadata %>% mutate(Lv.3.Anno = case_when(Lv.2.Anno == "FDCs" ~ "FDCs",
+                                          Lv.2.Anno == "FRCs" ~ "FRCs",
+                                          Lv.2.Anno == "Pericytes" ~ "Pericytes",
+                                          Lv.2.Anno == "Schwann" ~ "Schwann", 
+                                          Cell_Ids %in% nrt ~ "CAFs_NRT",
+                                          Cell_Ids %in% vsm ~ "Vascular smooth muscle",
+                                          Cell_Ids %in% cxcl ~ "CAFs_CXCL14+",
+                                          Cell_Ids %in% myo ~ "CAFs_MYO",
+                                          TRUE ~ "unassigned")) -> metadata
+metadata %>% group_by(Lv.2.Anno) %>% dplyr::count(Lv.3.Anno)
+Lv.3.Anno <- metadata$Lv.3.Anno 
+names(Lv.3.Anno) <- metadata$S_CB
+stromal.subsets <- AddMetaData(stromal.subsets, metadata = Lv.3.Anno, col.name = "Lv.3.Anno")
+saveRDS(stromal.subsets, file = file.path(params$step_dir, "stromal.subsets.RDS"))
+
+DefaultAssay(stromal.subsets) <- "RNA"
+stromal.subsets <- subset(stromal.subsets, subset = Lv.3.Anno == "unassigned", invert = T)
+d <- DotPlot(stromal.subsets, group.by = "Lv.3.Anno", features = iCAFs.deg, col.min = -2, col.max = 10) + RotatedAxis()
+
+ddata <- as.data.frame(d[["data"]])
+
+ddata <- ddata %>% filter(!is.na(features.plot)) # removing rows with NA
+df_spread <- tidyr::spread(ddata[,c(3,4,5)], id, avg.exp.scaled)
+rownames(df_spread) <- df_spread[,1]
+df_spread <- df_spread[,-1]
+mat <- as.matrix(df_spread)
+
+sum(is.infinite(mat)) # to test that there are no infinite values
+sum(is.na(mat))
+
+library(pheatmap)
+library(viridisLite)
+paletteLength <- 50
+col <- colorRampPalette(c("steelblue","white","darkred"))(50)
+myBreaks <- c(seq(min(mat), 0, length.out=ceiling(paletteLength/2) + 1), 
+              seq(max(mat)/paletteLength, max(mat), length.out=floor(paletteLength/2))) # to keep 0 = white color
+phet <- pheatmap(t(mat), 
+                 color = col, 
+                 breaks = myBreaks,
+                 fontsize = 9, cluster_cols = T,
+                 cellheight = 12,
+                 border_color = F,
+                 fontsize_row = 12, cutree_cols = 1, cutree_rows = 1,
+                 cellwidth = 5, scale = "none")
+```
+
+## UCELL Score on all stromal subsets against known CAF programs 
+```{r ext-data-fig-8g-caf-programs, fig.width=12, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+stromal <- list()
+stromal$quiescent.stellates <- c("PDGFRB","SPARC","GJA4","CSPG4","EDNRB","RGS5","COL4A1")
+stromal$activated.stellates <- c("COL1A1","FN1","THY1","LUM","TIMP1","MMP2")
+stromal$immune.activated.stellates <- c("CXCL8","INHBA","FGF2","IL6","CSF3", "CXCL3","IL33")
+#stromal$Schwann.cells <-c("SOX10", "S100B" ,"CRYAB","NGFR","PLP1","PMP22")
+
+stromal$MYO <-c("ADAMTS12","CASC15","POSTN","NTM","LINC01429","NREP","PDGFC","LEF1","NUAK1","COL1A1","KIF26B")
+stromal$NRT <- c("SCN7A","NFIA","C7","PID1","C1orf21","MAMDC2","CLMN","PREX2","MTUS1","ADAMTS9-AS2","KCNIP1","LAMA2")
+stromal$ADH.F <- c("NFATC2","EMP1","MIR222HG","SAMD4A","LMNA","GPRC5A","MMP19","MEDAG","NFATC1","TSC22D2") 
+stromal$IMM <- c("SLC22A3", "XKR4","ANKRD29","SLCO2B1","LAMA3","ABCC3","LAMC2","GRIN2B","RBM47","NOL4")
+
+stromal$iCAFs <- c("PLA2G2A","MCL1","S100A10","S100A4","LMNA","UAP1","DPT","ABL2","EFEMP1","TNFAIP6","FBLN2","CCDC80","FSTL1","PTX3","UGDH","IL8","CXCL1","CXCL2","ADH1B","CPE")
+stromal$myCAFs <- c("HOPX","IGFBP7","COL10A1","INHBA","CALD1","BGN","CTHRC1","TPM2","ACTA2","TAGLN","POSTN","TPM1","GRP","CST1","MYL9","MMP11")
+stromal$apCAFs <- c("CD74","SAA3","SLPI", "HLA-DQA1", "HLA-DRA","HLA-DPA1")
+
+#https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8404474/pdf/JEM_20210790.pdf
+stromal$FDCs <- c("CR1","CR2","MFGE8","VCAM1","CXCL13","SLC1A2","RGS9","MATN2","VCAM1")
+stromal$FRCs <- c("PDGFRA","PDPN","LTBR","IL1R1","GPRC5A","HAS1","CFB") # used combined genes from the study plus genes from PC12 
+
+# doi: 10.1158/2159-8290.CD-19-0644. Epub 2019 Nov 7.
+stromal$LRRC15 <- c("COL11A1","LRRC15","TAGLN","ACTA2","MMP11","FZD1","INHBA","COL8A1","SDC1")
+stromal$IL1 <- c("HAS1","HAS2","MAFF","CCL2","CXCL1","LIF","IL6","IL1R1")
+stromal$eCAFs <- c("C7","CFD","PTGDS","ENG","TIMP1")
+
+#DimPlot(stromal.subsets, group.by = "Lv.3.Anno")
+stromal.subsets_noSchwann <- subset(stromal.subsets, subset = Lv.3.Anno %in% c("Schwann","unassigned"), invert =T)
+
+DefaultAssay(stromal.subsets_noSchwann) <- "RNA"
+Idents(stromal.subsets_noSchwann) <- "Lv.3.Anno"
+library(UCell)
+stromal.subsets_noSchwann <- AddModuleScore_UCell(stromal.subsets_noSchwann,
+                                 features = stromal,
+                                 assay="RNA", slot = "data")
+stromal.markers.names <- paste0(names(stromal),"_UCell") 
+
+# Plotting/visualisation
+d <- DotPlot(stromal.subsets_noSchwann, features = stromal.markers.names, scale = F) + RotatedAxis()
+
+ddata <- as.data.frame(d[["data"]])
+df_spread <- tidyr::spread(ddata[,c(1,3,4)], id, avg.exp) # use non-scale to show 
+df_spread <- na.omit(df_spread)
+rownames(df_spread) <- df_spread[,1]
+df_spread <- df_spread[,-1]
+mat <- as.matrix(df_spread)
+sum(is.infinite(mat)) # to test that there are no infinite values
+sum(is.na(mat))
+
+library(pheatmap)
+library(viridisLite)
+phet <- pheatmap(mat, 
+                 color = mako(n=14),
+                 fontsize = 15,
+                 cellheight = 15, 
+                 cluster_cols = T,
+                 border_color = "grey", 
+                 fontsize_row = 12, cutree_cols = 1, cutree_rows = 4,
+                 cellwidth = 15, scale = "none")
+```
+
+```{r ext-data-fig-8f-caf-gene-expression, fig.width=15, fig.height=12, dpi=300, message=FALSE, warning=FALSE}
+DefaultAssay(stromal.subsets) <- "RNA"
+stromal.subsets <- subset(stromal.subsets, subset = Lv.3.Anno == "unassigned", invert = T)
+stromal.subsets$Lv.3.Anno <- factor(stromal.subsets$Lv.3.Anno, levels = c("CAFs_MYO", "CAFs_NRT", "CAFs_CXCL14+","Pericytes","Vascular smooth muscle", "Schwann","FRCs","FDCs"))
+
+features <- c("PDGFRA","COL6A3","POSTN","MMP11","SCN7A","C7","CXCL12","CXCL14","PDGFRB","RGS5","MYH11","SOX10","PDPN","PLA2G2A","VCAM1","FDCSP","CCL19")
+VlnPlot(stromal.subsets, features = features, pt.size = 0, group.by = 'Lv.3.Anno')
+```
+
+# DELINEATING LYMPHOID STROMAL VS CAF
+## Marker expression
+```{r ext-data-fig-8a-lymphoid-stromal-gene-expression, fig.width=8, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+caf.lymphoid <- subset(stromal.subsets, subset = Lv.2.Anno %in% c("CAFs","FDCs","FRCs"))
+DefaultAssay(caf.lymphoid) <- "RNA"
+col <- c('#7d87b9',"#B4584D","#888D07")
+VlnPlot(caf.lymphoid, features = c("CR1","CR2","CXCL13","VCAM1","TNFSF14","IGF1","PDGFRA","PDPN","HAS1"), ncol = 3, cols = col, group.by = 'Lv.2.Anno', pt.size = 0)
+```
+
+## Transcriptome differences between RETICULAR CELL-like vs CAFs
+```{r}
+#Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
+fib <- stromal.subsets %>% subset(subset = Lv.3.Anno %in% c("Vascular smooth muscle", "unassigned"), invert=T)
+DefaultAssay(fib) <- "RNA"
+
+# Converting cluster name into numerical
+Idents(fib) <- "Lv.2.Anno"
+fib@meta.data$Lv.2.Anno <- as.factor(fib@meta.data$Lv.2.Anno)
+print(levels(fib@meta.data$Lv.2.Anno))
+#[1] "CAFs"      "FDCs"      "FRCs"      "Pericytes" "Schwann" 
+levels(fib@meta.data$Lv.2.Anno) <- 1:length(levels(fib@meta.data$Lv.2.Anno))
+print(1:length(levels(fib$Lv.2.Anno)))
+#[1] 1 2 3 4 5
+ClusterSub <- as.factor(fib@meta.data$Lv.2.Anno) 
+
+PatClust <- paste(fib$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+counts <- fib@assays$RNA@counts #dgCMatrix
+counts <- as.matrix(counts)
+counts <- t(rowsum(t(counts), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+# Filtering
+summary(count.matrix$samples$lib.size)
+#Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#    725    8251   43980  435665  300830 7727883 
+keep.samples <- count.matrix$samples$lib.size > 2e4
+table(keep.samples)
+keep.samples
+# FALSE  TRUE 
+#    25    44
+count.matrix <- count.matrix[, keep.samples]
+
+#keep.genes <- filterByExpr(count.matrix, group=count.matrix$samples$Cluster)
+#count.matrix <- count.matrix[keep.genes, , keep=FALSE]
+
+# 2 main cell classes: CAFs = 1; FRCs = 3
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% c("1","3")]  # the CAFs here are all CAFs for downstream analysis, without ambiguous cells
+keep <- filterByExpr(ClstSub, group = ClstSub$samples$Cluster,
+                     min.count = 5, min.total.count = 10)#min=10, min.total.count=20 # will use #5 to minimise false positive 
+table(keep)
+# keep
+# FALSE  TRUE 
+# 14896 11892
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+fib.col <- c("#90ADD1", "#92A36F")
+plotMDS(ClstSub, pch = 16, col = fib.col[ClstSub$samples$group], main="")
+
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~0+Cls+Pat)
+
+colnames(design) <- gsub("patient","",colnames(design))
+head(design)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design, robust=T)
+qfit <- glmQLFit(ClstSub, design)
+contr <- makeContrasts(Cls3-Cls1,
+    levels=design)
+
+FRC.qlf <- glmQLFTest(qfit, contrast=contr)
+# Top DE genes, sorted by p-value, with FDR-adjusted p-values
+tt <- topTags(FRC.qlf, n = Inf, adjust.method = "BH", sort.by = "PValue")
+
+### Extracting data table ###
+FRC.de <- tt$table
+FRC.de$gene <- rownames(FRC.de)
+```
+
+```{r ext-data-fig-8c-volcano-plot, fig.width=8, fig.height=8, dpi=300, message=FALSE, warning=FALSE}
+# features to plot
+features <- c("CXCL2","PLA2G2A","HAS1","MEDAG", "IGFBP6","CXCL3","CCL2","IL6R","IL6ST","PI16","CSF1","IL1R1","IL1RAP","VCAM1","ACTA2","POSTN",
+              "C3","FGF7","CCDC80","PIM1","IGF1","MYC","GPRC5A", #iCAFs
+              "LEF1","MMP11","GALNTL6","CSMD1","ZNF365","APOD", "KSR2", #FIB
+              "TNFSF14","ICAM1","IL1RL1","CD34","COL11A1","TWIST1","COL10A1","ITGA11")
+
+library(EnhancedVolcano)
+EnhancedVolcano(FRC.de, x="logFC", y="FDR",
+    lab = FRC.de$gene,
+    title = "Differentially expressed genes in fibroblastic reticular cells (FRCs)",
+    selectLab = features,
+    FCcutoff = 1.25, 
+    pCutoff = 0.05,
+    pointSize = 4.0,
+    labSize = 5.0,
+    drawConnectors = TRUE,
+    col = c("black","black","black","coral3"),
+    ylim = c(0,12), xlim = c(-7.5,7.5),
+    #colAlpha = 1,
+    widthConnectors = 0.5)
+```
+
+## GSEA analysis
+```{r}
+library("tidyr")
+library("msigdbr")
+library("clusterProfiler")
+library("org.Hs.eg.db")
+library("ReactomePA")
+frc <- FRC.de %>% dplyr::arrange(desc(logFC))
+geneList <- frc$logFC # sort according to FC
+names(geneList) <- frc$gene # Extract vector of gene symbol
+
+# GSEA use ensemble ID
+gene.symbols <- frc$gene
+gene.entrez <- bitr(gene.symbols, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db", drop = F)
+colnames(gene.entrez)[1] <- "gene"
+frc <- left_join(frc, gene.entrez, by = "gene")
+
+gene_list <- frc$logFC
+names(gene_list) <- frc$ENTREZID
+
+set.seed(1245)
+gse <- gsePathway(geneList = gene_list, 
+                pvalueCutoff = 0.2,
+                pAdjustMethod = "BH", 
+                verbose = FALSE)
+dotplot(gse, showCategory=30)
+res <- gse@result
+
+library(enrichplot)
+gseaplot2(gse, geneSetID = c(8,20,30),pvalue_table = TRUE,
+          color = c("#DB5D4B","#7872D9","black"))
+```
+
+```{r}
+sessionInfo()
+```
+
+

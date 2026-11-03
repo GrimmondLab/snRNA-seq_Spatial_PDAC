@@ -1,0 +1,279 @@
+---
+title: "STS_Lymphoid_TNK.Rmd"
+author: "Mai La"
+date: "2024-08-19"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+```
+
+# Libraries
+```{r Packages}
+library(Seurat)
+library(schex)
+library(ggplot2)
+library(shiny)
+library(dplyr)
+library(patchwork)
+library(rmarkdown)
+library(openxlsx)
+library(here)
+```
+
+# Data loading
+```{r}
+sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+sample.high.lymphoid <- as.data.frame(sts.non.malignant@meta.data) %>%
+                                  group_by(Sample) %>%
+                                  dplyr::count(Lv.1.Anno) %>%
+                                  dplyr::filter(Lv.1.Anno %in% c("Lymphoid", "B", "Plasma", "B:GC"), n > 30) %>%
+                                  pull(Sample) %>%
+                                  as.character()
+
+lymphoid <- sts.non.malignant %>% subset(subset = Sample %in% sample.high.lymphoid & # this is to use lymphoid cells that are common to both classifications to make sure we have a very pure population of lymphoid
+                                  Lv.1.Anno %in% c("Lymphoid", "B", "Plasma","B:GC"))
+```
+
+# DietSeurat
+```{r}
+DefaultAssay(lymphoid) <- "RNA"
+lymphoid <- DietSeurat(lymphoid,
+                     assay = "RNA", #what to keep
+                     data = TRUE, #to preserve the data slot
+                     counts = TRUE) #to keep the count matrices for the assay specified
+
+colnames(lymphoid[[]])
+lymphoid[["nCount_SCT"]] <- NULL
+lymphoid[["nFeature_SCT"]] <- NULL
+#lymphoid[["SCT_snn_res.0.6"]] <- NULL
+lymphoid[["SCT_snn_res.0.7"]] <- NULL
+#lymphoid[["SCT_snn_res.0.8"]] <- NULL
+#lymphoid[["SCT_snn_res.0.5"]] <- NULL
+lymphoid[["seurat_clusters"]] <- NULL
+
+#Removing outlier samples
+lymphoid <- subset(lymphoid, subset = Sample %in% c("1959","2185"), invert = T)
+```
+
+# Normalisation using SCTv2
+```{r}
+# To split object into individual samples for downstream normalisation 
+lymphoid <- SplitObject(lymphoid, split.by = "Sample") # we will use Sample instead of Patient, as they were processed separately 
+lymphoid <- lapply(lymphoid, FUN= SCTransform, 
+                              vst.flavor="v2",
+                              assay = "RNA",
+                              variable.features.n = 3000, # default, have seen range from 2000-5000
+                              #vars.to.regress = "subsets_mito_percent"
+                              )# should only use percent.mito
+```
+
+## Simspec
+```{r}
+# Merge and set common features 
+int.features.split <- SelectIntegrationFeatures(object.list = lymphoid, nfeatures = 2000)
+lymphoid.simspec_css.sample.sct <- merge(x = lymphoid[[1]], y = lymphoid[2:length(lymphoid)], 
+                                  merge.data = TRUE)
+
+VariableFeatures(lymphoid.simspec_css.sample.sct) <- int.features.split
+
+# PCA 
+lymphoid.simspec_css.sample.sct <- RunPCA(lymphoid.simspec_css.sample.sct, verbose = TRUE, assay = "SCT",
+                                  npcs = 30) #default npcs = 50
+
+# Run CSS ----
+library(simspec)
+# On running simspec_CSS on SCTranformed objects https://github.com/immunogenomics/simspec_CSS/issues/41
+lymphoid.simspec_css.sample.sct <-
+  simspec::cluster_sim_spectrum(
+    object = lymphoid.simspec_css.sample.sct,
+    label_tag = "orig.ident", #original sample labels from pre-processing step
+    cluster_resolution = 0.4,
+    corr_method = "pearson",
+    spectrum_type = "corr_kernel"
+  )
+
+cat("Current reductions in object:", Reductions(lymphoid.simspec_css.sample.sct)) # pca css
+# Current reductions in object: pca css
+
+# Reference codes from:  https://doi.org/10.17632/3kthhpw2pd 
+lymphoid.simspec_css.sample.sct <- RunUMAP(lymphoid.simspec_css.sample.sct, reduction = "css", 
+                                   dims = 1:ncol(Embeddings(lymphoid.simspec_css.sample.sct, "css")), #294
+                                   reduction.name="umap_css", reduction.key="UMAPCSS_")
+
+lymphoid.simspec_css.sample.sct <- FindNeighbors(lymphoid.simspec_css.sample.sct, reduction="css", 
+                                         dims = 1:ncol(Embeddings(lymphoid.simspec_css.sample.sct, "css")))
+
+lymphoid.simspec_css.sample.sct <- FindClusters(lymphoid.simspec_css.sample.sct, algorithm = 3,resolution = seq(0.1, 1, by = 0.1))
+lymphoid.simspec_css.sample.sct <- FindClusters(lymphoid.simspec_css.sample.sct, algorithm = 3,resolution = 1.2)
+
+library(clustree)
+clustree::clustree(lymphoid.simspec_css.sample.sct) #stable res at 0.1, 0.2, 0.3, 0.5
+DimPlot(lymphoid.simspec_css.sample.sct, group.by = "SCT_snn_res.1.2", label = T) + DimPlot(lymphoid.simspec_css.sample.sct, group.by = "Lv.2.Anno", label = T)
+
+Idents(lymphoid.simspec_css.sample.sct) <- "SCT_snn_res.1.2" # stable clustering at this resolution
+
+# FindMarkers to confirm identity
+lymphoid.simspec_css.sample.sct <- PrepSCTFindMarkers(lymphoid.simspec_css.sample.sct)
+markers <- FindAllMarkers(lymphoid.simspec_css.sample.sct, logfc.threshold = 0.25, min.pct = 0.1, only.pos = T)
+```
+
+## Annotation
+```{r}
+lymphoid.col <- c("#E1DF5F","#E27258", "darkgreen","#FDB462",
+                  "#82CCDE","#778CD3","#B8C9E4" ,
+                  "#C8AF7C","#DF649A",
+                  "#D9E7CA",
+                  "#D7B9D0" ,"#CA85A5","#608A8D")
+lymphoid.color <- setNames(object = lymphoid.col, nm=c("CD4+ T:CCR7+","CD4+ T:FOXP3+","CD4+ T:CXCL13+","CD4+ T:IL7R+",
+                                                       "CD8+ T:GZMK+","CD8+ T:ITGAE+","CD8+ T:IL7R+",
+                                                       "NK","gdT",
+                                                       "CD3+ T",
+                                                       "B","B:GC","Plasma"))
+metadata <- lymphoid.simspec_css.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(Lv.2.Anno = case_when(SCT_snn_res.1.2 == "0" ~ "B",
+                                          SCT_snn_res.1.2 == "3" ~ "CD4+ T:IL7R+", 
+                                          SCT_snn_res.1.2 == "1" ~ "CD8+ T:IL7R+", 
+                                          SCT_snn_res.1.2 %in% c("7","6") ~ "CD4+ T:CCR7+", 
+                                          SCT_snn_res.1.2 %in% c("10","5","2") ~ "CD8+ T:GZMK+", #checked
+                                          SCT_snn_res.1.2 %in% c("15","13","11")  ~ "CD8+ T:ITGAE+", # Trm
+                                          SCT_snn_res.1.2 %in% c("14","8") ~ "CD4+ T:FOXP3+", #checked
+                                          SCT_snn_res.1.2 == "12" ~ "NK", #checked
+                                          SCT_snn_res.1.2 %in% c("9","16") ~ "Plasma", #checked
+                                          SCT_snn_res.1.2 == "17" ~ "gdT", #checked
+                                          SCT_snn_res.1.2 == "18" ~ "CD4+ T:CXCL13+", #checked
+                                          SCT_snn_res.1.2 == "19" ~ "B:GC", #checked
+                                          TRUE ~ "CD3+ T"
+                                          )) -> metadata
+metadata %>% group_by(SCT_snn_res.0.7) %>% count(Lv.2.Anno)
+Lv.2.Anno <- metadata$Lv.2.Anno 
+names(Lv.2.Anno) <- metadata$S_CB
+lymphoid.simspec_css.sample.sct <- AddMetaData(object = lymphoid.simspec_css.sample.sct, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+DimPlot(lymphoid.simspec_css.sample.sct, group.by = "SCT_snn_res.1.2", label = T) + 
+  DimPlot(lymphoid.simspec_css.sample.sct, group.by = "Lv.2.Anno", label = T, cols = lymphoid.color)
+saveRDS(lymphoid.simspec_css.sample.sct, file = file.path(params$step_dir, "lymphoid.simspec.RDS"))
+```
+
+# PLOTTING
+```{r fig-1c-lymphoid, fig.width=7, fig.height=7, dpi=300, message=FALSE, warning=FALSE}
+DimPlot(lymphoid.simspec_css.sample.sct, cols = lymphoid.color, group.by = 'Lv.2.Anno')
+```
+
+# PSEUDOBULK
+## DE comparing all lymphoid subsets
+```{r echo=TRUE, include=FALSE}
+#Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
+lymphoid.de <- lymphoid.simspec_css.sample.sct
+DefaultAssay(lymphoid.de) <- "RNA"
+
+# Converting cluster name into numerical
+Idents(lymphoid.de) <- "Lv.2.Anno"
+lymphoid.de@meta.data$Lv.2.Anno <- as.factor(lymphoid.de@meta.data$Lv.2.Anno)
+print(levels(lymphoid.de@meta.data$Lv.2.Anno))
+# [1] "B"              "B:GC"           "CD3+ T"         "CD4+ T:CCR7+"   "CD4+ T:CXCL13+" "CD4+ T:FOXP3+"  "CD4+ T:IL7R+"   "CD8+ T:GZMK+"   "CD8+ T:IL7R+"   "CD8+ T:ITGAE+"  "gdT"            "NK"            
+# [13] "Plasma" 
+levels(lymphoid.de@meta.data$Lv.2.Anno) <- 1:length(levels(lymphoid.de@meta.data$Lv.2.Anno))
+print(1:length(levels(lymphoid.de$Lv.2.Anno)))
+#[1]  1  2  3  4  5  6  7  8  9 10 11 12 13
+ClusterSub <- as.factor(lymphoid.de@meta.data$Lv.2.Anno) 
+
+PatClust <- paste(lymphoid.de$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#
+counts <- lymphoid.de@assays$RNA@counts #dgCMatrix
+counts <- as.matrix(counts)
+counts <- t(rowsum(t(counts), group=PatClust))
+
+library(limma)
+library(edgeR)
+count.matrix <- DGEList(counts) 
+count.matrix$samples$Patient <- gsub("_Clst.*$","", colnames(count.matrix)) #adding a new column, named Patient 
+count.matrix$samples$Cluster <- as.numeric(gsub("^.*_Clst","",colnames(count.matrix))) #adding a new column, named Cluster
+count.matrix$samples$group <- count.matrix$samples$Cluster
+count.matrix #count matrix
+
+ncls <- length(table(ClusterSub))
+N <- 1:ncls #focus on all clusters
+ClstSub <- count.matrix[,count.matrix$samples$Cluster %in% N] 
+keep <- filterByExpr(ClstSub, min.count=5, min.total.count=10) #min=10, min.total.count=20
+ClstSub <- ClstSub[keep, , keep=F]
+ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
+ClstSub$samples$group
+
+plotMDS(ClstSub, pch = 17, col = lymphoid.color[ClstSub$samples$group], main="")
+
+#Design matrix
+Cls <- as.factor(ClstSub$samples$Cluster)
+Pat <- factor(ClstSub$samples$Patient)
+design <- model.matrix(~ Cls + Pat)
+
+#Estimate NB dispersion & QL dispersion
+ClstSub <- estimateDisp(ClstSub, design = design)
+qfit <- glmQLFit(ClstSub, design)
+
+contr <- makeContrasts(
+    Cls1 = -(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls2 = Cls2-(Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls3 = Cls3-(Cls2+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls4 = Cls4-(Cls2+Cls3+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls5 = Cls5-(Cls2+Cls3+Cls4+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls6 = Cls6-(Cls2+Cls3+Cls4+Cls5+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls7 = Cls7-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls8+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls8 = Cls8-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls9+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls9 = Cls9-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls10+Cls11+Cls12+Cls13)/12,
+    Cls10 = Cls10-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls11+Cls12+Cls13)/12,
+    Cls11 = Cls11-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls12+Cls13)/12,
+    Cls12 = Cls12-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls13)/12,
+    Cls13 = Cls13-(Cls2+Cls3+Cls4+Cls5+Cls6+Cls7+Cls8+Cls9+Cls10+Cls11+Cls12)/12,
+    levels=design)
+
+de <- list()
+for (i in 1:ncls) de[[i]] <- glmQLFTest(qfit, contrast = contr[,i])
+
+#log-CPM
+prior.count <- 1
+ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating cpm
+
+# Remove batch effect on log-CPM
+logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
+boxplot(as.data.frame(ClstSub.cpm),main="Original")
+boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+
+### Extracting data table ###
+library(tibble)
+names(de) <- colnames(contr)   # Cls1 ... Cls4
+res_list <- lapply(names(de), function(cn) {
+  topTags(de[[cn]], n = Inf, adjust.method = "BH")$table %>%
+    rownames_to_column("gene") %>%
+    mutate(cluster = cn)
+})
+names(res_list) <- names(de)
+lymphoid.simspec.pseudobulk <- bind_rows(res_list)
+lymphoid.simspec.pseudobulk %>% mutate(cell_names = case_when(cluster == "Cls1" ~ "B",
+                                                                      cluster == "Cls2" ~ "B:GC",
+                                                                      cluster == "Cls3" ~ "CD3+ T",
+                                                                      cluster == "Cls4" ~ "CD4+ T:CCR7+",
+                                                                      cluster == "Cls5" ~ "CD4+ T:CXCL13+",
+                                                                      cluster == "Cls6" ~ "CD4+ T:FOXP3+",
+                                                                      cluster == "Cls7" ~ "CD4+ T:IL7R+",
+                                                                      cluster == "Cls8" ~  "CD8+ T:GZMK+",
+                                                                      cluster == "Cls9" ~ "CD8+ T:IL7R+",
+                                                                      cluster == "Cls10" ~ "CD8+ T:ITGAE+",
+                                                                      cluster == "Cls11" ~ "gdT",
+                                                                      cluster == "Cls12" ~ "NK",
+                                                                      TRUE ~ "Plasma")) -> lymphoid.simspec.pseudobulk
+# Supplementary Table 7 (originally saved as Lymphoid.simspec.pseudobulk_revisedFDR.csv)
+write.csv(lymphoid.simspec.pseudobulk, file = file.path(params$step_dir, "SupplementaryTable7_lymphoid_pseudobulk.csv"), row.names = F)
+```
+
+```{r}
+sessionInfo()
+```
+
