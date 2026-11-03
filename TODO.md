@@ -68,14 +68,14 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
-- [ ] **Confirm the CellChat commit:** `packageDescription("CellChat")$RemoteSha` in the original environment, then update `envs/post_install_cellchat.R`. 2.1.2 covers many commits, including database changes.
 - [ ] Check the build log: `post_install_cellchat.R` compiles CRAN and GitHub packages inside the env, which no other env does with compiled code.
 
 ### Held apart
 - [ ] `snrnaseq/QC_checks.Rmd`: instructions to follow.
 
 ## 5. Before submission
-- [ ] Deposit on Zenodo, and replace every **DOI_TBD**: the post-QC object, the annotated Stage 2 object, `tuft.snv.df.csv` (KRAS calls per tuft cell, input to Stage 3), `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
+- [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.
+- [ ] Deposit on Zenodo, and replace every remaining **DOI_TBD**: the annotated Stage 2 object, `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
 - [ ] Tag a release (e.g. `v1.0`) and archive the repo on Zenodo for a citable DOI.
 - [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
       `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`

@@ -26,10 +26,10 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 |---|---|---|---|---|
 | 0. Cell Ranger + CellBender | `snrnaseq/stage0_cellranger_cellbender/` | — (documentation only) | FASTQ | Record only |
 | 1. Doublet removal + fixed QC thresholds | `snrnaseq/stage1_doublet_qc/` | `snrnaseq` | CellBender output: from GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), or the original local folders for the reproducibility test | Ready |
-| 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object (**DOI_TBD**) | Ready |
-| 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Annotated integrated object from Stage 2 (`sts.simspec_css.sample.sct.RDS`) + `tuft.snv.df.csv` (**DOI_TBD**) | Ready |
+| 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | Ready |
+| 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Annotated integrated object from Stage 2 (`sts.simspec_css.sample.sct.RDS`) (**DOI_TBD**) + `tuft.snv.df.csv` ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | Ready |
 | 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object | Ready |
-| 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | CellChat commit to confirm |
+| 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | Ready |
 
 **Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. Its outputs feed no later stage and are not deposited. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
 
@@ -37,14 +37,15 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 
 Stage 1 can be rerun from the raw CellBender output, but it doesn't reproduce the original object exactly. The original run set `set.seed()` but did not pass a seed to the parallel workers (`BPPARAM` `RNGseed`), so parallel steps such as scDblFinder gave slightly different results. The rerun gives 26,757 genes × 115,293 cells, while the original object has 26,788 genes × 115,221 cells.
 
-All later stages therefore start from the **original post-QC object**, deposited at **DOI_TBD**. This keeps every manuscript figure exactly reproducible, while Stage 1 documents how that object was made.
+All later stages therefore start from the **original post-QC object**, deposited at [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322). This keeps every manuscript figure exactly reproducible, while Stage 1 documents how that object was made.
 
 ## Data
 
 | Data | Where |
 |---|---|
 | snRNA-seq CellBender output (`<sample>_cellbender_filtered.h5` and 10x matrix files) | GEO [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918) |
-| Analysis objects that later stages start from (post-QC object, annotated Stage 2 object, Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
+| Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| Other analysis objects that later stages start from (annotated Stage 2 object, Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
 | Spatial data | To be added |
 
 ## Build

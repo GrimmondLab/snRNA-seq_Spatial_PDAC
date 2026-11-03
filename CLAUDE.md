@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 + Zenodo, DOI_TBD).
+Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 + Zenodo, 10.5281/zenodo.23933322 and DOI_TBD).
 
 Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and open work), the stage READMEs under `snrnaseq/stage*/`.
 

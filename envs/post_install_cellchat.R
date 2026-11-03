@@ -1,9 +1,8 @@
 # Run once at image build time, inside the cellchat env (see Dockerfile).
 # Packages with no R 4.3 conda build at the versions used for the manuscript.
-# CellChat is GitHub-only. 2.1.2 covers many commits (2024-02 to 2025-03, including changes to the
-# human database). PROVISIONAL: this is the last of them; replace it with the RemoteSha of the original
-# install, packageDescription("CellChat")$RemoteSha.
-cellchat_sha <- "2aab4d2bbfb9e2e107066aad640304266d9e091a"
+# CellChat is GitHub-only. 2.1.2 covers many commits, including changes to the human database;
+# this is the RemoteSha of the original install (2024-09-07).
+cellchat_sha <- "6063355ab8c06a55c61add6a07bc35c94cc962a0"
 
 # dplyr 1.2.1 needs rlang >= 1.1.7, vctrs >= 0.7.1 and lifecycle >= 1.0.5, so they are installed first.
 # These replace the conda builds of the same packages.

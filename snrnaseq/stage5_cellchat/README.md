@@ -33,7 +33,7 @@ Conda env `cellchat` in the project image (`../../envs/cellchat.yml`, locked in 
 
 `../../envs/post_install_cellchat.R` installs what conda does not have at these versions for R 4.3: CellChat from GitHub, and cli, rlang, lifecycle, vctrs, tidyr, dplyr and NMF from CRAN source, all at their original versions.
 
-**CellChat commit (TODO).** Version 2.1.2 covers many commits, including changes to the human database. The script pins the last of them (`2aab4d2`), which is provisional until it is confirmed against the original install.
+**CellChat commit.** Version 2.1.2 covers many commits, including changes to the human database. The script pins `6063355`, the commit of the original install.
 
 Every other package recorded in `sessionInfo/` is pinned to its original version, except:
 

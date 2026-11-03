@@ -9,7 +9,7 @@ R 4.3 · Bioconductor 3.17 · conda env `snrnaseq` · master script `run_stage2.
 
 ## Input
 
-The original post-QC object deposited with the manuscript (**DOI_TBD**): `qc.dbl.fltrd.sts.sce.RDS`, 26,788 genes × 115,221 cells. Stage 2 starts from this object rather than from a Stage 1 rerun (see the top-level `README.md`).
+The original post-QC object deposited with the manuscript ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)): `qc.dbl.fltrd.sts.sce.RDS`, 26,788 genes × 115,221 cells. Stage 2 starts from this object rather than from a Stage 1 rerun (see the top-level `README.md`).
 
 ## Environment
 
