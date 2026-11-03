@@ -28,7 +28,7 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 | 1. Doublet removal + fixed QC thresholds | `snrnaseq/stage1_doublet_qc/` | `snrnaseq` | CellBender output: from GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), or the original local folders for the reproducibility test | Ready |
 | 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object (**DOI_TBD**) | Ready |
 | 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Annotated integrated object from Stage 2 (`sts.simspec_css.sample.sct.RDS`) + `tuft.snv.df.csv` (**DOI_TBD**) | Ready |
-| 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object, `endo.RDS` | Waiting for `endo.RDS` |
+| 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object | Ready |
 | 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | CellChat commit to confirm |
 
 **Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. Its outputs feed no later stage and are not deposited. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
@@ -44,7 +44,7 @@ All later stages therefore start from the **original post-QC object**, deposited
 | Data | Where |
 |---|---|
 | snRNA-seq CellBender output (`<sample>_cellbender_filtered.h5` and 10x matrix files) | GEO [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918) |
-| Analysis objects that later stages start from (post-QC object, annotated Stage 2 object, Stage 3 non-malignant object, endothelial object, final annotated object) | Zenodo, **DOI_TBD** |
+| Analysis objects that later stages start from (post-QC object, annotated Stage 2 object, Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
 | Spatial data | To be added |
 
 ## Build

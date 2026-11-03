@@ -62,7 +62,6 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [ ] **Keep one `sample_map.csv`.** `shared/sample_map.csv` is identical to `snrnaseq/stage0_cellranger_cellbender/sample_map.csv`; keep `shared/` and point the Stage 0 README at it.
 
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
-- [ ] **Add the code that makes `endo.RDS`,** or deposit the object. `Plotting.Rmd` reads it (column `cell_names`), but no Rmd in the repository creates it, so Stage 4 stops at `Plotting.Rmd` without it.
 - [ ] Confirm that `sts.simspec_css.sample.sct_fullworkflow.RDS` (read by the original `Plotting.Rmd`) is the Stage 2 annotated object.
 - [ ] Add the session information of `Plotting.Rmd`.
 - [ ] Cross-tabulate `Lv.2.Anno` in each saved object against the original objects per cell. They are assigned by cluster number.
@@ -77,7 +76,7 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [ ] `snrnaseq/QC_checks.Rmd`: instructions to follow.
 
 ## 5. Before submission
-- [ ] Deposit on Zenodo, and replace every **DOI_TBD**: the post-QC object, the annotated Stage 2 object, `tuft.snv.df.csv` (KRAS calls per tuft cell, input to Stage 3), `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4), `endo.RDS` and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
+- [ ] Deposit on Zenodo, and replace every **DOI_TBD**: the post-QC object, the annotated Stage 2 object, `tuft.snv.df.csv` (KRAS calls per tuft cell, input to Stage 3), `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
 - [ ] Tag a release (e.g. `v1.0`) and archive the repo on Zenodo for a citable DOI.
 - [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
       `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`
