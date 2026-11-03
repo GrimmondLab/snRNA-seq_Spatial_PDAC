@@ -9,14 +9,14 @@ Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and 
 - `snrnaseq/stageN_*/`, `snrnaseq/supplementary_*/`: one folder per R stage or supplementary analysis: Rmd(s), `run_stageN.R` (renders them with `params`), `config.yml` (container paths `/data/...`, `/output`), `sessionInfo/` of the **original** runs, and a README listing every version difference from those runs.
 - `spatial/`: Python, not added yet.
 - `shared/`: tables used by several stages.
-- `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stage 3; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits); `session_info.R`.
+- `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits); `session_info.R`.
 - `Dockerfile` + `run.sh`: **one** image holding all envs. `run.sh <stage> [config]` maps a stage to its env and folder.
 
 ## Conventions
 
 - New stages go into the single image: add an env (or reuse one), a `run.sh` case, and key-version checks in the CI smoke test. No per-stage Dockerfiles or `install_packages.R` scripts.
 - Pin R packages to the versions in the stage's original `sessionInfo/`. When conda has no R 4.3 build of that version, pin the nearest and record the difference in the stage README and in the env yml. Watch noarch conda-forge R packages: newer builds can require R ≥ 4.4 even though they aren't tagged `r43`/`r44`.
-- bioconda/conda-forge only, `nodefaults`. linux-64 only (bioconda's R 4.3 builds), so the image is linux/amd64.
+- bioconda/conda-forge only, `nodefaults`. linux-64 only (bioconda's R 4.3 builds), so the image is linux/amd64. One exception: `post_install_cellchat.R` installs dplyr 1.2.1, the packages it needs and NMF from CRAN source, because Stage 5 needs them and conda has no R 4.3 build.
 - `run.sh` puts the env first on `PATH` instead of `micromamba activate`, and stages write only under `/output` (`intermediates_dir` too), so the read-only Apptainer `.sif` works. Keep it that way.
 - After editing `envs/<env>.yml`, regenerate its lock (command in `README.md`, "Updating an env") and commit both.
 - Cell-type labels are assigned by cluster number in several Rmds. Any change that could renumber clusters needs a per-cell cross-tab against the original object.

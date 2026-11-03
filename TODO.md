@@ -1,7 +1,7 @@
 # TODO
 
 Next steps after the move to one conda-based Docker image (`Dockerfile`, `envs/`, `run.sh`).
-The image built with the `snrnaseq` and `infercnv` envs, and every package the Rmds load attached in both. The `downstream` env (Stage 3) is locked but has not been built into the image yet. Nothing has been run on real data yet.
+The image built with the `snrnaseq` and `infercnv` envs, and every package the Rmds load attached in both. The `downstream` (Stages 3–4) and `cellchat` (Stage 5) envs are locked but have not been built into the image yet. Nothing has been run on real data yet.
 
 ## 1. Build and move the image to the HPC
 
@@ -61,12 +61,23 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [ ] Extended Data Fig. 4G: the KRAS status colours (`kras.col`) were defined outside the original Rmd. Get them from the author.
 - [ ] **Keep one `sample_map.csv`.** `shared/sample_map.csv` is identical to `snrnaseq/stage0_cellranger_cellbender/sample_map.csv`; keep `shared/` and point the Stage 0 README at it.
 
-### Later stages (downstream subclustering + plotting)
-- [ ] Add the Rmds when available. Check their `sessionInfo` against the existing envs; add pins or a new env if needed.
-- [ ] Add a `run_stageN.R` (copy the pattern of `run_stage2.R`), a `run.sh` entry and key-version checks in the CI smoke test.
+### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
+- [ ] **Add the code that makes `endo.RDS`,** or deposit the object. `Plotting.Rmd` reads it (column `cell_names`), but no Rmd in the repository creates it, so Stage 4 stops at `Plotting.Rmd` without it.
+- [ ] Confirm that `sts.simspec_css.sample.sct_fullworkflow.RDS` (read by the original `Plotting.Rmd`) is the Stage 2 annotated object.
+- [ ] Add the session information of `Plotting.Rmd`.
+- [ ] Cross-tabulate `Lv.2.Anno` in each saved object against the original objects per cell. They are assigned by cluster number.
+- [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
+
+### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
+- [ ] **Confirm the CellChat commit:** `packageDescription("CellChat")$RemoteSha` in the original environment, then update `envs/post_install_cellchat.R`. 2.1.2 covers many commits, including database changes.
+- [ ] Check the build log: `post_install_cellchat.R` compiles CRAN and GitHub packages inside the env, which no other env does with compiled code.
+- [ ] `Cellchat.Rmd` uses `"LECs"` in the TLS plot, but `Plotting.Rmd` labels these cells `"Lymphatic endothelial"`, so they are left out. Decide whether that is intended.
+
+### Held apart
+- [ ] `snrnaseq/QC_checks.Rmd`: instructions to follow.
 
 ## 5. Before submission
-- [ ] Deposit the post-QC and annotated Stage 2 objects, and `tuft.snv.df.csv` (KRAS calls per tuft cell, input to the malignant / non-malignant stage), on Zenodo, and replace every **DOI_TBD**.
+- [ ] Deposit on Zenodo, and replace every **DOI_TBD**: the post-QC object, the annotated Stage 2 object, `tuft.snv.df.csv` (KRAS calls per tuft cell, input to Stage 3), `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4), `endo.RDS` and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
 - [ ] Tag a release (e.g. `v1.0`) and archive the repo on Zenodo for a citable DOI.
 - [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
       `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`

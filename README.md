@@ -4,7 +4,7 @@ Code and environment definitions for the analyses in the manuscript. The reposit
 
 | Folder | Language | Contents |
 |---|---|---|
-| `snrnaseq/` | R | snRNA-seq analysis, five stages |
+| `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5 |
 | `spatial/` | Python | Spatial (Xenium) analysis, being added (see `spatial/README.md`) |
 
 Everything runs from **one Docker image** that holds one conda env per group of stages. The envs are built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see below).
@@ -14,7 +14,8 @@ Everything runs from **one Docker image** that holds one conda env per group of 
 | Env | Definition | Lock file | Contents | Stages |
 |---|---|---|---|---|
 | `snrnaseq` | `envs/snrnaseq.yml` | `envs/snrnaseq-linux-64.lock` | R 4.3, Bioconductor 3.17, Seurat 4.3.0, simspec (GitHub, pinned commit) | 1, 2 |
-| `downstream` | `envs/downstream.yml` | `envs/downstream-linux-64.lock` | R 4.3, Bioconductor 3.17, Seurat 4.3.0, ggplot2 3.5.2, edgeR, clusterProfiler, simspec + treeio (GitHub, pinned commits) | 3 |
+| `downstream` | `envs/downstream.yml` | `envs/downstream-linux-64.lock` | R 4.3, Bioconductor 3.17, Seurat 4.3.0, ggplot2 3.5.2, edgeR, clusterProfiler, simspec + treeio (GitHub, pinned commits), UCell, SingleR, EnhancedVolcano, ReactomePA | 3, 4 |
+| `cellchat` | `envs/cellchat.yml` | `envs/cellchat-linux-64.lock` | R 4.3, Bioconductor 3.17, Seurat 4.3.0, CellChat 2.1.2 (GitHub), dplyr 1.2.1 and NMF 0.27 (CRAN source) | 5 |
 | `infercnv` | `envs/infercnv.yml` | `envs/infercnv-linux-64.lock` | R 4.3, infercnv 1.20.0, Seurat 5.1.0 | Supplementary inferCNV |
 
 All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pinned to its original version where conda has an R 4.3 build. Each stage README lists the exceptions. The build saves each env's `sessionInfo()` to `/pipeline/sessionInfo/<env>.txt` inside the image.
@@ -27,7 +28,8 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 | 1. Doublet removal + fixed QC thresholds | `snrnaseq/stage1_doublet_qc/` | `snrnaseq` | CellBender output: from GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), or the original local folders for the reproducibility test | Ready |
 | 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object (**DOI_TBD**) | Ready |
 | 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Annotated integrated object from Stage 2 (`sts.simspec_css.sample.sct.RDS`) + `tuft.snv.df.csv` (**DOI_TBD**) | Ready |
-| Later: downstream subclustering + plotting | — | — | Output of Stage 3 | Waiting for files |
+| 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object, `endo.RDS` | Waiting for `endo.RDS` |
+| 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | CellChat commit to confirm |
 
 **Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. Its outputs feed no later stage and are not deposited. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
 
@@ -42,7 +44,7 @@ All later stages therefore start from the **original post-QC object**, deposited
 | Data | Where |
 |---|---|
 | snRNA-seq CellBender output (`<sample>_cellbender_filtered.h5` and 10x matrix files) | GEO [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918) |
-| Analysis objects that later stages start from (post-QC object, annotated Stage 2 object) | Zenodo, **DOI_TBD** |
+| Analysis objects that later stages start from (post-QC object, annotated Stage 2 object, Stage 3 non-malignant object, endothelial object, final annotated object) | Zenodo, **DOI_TBD** |
 | Spatial data | To be added |
 
 ## Build
@@ -79,7 +81,7 @@ apptainer pull pdac-snrnaseq.sif oras://ghcr.io/grimmondlab/snrna-seq_spatial_pd
 docker run --rm -v <input>:/data/...:ro -v <output>:/output pdac-snrnaseq:1.0 <stage> [config.yml]
 ```
 
-- `<stage>` is `stage1`, `stage2`, `stage3` or `infercnv`.
+- `<stage>` is `stage1`, `stage2`, `stage3`, `stage4`, `stage5` or `infercnv`.
 - `[config.yml]` defaults to the stage's own `config.yml`. You can also give the name of another config in the stage folder (e.g. `config_local.yml`), or the path of a config you have mounted into the container.
 - Each stage README lists the mounts it needs and gives a full example.
 
@@ -123,7 +125,7 @@ docker run --rm -it --entrypoint bash \
 The shell starts in `/pipeline`, which holds `run.sh`, `snrnaseq/`, `envs/` and `sessionInfo/`. No env is active. Put one first on `PATH`, the same way `run.sh` does:
 
 ```bash
-export PATH=/opt/conda/envs/snrnaseq/bin:$PATH   # or downstream (Stage 3), infercnv
+export PATH=/opt/conda/envs/snrnaseq/bin:$PATH   # or downstream (Stages 3, 4), cellchat (Stage 5), infercnv
 R                                                # interactive R in that env
 ./run.sh stage1                                  # or run a whole stage from the shell
 ```

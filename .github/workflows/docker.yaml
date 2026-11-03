@@ -59,7 +59,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
           labels: |
-            org.opencontainers.image.description=PDAC snRNA-seq analysis: R 4.3 conda envs (snrnaseq, downstream, infercnv) and run.sh
+            org.opencontainers.image.description=PDAC snRNA-seq analysis: R 4.3 conda envs (snrnaseq, downstream, cellchat, infercnv) and run.sh
             org.opencontainers.image.revision=${{ steps.codeout.outputs.commit }}
       - name: 🐳 Docker img build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -82,16 +82,19 @@ jobs:
           fi
           # Key versions recorded at build time (envs/session_info.R)
           mkdir -p sessionInfo
-          for env in snrnaseq downstream infercnv; do
+          for env in snrnaseq downstream cellchat infercnv; do
             docker run --rm --entrypoint cat "${LOCAL_IMG}" "/pipeline/sessionInfo/${env}.txt" > "sessionInfo/${env}.txt"
           done
           check() { grep -q -- "$2" "sessionInfo/$1.txt" || { echo "$1: missing $2" >&2; exit 1; }; }
-          for env in snrnaseq downstream infercnv; do check "${env}" "R version 4.3"; done
+          for env in snrnaseq downstream cellchat infercnv; do check "${env}" "R version 4.3"; done
           for p in Seurat_4.3.0 SeuratObject_4.1.3 scDblFinder_1.14.0 scran_1.28.1 Matrix_1.5-4.1 simspec_ glmGamPoi_1.12.2; do
             check snrnaseq "${p}"
           done
-          for p in Seurat_4.3.0 ggplot2_3.5.2 patchwork_1.3.2 edgeR_3.42.4 clusterProfiler_4.8.1 msigdbr_7.5.1 simspec_ treeio_1.25.0.001; do
+          for p in Seurat_4.3.0 ggplot2_3.5.2 patchwork_1.3.2 edgeR_3.42.4 clusterProfiler_4.8.1 msigdbr_7.5.1 simspec_ treeio_1.25.0.001 schex_1.14.0 UCell_2.4.0 SingleR_2.2.0 EnhancedVolcano_1.18.0 ReactomePA_1.44.0; do
             check downstream "${p}"
+          done
+          for p in CellChat_2.1.2 dplyr_1.2.1 Seurat_4.3.0 ggplot2_3.5.2 NMF_0.27 presto_1.0.0; do
+            check cellchat "${p}"
           done
           for p in infercnv_1.20.0 Seurat_5.1.0 SeuratObject_5.0.2 rjags_4-15; do
             check infercnv "${p}"
@@ -165,7 +168,7 @@ jobs:
           if apptainer run "${SIF}" stage9; then
             echo "run.sh accepted an unknown stage" >&2; exit 1
           fi
-          for env in snrnaseq downstream infercnv; do
+          for env in snrnaseq downstream cellchat infercnv; do
             apptainer exec "${SIF}" cat "/pipeline/sessionInfo/${env}.txt" | cmp - "sessionInfo/${env}.txt"
           done
           echo "SIF matches the Docker image."

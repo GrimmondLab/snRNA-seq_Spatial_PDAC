@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs one analysis stage in its own conda env.
 # Usage: run.sh <stage> [config.yml]
-#   stage: stage1 | stage2 | stage3 | infercnv
+#   stage: stage1 | stage2 | stage3 | stage4 | stage5 | infercnv
 #   config defaults to the stage's config.yml (container paths: /data/..., /output)
 set -euo pipefail
 
@@ -17,6 +17,8 @@ case "$stage" in
   stage1) env=snrnaseq; dir=snrnaseq/stage1_doublet_qc;     script=run_stage1.R ;;
   stage2) env=snrnaseq; dir=snrnaseq/stage2_seurat_simspec; script=run_stage2.R ;;
   stage3) env=downstream; dir=snrnaseq/stage3_malignant_nonmalignant; script=run_stage3.R ;;
+  stage4) env=downstream; dir=snrnaseq/stage4_reclustering; script=run_stage4.R ;;
+  stage5) env=cellchat; dir=snrnaseq/stage5_cellchat; script=run_stage5.R ;;
   infercnv) env=infercnv; dir=snrnaseq/supplementary_infercnv; script=run_infercnv.R ;;
   *) echo "Unknown stage: $stage" >&2; usage 1 >&2 ;;
 esac
