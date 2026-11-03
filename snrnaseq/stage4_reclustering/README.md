@@ -12,6 +12,7 @@ R 4.3 · Bioconductor 3.17 · Seurat 4.3.0 · ggplot2 3.5.2 · conda env `downst
    - **Stromal classes:** pseudobulk differential expression between CAFs, FDCs, FRCs, pericytes and Schwann cells.
    - **CAFs:** SCTransform per sample, simspec integration, clustering at resolution 0.1, annotation (`Lv.2.Anno_subset`), pseudobulk differential expression, UCell scores for published CAF programs.
    - **FRCs vs CAFs:** differential expression and Reactome GSEA.
+   - **Endothelial cells:** SCTransform per sample, RPCA integration, clustering at resolution 0.4, annotation of subsets including lymphatic endothelial cells (`cell_names`).
 4. `Plotting.Rmd`: moves the subset labels onto the integrated object (`Lv.2.Anno`, `Lv.1.Anno`), adds ICGC donor IDs, draws the overview figures and saves the final annotated object.
 
 ## Manuscript outputs
@@ -44,7 +45,6 @@ Figures are shown in each HTML report and also saved as PNG and PDF files, named
 |---|---|
 | `sts.nonmalignant.RDS` | Non-malignant object from Stage 3, with `Lv.1.Anno` and `Lv.2.Anno` (deposited, **DOI_TBD**) |
 | `sts.simspec_css.sample.sct.RDS` | Annotated integrated object from Stage 2 (deposited, **DOI_TBD**). Read by `Plotting.Rmd`. The original code read it as `sts.simspec_css.sample.sct_fullworkflow.RDS` |
-| `endo.RDS` | Endothelial subsets, in column `cell_names` (**TODO:** no code in this repository creates it yet). Read by `Plotting.Rmd` |
 | `sample_map.csv` | `shared/sample_map.csv`, included in the image at `/pipeline/shared/`. Adds ICGC donor IDs to the figures |
 
 ## Environment
@@ -74,7 +74,7 @@ Use the project image (see the top-level `README.md` to build or pull it).
 
 | Container path | Mount | Mode |
 |---|---|---|
-| `/data/input` | folder containing `sts.nonmalignant.RDS`, `sts.simspec_css.sample.sct.RDS` and `endo.RDS` | read-only |
+| `/data/input` | folder containing `sts.nonmalignant.RDS` and `sts.simspec_css.sample.sct.RDS` | read-only |
 | `/output` | where results go | read-write |
 
 ```bash
@@ -100,14 +100,14 @@ apptainer run \
 |---|---|---|
 | `STS_Lymphoid_TNK/` | `lymphoid.simspec.RDS` | Lymphoid object with `Lv.2.Anno` |
 | `STS_Myeloid_Mast_DCs/` | `myeloid.nonintegrated.RDS`, `mac.only.simspec.RDS` | Myeloid and TAM objects with `Lv.2.Anno` |
-| `STS_stromal_CAF_reclustering/` | `fib.only.simspec.RDS`, `stromal.subsets.RDS` | CAF object with `Lv.2.Anno_subset`; stromal object with `Lv.3.Anno` |
+| `STS_stromal_CAF_reclustering/` | `fib.only.simspec.RDS`, `stromal.subsets.RDS`, `endo.RDS` | CAF object with `Lv.2.Anno_subset`; stromal object with `Lv.3.Anno`; endothelial object with `cell_names` |
 | `Plotting/` | `sts.simspec_css.sample.sct_final.RDS` | Final annotated object, with `Lv.1.Anno`, `Lv.2.Anno` and `ICGC_ID`. Input to Stage 5 |
 
 Each folder also holds the HTML report and figures, and the first three hold the Supplementary Tables listed above.
 
 ## Notes
 
-- **Cell labels come from cluster numbers.** Lymphoid, TAM and CAF subsets are assigned to clusters by number. A rerun in this image is expected to give the same clusters, and so the same labels; the saved objects can be compared with the originals to confirm this.
+- **Cell labels come from cluster numbers.** Lymphoid, TAM, CAF and endothelial subsets are assigned to clusters by number. A rerun in this image is expected to give the same clusters, and so the same labels; the saved objects can be compared with the originals to confirm this.
 - **`non.malig` in `Plotting.Rmd`** is the list of 84 cells of sample 2215 from `STS_Malignant.Rmd`. They are labelled `unassigned` in `Lv.1.Anno`.
 - **`fib.only.simspec.RDS` is saved three times** under the same name, as in the original code. The last save has the UCell scores.
 

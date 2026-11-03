@@ -59,7 +59,7 @@ Clec5a <- mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_MHC_II") %>% pull(C
 olr1 <-  mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_OLR1+") %>% pull(Cell_Ids)
 spp1 <- mac@meta.data %>% dplyr::filter(Lv.2.Anno == "TAMs_SPP1+") %>% pull(Cell_Ids)
 
-endo <- readRDS(cfg$endothelial_object)
+endo <- readRDS(file.path(params$out_root, "STS_stromal_CAF_reclustering", "endo.RDS"))
 endothelial <- endo@meta.data %>% dplyr::filter(cell_names %in% c("Endothelial:Angiogenic tip cells","Endothelial:reactive EndMT","Endothelial:Stalk-like","Endothelial:Tip-like")) %>% pull(Cell_Ids)
 LEC <-  endo@meta.data %>% dplyr::filter(cell_names == "Lymphatic endothelial") %>% pull(Cell_Ids)
 

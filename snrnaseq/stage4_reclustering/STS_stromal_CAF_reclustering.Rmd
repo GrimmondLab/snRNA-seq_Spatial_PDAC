@@ -682,6 +682,97 @@ gseaplot2(gse, geneSetID = c(8,20,30),pvalue_table = TRUE,
           color = c("#DB5D4B","#7872D9","black"))
 ```
 
+# ENDOTHELIAL
+## Subsetting the cell type 
+```{r}
+sample.high.endothelial <- as.data.frame(sts.non.malignant@meta.data) %>%
+        group_by(Sample) %>%
+        dplyr::count(Lv.2.Anno) %>% 
+        dplyr::filter(Lv.2.Anno == "Endothelial", n > 30) %>%# pull(n) %>% summary()
+        pull(Sample) %>% as.character()
+
+endo <- sts.non.malignant %>% subset(subset = Sample %in% sample.high.endothelial & Lv.2.Anno == "Endothelial")
+```
+
+## Diet Seurat
+```{r}
+DefaultAssay(endo) <- "RNA"
+endo <- DietSeurat(endo, assays = "RNA", data = TRUE, counts = TRUE)
+
+# to remove additional columns & because we need to split individual samples and redo the SCT, so we need to remove the "^_SCT"
+colnames(endo[[]]) #check which columns to remove
+endo[["nCount_SCT"]] <- NULL
+endo[["nFeature_SCT"]] <- NULL
+endo[["seurat_clusters"]] <- NULL
+#endo[["SCT_snn_res.0.5"]] <- NULL
+#endo[["SCT_snn_res.0.6"]] <- NULL
+endo[["SCT_snn_res.0.7"]] <- NULL
+#endo[["SCT_snn_res.0.8"]] <- NULL
+#endo[["SCT_snn_res.0.9"]] <- NULL
+#endo[["SCT_snn_res.1"]] <- NULL
+#endo[["SCT_snn_res.1.3"]] <- NULL
+#endo[["SCT_snn_res.1.2"]] <- NULL
+```
+
+## Normalisation using SCtransform v2
+```{r}
+endo <- SplitObject(endo, split.by = "Sample")
+endo <- lapply(endo, FUN= SCTransform, 
+               vst.flavor="v2",
+               assay = "RNA",
+               variable.features.n = 3000,
+               vars.to.regress = "subsets_mito_percent"
+               ) # should only use percent.mito
+```
+
+## Integration using pearson residuals
+```{r}
+int.features.split <- SelectIntegrationFeatures(object.list = endo, nfeatures = 2000)
+endo <- PrepSCTIntegration(object.list = endo,  anchor.features = int.features.split)
+
+## RPCA integration
+endo <- lapply(X = endo, FUN = RunPCA, features = int.features.split, npcs =30)
+endo.anchors <- FindIntegrationAnchors(object.list = endo, normalization.method = "SCT",
+               anchor.features = int.features.split, dims = 1:30, reduction = "rpca", k.anchor = 10) 
+endo <- IntegrateData(anchorset = endo.anchors, normalization.method = "SCT", k.weight = 30, dims = 1:30)
+```
+
+# Perform integrated analysis
+```{r}
+DefaultAssay(endo) <- "integrated"
+endo <- RunPCA(endo, verbose=F)
+ElbowPlot(endo)
+DimPlot(endo, reduction = "pca", group.by = "Lv.1.Anno")
+
+endo <- RunUMAP(endo, reduction="pca", dims=1:30, verbose = FALSE)
+endo <- FindNeighbors(endo, reduction="pca", dim=1:30)
+
+# testing different algorithm & to determine the resolution of clustering
+endo <- FindClusters(endo, algorithm = 3, resolution = seq(0.1, 1, by = 0.1))
+
+# Use clustree to determine the resolution
+library(clustree)
+clustree::clustree(endo)  #most stable at resolution = 0.2, 0.4, 0.7, 0.8
+#Idents(endo) <- "integrated_snn_res.0.2" # we're keeping it simple, just to seperate LEC from endothelial 
+```
+
+# Assigning cluster name
+```{r fig.width=10, fig.height=4, message=FALSE}
+metadata <- endo@meta.data %>% as.data.frame() #Creating a data frame called metadata
+metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata %>% mutate(cell_names = case_when(#integrated_snn_res.0.8 == "0" ~ "Endothelial",
+                                           integrated_snn_res.0.4 == "3" ~ "Endothelial:Angiogenic tip cells", #checked
+                                           integrated_snn_res.0.4 == "5" ~ "Lymphatic endothelial", #checked
+                                           integrated_snn_res.0.4 == "4" ~ "Endothelial:reactive EndMT",#checked and/or antigen-presenting endothelial
+                                           integrated_snn_res.0.4 == "2" ~ "Endothelial:Stalk-like", #checked
+                                           TRUE ~ "Endothelial:Tip-like")) -> metadata
+metadata %>% group_by(integrated_snn_res.0.4) %>% count(cell_names)
+cell_names <- metadata$cell_names
+names(cell_names) <- metadata$S_CB
+endo <- AddMetaData(object = endo, metadata = cell_names, col.name = "cell_names")
+saveRDS(endo, file = file.path(params$step_dir, "endo.RDS"))
+```
+
 ```{r}
 sessionInfo()
 ```
