@@ -137,7 +137,7 @@ netVisual_individual(NRT, signaling = pathways.show, layout = "circle")
 TLS <- subsetCellChat(
   cellchat,
   cells.use = NULL,
-  idents.use = c("B","FRCs","FDCs","CD3+ T", "CD4+ T:IL7R+","Migratory DCs","cDC1", "cDC2", "CD8+ T:GZMK+","CD8+ T:ITGAE+","TAMs_C1QC+","Schwann","Endothelial","CAFs_NRT","LECs"),
+  idents.use = c("B","FRCs","FDCs","CD3+ T", "CD4+ T:IL7R+","Migratory DCs","cDC1", "cDC2", "CD8+ T:GZMK+","CD8+ T:ITGAE+","TAMs_C1QC+","Schwann","Endothelial","CAFs_NRT"), #"LECs"),
   group.by = NULL,
   invert = FALSE,
   thresh = 0.05

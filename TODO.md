@@ -70,7 +70,6 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
 - [ ] **Confirm the CellChat commit:** `packageDescription("CellChat")$RemoteSha` in the original environment, then update `envs/post_install_cellchat.R`. 2.1.2 covers many commits, including database changes.
 - [ ] Check the build log: `post_install_cellchat.R` compiles CRAN and GitHub packages inside the env, which no other env does with compiled code.
-- [ ] `Cellchat.Rmd` uses `"LECs"` in the TLS plot, but `Plotting.Rmd` labels these cells `"Lymphatic endothelial"`, so they are left out. Decide whether that is intended.
 
 ### Held apart
 - [ ] `snrnaseq/QC_checks.Rmd`: instructions to follow.
