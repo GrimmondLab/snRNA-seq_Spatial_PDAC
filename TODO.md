@@ -45,9 +45,12 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 
 ## 3. Spatial (Python): blocked on inputs
 - [ ] Add the notebooks (`.ipynb`) and any helper `.py` files under `spatial/`.
-- [ ] Decide which env record is correct: `environment_full.yml` or `requirements_pip.txt` (they disagree on 19 versions, including scanpy and squidpy).
+- [x] Decide which env record is correct: `spatial/environment/requirements_as_used.txt`, the versions actually loaded (scanpy 1.9.5 and squidpy 1.3.1, from `~/.local`).
+- [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
+- [ ] When the notebooks arrive, search them and their helper files for s3fs, aiobotocore, botocore and `s3://`. The analyst does not recall using Amazon S3. If nothing needs them, leave these three out: they probably conflict with the imported fsspec 2023.10.0 and urllib3 2.1.0, so the env may not solve with them.
+- [ ] Deposit the 16 processed `.h5ad` files (they also hold the PCA results that Stage 1 reads), and record their DOI.
 - [ ] Write `envs/spatial.yml`, using conda-forge/bioconda only (no `defaults`):
-  - pin the analysis packages (scanpy, squidpy, anndata, muon, mofapy2, …) to the chosen record;
+  - pin the analysis packages (scanpy, squidpy, anndata, …) to `requirements_as_used.txt` with the corrections in `spatial/README.md`, leaving out muon and mofapy2 (not used);
   - leave low-level libraries unpinned;
   - add pip-only packages under `pip:`.
 - [ ] Lock it with `conda-lock` (see README, "Updating an env"), and add it to the `Dockerfile` and a `spatial` entry in `run.sh` (papermill or `jupyter nbconvert --execute`).

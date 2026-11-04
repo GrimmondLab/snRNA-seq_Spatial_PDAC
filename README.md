@@ -48,7 +48,7 @@ All later stages therefore start from the **original post-QC object**, deposited
 | snRNA-seq CellBender output (`<sample>_cellbender_filtered.h5` and 10x matrix files) | GEO [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918) |
 | Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Other analysis objects that later stages start from (annotated Stage 2 object, Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
-| Spatial data | To be added |
+| Spatial (Xenium) data | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
 
 ## Build
 
