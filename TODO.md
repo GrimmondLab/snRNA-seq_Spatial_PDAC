@@ -67,8 +67,8 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
 - [ ] Check the build log: `post_install_cellchat.R` compiles CRAN and GitHub packages inside the env, which no other env does with compiled code.
 
-### Held apart
-- [ ] `snrnaseq/QC_checks.Rmd`: instructions to follow.
+### Supplementary QC (`snrnaseq/supplementary_qc/`, record only)
+- [ ] Add the three CSVs to Supplementary Table 1, from the rerun of the tidied file, each with a note on what it covers (see the folder README).
 
 ## 5. Before submission
 - [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.

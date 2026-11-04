@@ -33,6 +33,8 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 
 **Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. Its outputs feed no later stage and are not deposited. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
 
+**Supplementary: per-sample QC** (`snrnaseq/supplementary_qc/`, documentation only). How the per-sample QC tables and plots requested in review were made, from the annotated object and the Cell Ranger output. It adds to Stages 0 and 1.
+
 ### The break between Stage 1 and Stage 2
 
 Stage 1 can be rerun from the raw CellBender output, but it doesn't reproduce the original object exactly. The original run set `set.seed()` but did not pass a seed to the parallel workers (`BPPARAM` `RNGseed`), so parallel steps such as scDblFinder gave slightly different results. The rerun gives 26,757 genes × 115,293 cells, while the original object has 26,788 genes × 115,221 cells.

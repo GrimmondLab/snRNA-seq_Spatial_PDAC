@@ -43,3 +43,5 @@ CellBender was run with `--output <id>_cellbender.h5`. It writes several files f
 
 - Samples from run `200317_A00130_0132_AH2KMMDSXY_run_bc` have a `-GEX` suffix in Cell Ranger, CellBender and on GEO (for example `1993-GEX`). Stage 1 removes it, so the analysis name is `1993`.
 - Sample 2302 was sequenced twice, in runs `190322_A00130_0097…` and `190819_A00130_0114…`, with the same ID `2302` both times. The second is the second section: Stage 1 renames it `2302-section-2` using its run ID, and it is deposited on GEO as `2302-section-2_cellbender_filtered.h5`.
+
+The per-sample sequencing metrics from the Cell Ranger output (reads per nucleus, sequencing saturation) are in `../supplementary_qc/`.

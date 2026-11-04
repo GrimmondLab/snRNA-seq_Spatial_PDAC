@@ -6,5 +6,6 @@
 !shared/
 !snrnaseq/
 snrnaseq/stage0_cellranger_cellbender/
+snrnaseq/supplementary_qc/
 snrnaseq/*/sessionInfo/
 snrnaseq/*/original/

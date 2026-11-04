@@ -9,6 +9,8 @@ R 4.3 · Bioconductor 3.17 · conda env `snrnaseq` · master script `run_stage1.
 
 The analyses from Stage 2 onward start from the original post-QC object deposited with the manuscript, not from this stage's output (see the top-level `README.md`).
 
+Per-sample QC metrics for the nuclei that passed these filters are in `../supplementary_qc/`.
+
 ## Environment
 
 Conda env `snrnaseq` (`../../envs/snrnaseq.yml`, locked in `envs/snrnaseq-linux-64.lock`): R 4.3, Bioconductor 3.17 (scDblFinder 1.14.0, scater 1.28.0, scran 1.28.1, scuttle 1.10.1, DropletUtils 1.20.0), Seurat 4.3.0, dplyr 1.1.2, ggplot2 3.4.2. All packages recorded in `sessionInfo/` are pinned to their original versions, except xgboost (used by scDblFinder: 1.7.5.1 → 1.7.6, the nearest conda build), digest, cli, hexbin and labeling (no R 4.3 build of the original version). Build and general run instructions are in the top-level `README.md`.

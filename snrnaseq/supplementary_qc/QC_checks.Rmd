@@ -1,0 +1,194 @@
+---
+title: "QC_check"
+author: "Mai La"
+date: "2026-10-20"
+output: html_document
+---
+
+# Attach libraries
+```{r Packages}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(purrr)
+library(stringr)
+library(DropletUtils)
+```
+
+# Loading data
+```{r}
+sts.simspec.final <- readRDS("~/projects/PDAC_non_malignant_cell_types/output/cellbender/Aug24_objects/sts.simspec.final.RDS")
+cellranger_dir <- "~/projects/PDAC_non_malignant_cell_types/data/Cellranger_info"    # the folder that contains the 4 run folders
+output_dir <- "Revision_October26/output"
+
+obj <- sts.simspec.final
+
+# Create sample-level metadata mapping
+sample_map <- unique(
+  obj@meta.data[, c("orig.ident", "ICGC_ID","Sample")]
+)
+
+# Verify one ICGC_ID per sample
+stopifnot(!anyDuplicated(sample_map$orig.ident))
+```
+
+# QC metrics per nucleus
+Genes detected, counts, mitochondrial and ribosomal proportions and MALAT1 expression, for the nuclei that passed QC.
+```{r}
+obj$sample <- obj$orig.ident
+obj$malat1_expr <- FetchData(obj, vars = "MALAT1")[, 1]   # normalised expression
+
+qc_vars <- c("nFeature_RNA", "nCount_RNA", "subsets_mito_percent",
+             "subsets_ribo_percent", "malat1_expr")
+
+# Table (Supplementary Table)
+qc_table <- obj@meta.data %>%
+  group_by(orig.ident) %>%
+  summarise(n_nuclei = n(),
+            across(all_of(qc_vars),
+                   list(median = median, mean = mean), .names = "{.col}_{.fn}"))
+
+# Add ICGC_ID to QC table
+qc_table$ICGC_ID <- sample_map$ICGC_ID[
+  match(
+    as.character(qc_table$orig.ident),
+    as.character(sample_map$orig.ident)
+  )
+]
+
+# Check unmatched samples
+stopifnot(!anyNA(qc_table$ICGC_ID))
+
+write.csv(qc_table, file.path(output_dir, "Supp_Table_QC_per_sample.csv"), row.names = FALSE)
+
+# Plots (Supplementary Figure)
+p <- obj@meta.data %>%
+  pivot_longer(all_of(qc_vars), names_to = "metric", values_to = "value") %>%
+  ggplot(aes(sample, value, fill = sample)) +
+  geom_violin(scale = "width") +
+  geom_boxplot(width = 0.1, outlier.size = 0.2, fill = "white") +
+  facet_wrap(~ metric, scales = "free_y", ncol = 3) +
+  theme_classic() +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave(file.path(output_dir, "Supp_Fig_QC_per_sample.pdf"), p, width = 12, height = 7)
+```
+
+# Sequencing metrics for the nuclei in the final object
+Sequencing depth (mean reads per nucleus) and sequencing saturation were calculated for each library from the Cell Ranger (v6.1.1) molecule information files, using the nuclei in the final object. Sequencing saturation was defined as 1 − (unique molecules / total reads).
+```{r}
+# 1. Function: sequencing metrics for one sample
+calc_seq_metrics <- function(mol_path, barcodes) {
+  d <- read10xMolInfo(mol_path)$data   # one row per molecule: cell, gem_group, gene, umi, reads
+  d <- d[d$cell %in% barcodes, ]       # keep only nuclei in the final object
+  per_cell_reads <- tapply(d$reads, d$cell, sum)
+  data.frame(
+    n_nuclei_found       = length(unique(d$cell)),
+    n_nuclei_expected    = length(barcodes),
+    mean_reads_per_nuc   = round(sum(d$reads) / length(unique(d$cell))),
+    median_reads_per_nuc = round(median(per_cell_reads)),
+    seq_saturation       = round(1 - nrow(d) / sum(d$reads), 3)
+  )
+}
+
+# 2. Sample table (folder name -> Seurat sample name)
+mol <- list.files(cellranger_dir, pattern = "^molecule_info\\.h5$",
+                  recursive = TRUE, full.names = TRUE)
+
+mol_tbl <- data.frame(path = mol) %>%
+  mutate(rel    = sub(paste0("^", normalizePath(cellranger_dir), "/?"), "", normalizePath(path)),
+         run    = sub("/.*$", "", rel),                 # first folder = run
+         sample = sapply(strsplit(rel, "/"), `[`, 2),   # second folder = sample ID
+         seurat_sample = sub("-GEX", "", sample))
+
+stopifnot(nrow(mol_tbl) == 30, !anyDuplicated(mol_tbl$sample),
+          setequal(mol_tbl$seurat_sample, unique(obj$Sample)))
+
+# 3. Run for all samples (errors in one sample do not stop the loop)
+res <- lapply(seq_len(nrow(mol_tbl)), function(i) {
+  s  <- mol_tbl$seurat_sample[i]
+  bc <- colnames(obj)[obj$Sample == s]
+  bc <- sub("^.*_", "", bc)     # remove sample prefix, if present
+  bc <- sub("-1$", "", bc)      # remove -1 suffix
+  message("Running ", i, "/", nrow(mol_tbl), ": ", s)
+  tryCatch(
+    calc_seq_metrics(mol_tbl$path[i], bc) %>%
+      mutate(Sample = s, run = mol_tbl$run[i], .before = 1),
+    error = function(e) {
+      message("  FAILED: ", conditionMessage(e))
+      NULL
+    }
+  )
+}) %>% bind_rows()
+
+# 4. Sanity checks
+stopifnot(nrow(res) == 30)
+res %>% filter(n_nuclei_found == 0 | n_nuclei_found < 0.9 * n_nuclei_expected)  # should be empty
+
+res_icgc <- res %>%
+  left_join(sample_map, by = "Sample")
+
+write.csv(res_icgc, file.path(output_dir, "Supp_Table_seq_metrics.csv"), row.names = FALSE)
+```
+
+# Metrics from `cellranger count`
+Key indicators are fraction of valid barcodes, reads confidently mapped to transcriptome and reads in cells.
+```{r cellranger_metrics, echo=FALSE, warning=FALSE, message=FALSE}
+cellranger.metrics.csv.files <-
+  list.files(path = cellranger_dir,
+  recursive = TRUE,
+  pattern = "metrics_summary.csv",
+  full.names = T)
+
+# Percentages become fractions; counts such as "45,123" stay on their own scale
+cellranger.metrics <- cellranger.metrics.csv.files %>%
+  set_names() %>%                                  # name = full path
+  map(read_csv, show_col_types = FALSE) %>%
+  list_rbind(names_to = "path") %>%
+  mutate(Batch  = basename(dirname(dirname(path))),   # run folder
+         Sample = basename(dirname(path)),            # sample folder
+         .before = 1) %>%
+  select(-path) %>%
+  mutate(across(where(is.character) & !c(Batch, Sample),
+                ~ if (any(grepl("%", .x))) parse_number(.x) / 100 else parse_number(.x))) %>%
+  mutate(Sample = str_remove(Sample, "-GEX")) %>%
+  left_join(sample_map, by = "Sample")
+
+stopifnot(nrow(cellranger.metrics) == length(cellranger.metrics.csv.files),
+          !anyNA(cellranger.metrics$orig.ident))
+
+ggplot(data = cellranger.metrics, aes(x = Sample, y = `Valid Barcodes`*100)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 75, linetype = "dashed", color = "darkred") +
+  theme_bw()
+
+ggplot(data = cellranger.metrics, aes(x = Sample, y = `Reads Mapped Confidently to Transcriptome`*100)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 30, linetype = "dashed", color = "darkred") +
+  theme_bw()
+
+ggplot(data = cellranger.metrics, aes(x = Sample, y = `Fraction Reads in Cells`*100)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 70, linetype = "dashed", color = "darkred") +
+  theme_bw()
+
+p1 <- ggplot(cellranger.metrics, aes(x = orig.ident, y = `Mean Reads per Cell`, fill = Batch)) +
+  geom_col() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+p2 <- ggplot(cellranger.metrics, aes(x = orig.ident, y = `Sequencing Saturation`*100, fill = Batch)) +
+  geom_col() +
+  geom_hline(yintercept = 75, linetype = "dashed", colour = "darkred") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+cowplot::plot_grid(p1, p2, ncol = 1, align = "v")
+
+write_csv(cellranger.metrics, file.path(cellranger_dir, "cellranger_metrics_all_samples.csv"))
+```
+
+```{r}
+sessionInfo()
+```
