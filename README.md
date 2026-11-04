@@ -1,13 +1,14 @@
 # PDAC snRNA-seq and spatial analysis: reproducible environment
 
-Code and environment definitions for the analyses in the manuscript. The repository has two parts:
+Code and environment definitions for the analyses in the manuscript. The repository has three parts:
 
 | Folder | Language | Contents |
 |---|---|---|
 | `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5 |
 | `spatial/` | Python | Spatial (Xenium) analysis, being added (see `spatial/README.md`) |
+| `spatial_proteomics/` | R | Record of the code for the MIBI figures; no Docker container (see `spatial_proteomics/README.md`) |
 
-Everything runs from **one Docker image** that holds one conda env per group of stages. The envs are built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see below).
+The snRNA-seq and Xenium analyses run from **one Docker image** that holds one conda env per group of stages. The envs are built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see below).
 
 ## Environments
 
@@ -49,6 +50,7 @@ All later stages therefore start from the **original post-QC object**, deposited
 | Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Other analysis objects that later stages start from (annotated Stage 2 object, Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
 | Spatial (Xenium) data | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
+| Spatial proteomics (MIBI) input and processed files | Zenodo, **DOI_TBD** |
 
 ## Build
 

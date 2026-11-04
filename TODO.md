@@ -56,6 +56,13 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Lock it with `conda-lock` (see README, "Updating an env"), and add it to the `Dockerfile` and a `spatial` entry in `run.sh` (papermill or `jupyter nbconvert --execute`).
 - [ ] Check whether any notebook needs a GPU (torch / scvi-tools are in the env). If so, decide on a CPU fallback or a separate GPU image.
 
+## 3b. Spatial proteomics (MIBI): record only, waiting on the collaborating team
+- [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. `Fig2_efg_CellNeighbourhood.R` does not run as written: it joins on a `cell.id` column that is not there, and it is unclear whether clustering used all cells or excluded "Other". `ExtFig6f_boxplots_cell_distance.R` does not load dplyr or ggplot2 and does not define `output_folder`.
+- [ ] Get `sessionInfo()` for the scripts and add the versions to the README.
+- [ ] Deposit `spe.rds` and the other input and processed files on Zenodo, and fill in DOI_TBD.
+- [ ] Add the team's Docker container for upstream image processing and QC, or a link to it.
+- [ ] Agree how to credit the team, and get permission to publish the code.
+
 ## 4. Finish moving the downstream commit (d404957) to the single image
 
 Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, no seed, as in the original run); Stage 3 has its own env `downstream` (`envs/downstream.yml` + lock, GitHub packages in `envs/post_install_downstream.R`); both run through `run.sh` and are checked in the CI smoke test; the per-stage Dockerfiles and `install_packages.R` are deleted.
