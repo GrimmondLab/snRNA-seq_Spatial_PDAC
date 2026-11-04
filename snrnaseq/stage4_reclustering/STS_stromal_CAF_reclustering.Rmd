@@ -399,7 +399,7 @@ FeaturePlot(fib.only.simspec_css.sample.sct, features = c("PDGFRA","CXCL14","COL
             ncol = 2, order = TRUE)
 ```
 
-```{r ext-data-fig-1c-caf, fig.width=5, fig.height=5, dpi=300, message=FALSE, warning=FALSE}
+```{r fig-1c-caf, fig.width=5, fig.height=5, dpi=300, message=FALSE, warning=FALSE}
 caf <- fib.only.simspec_css.sample.sct %>% subset(Lv.2.Anno_subset == "Vascular smooth muscle", invert=T)
 caf.col <- c('#FFE5A7',"#B4584D",'#FFB0A7') 
 caf.color <- setNames(object = caf.col, nm=c("CAFs_MYO", "CAFs_NRT","CAFs_CXCL14+")) 

@@ -109,5 +109,4 @@ apptainer run \
 
 - **Cell labels come from cluster numbers.** `Lv.1.Anno` is assigned to resolution-0.7 clusters by number, and `Tuft.persistent` to tuft clusters 2 and 3 at resolution 0.9. A rerun in this image is expected to give the same clusters, and so the same labels; `sts.nonmalignant.RDS` can be compared with the original object to confirm this.
 - **The malignant contrasts expect 6 clusters.** The edgeR contrasts in `STS_Malignant.Rmd` are written for the 6 clusters at resolution 0.1. A check stops the run with a message if a different number of clusters is found.
-- **Extended Data Fig. 4G colours (TODO).** The original code coloured the KRAS status with a vector `col` that was defined outside the file. Until it is added (`kras.col` in that chunk), the figure uses ggplot2's default colours.
 - **`sts.nonmalignant.RDS` is saved once,** after `Lv.2.Anno` is added. The original code also saved it earlier, with `Lv.1.Anno` only, under the same name.

@@ -441,10 +441,6 @@ tuft.merged$ICGC_ID <- id.map$ICGC_ID[
 pat_col <- c("#DE73DA" ,"#E7E3DA" ,"#67C0D8" ,"#E1A497")
 col <- c("darkred","darkred","darkgrey","darkgrey","grey")
 DimPlot(tuft.merged, group.by = "ICGC_ID", cols = pat_col) + DimPlot(tuft.merged, group.by = "KRAS.mut", cols = col)
-# TODO: `col` was not defined in this file (it came from the original R session). Replace NULL with the
-# colour vector used for the manuscript figure; NULL uses ggplot2's default colours.
-kras.col <- NULL
-DimPlot(tuft.merged, group.by = "ICGC_ID") + DimPlot(tuft.merged, group.by = "KRAS.mut", cols = kras.col)
 ```
 
 ```{r ext-data-fig-4h, fig.width=6, fig.height=4, dpi=300, message=FALSE, warning=FALSE}

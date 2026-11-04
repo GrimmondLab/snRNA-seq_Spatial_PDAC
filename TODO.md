@@ -58,12 +58,9 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, no seed, as in the original run); Stage 3 has its own env `downstream` (`envs/downstream.yml` + lock, GitHub packages in `envs/post_install_downstream.R`); both run through `run.sh` and are checked in the CI smoke test; the per-stage Dockerfiles and `install_packages.R` are deleted.
 
 - [ ] **Build the image with the `downstream` env** (locally or by pushing a tag) and check the build log: `post_install_downstream.R` must install treeio 1.25.0.001 over the conda treeio 1.24.1, and every package in `sessionInfo/downstream.txt` must attach. If the GitHub treeio clashes with the conda builds of ggtree / enrichplot / clusterProfiler, fall back to conda's treeio 1.24.1 and record the difference.
-- [ ] Extended Data Fig. 4G: the KRAS status colours (`kras.col`) were defined outside the original Rmd. Get them from the author.
 - [ ] **Keep one `sample_map.csv`.** `shared/sample_map.csv` is identical to `snrnaseq/stage0_cellranger_cellbender/sample_map.csv`; keep `shared/` and point the Stage 0 README at it.
 
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
-- [ ] Confirm that `sts.simspec_css.sample.sct_fullworkflow.RDS` (read by the original `Plotting.Rmd`) is the Stage 2 annotated object.
-- [ ] Add the session information of `Plotting.Rmd`.
 - [ ] Cross-tabulate `Lv.2.Anno` in each saved object against the original objects per cell. They are assigned by cluster number.
 - [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
 

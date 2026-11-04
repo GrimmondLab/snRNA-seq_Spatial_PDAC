@@ -22,9 +22,8 @@ Figure names are taken from the chunk labels.
 | Output | File | Chunk |
 |---|---|---|
 | Fig. 1B | `Plotting.Rmd` | `fig1b-snrnaseq-umap`, `fig1b-snrnaseq-cellularcomposition` |
-| Fig. 1C | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd` | `fig-1c-lymphoid`, `fig-1c-tam` |
+| Fig. 1C | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd` | `fig-1c-lymphoid`, `fig-1c-tam`, `fig-1c-caf` |
 | Extended Data Fig. 1A | `Plotting.Rmd` | `ext-data-fig1a-snrnaseq-gex` |
-| Extended Data Fig. 1C | `STS_stromal_CAF_reclustering.Rmd` | `ext-data-fig-1c-caf` |
 | Extended Data Fig. 2A | `Plotting.Rmd` | `ext-data-fig2a-snrnaseq-gex` |
 | Extended Data Fig. 5A | `STS_stromal_CAF_reclustering.Rmd` | `ext-data-fig-5a-Baron`, `ext-data-fig-5a-Elyada`, `ext-data-fig-5a-Hwang` |
 | Extended Data Fig. 5B | `STS_stromal_CAF_reclustering.Rmd` | `ext-data-fig-5b` |
@@ -57,7 +56,7 @@ The differences from the original runs are those in the Stage 3 README ("Environ
 |---|---|---|---|
 | devtools, usethis, pkgbuild, pkgload, profvis, urlchecker, sessioninfo, loupeR, monocle3, hdf5r, lme4, minqa, nloptr, boot, terra, prettyunits | | not installed | loaded in the original sessions but not used by the code |
 
-`sessionInfo/` holds the session information of the original runs. `STS_stromal_CAF_reclustering.Rmd` has two: the `_v2` file was recorded in the session that ran the Reactome GSEA, so it has packages the first does not. There is no recording for `Plotting.Rmd` (**TODO**).
+`sessionInfo/` holds the session information of the original runs. `STS_stromal_CAF_reclustering.Rmd` has two: the `_v2` file was recorded in the session that ran the Reactome GSEA, so it has packages the first does not. `sessionInfo_Plotting.txt` was recorded after dplyr was updated to 1.2.1 for CellChat; `Plotting.Rmd` originally ran with the same packages as the other files here, including dplyr 1.1.2, which this env uses.
 
 ## Files
 
