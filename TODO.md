@@ -1,12 +1,13 @@
 # TODO
 
 Next steps after the move to one conda-based Docker image (`Dockerfile`, `envs/`, `run.sh`).
-`v0.1.2` is published (Docker image and `.sif`) with the `snrnaseq`, `downstream` and `infercnv` envs, but it predates Stages 4 and 5. The `cellchat` env and the Stage 4 additions to `downstream` are locked but have not been built into an image yet. Stage 1 has run end to end on a 3-sample subset (Docker, `0.1.2`). The full run on Spartan needs far more memory than documented (see Stage 1 below), and no full stage has finished yet.
+`v0.2.0` is published as a Docker image with all four envs, including Stages 4 and 5. Its `.sif` failed in CI (no disk space), so the latest `.sif` is `v0.1.2`, which has neither stage. Stage 1 has run end to end on a 3-sample subset (Docker, `0.1.2`). The full run on Spartan needs far more memory than documented (see Stage 1 below), and no full stage has finished yet.
 
 ## 1. Build and move the image to the HPC
 
 - [x] Publish a first image: `v0.1.2` built, passed the smoke test and pushed `:0.1.2` and `:0.1.2-sif` (so the org allows Actions to publish packages).
-- [ ] Push a new tag that includes Stages 4 and 5 (e.g. `git tag v0.2.0 && git push origin v0.2.0`). Check the run passes, and download its `sessionInfo` artifact.
+- [x] Push a tag with Stages 4 and 5: `v0.2.0` built, passed the smoke test and pushed `:0.2.0`.
+- [ ] Publish a `.sif` with Stages 4 and 5: push a new tag with the CI disk fix and check the Apptainer step passes.
 - [ ] The repo is private, so the package will be private. Make it public (package settings → visibility) before sharing with reviewers, or use a `docker login ghcr.io` with a PAT that has `read:packages` on the HPC.
 - [x] Pull the prebuilt `.sif` on the HPC and check that the runner starts (it should print usage):
       ```bash
@@ -82,7 +83,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, no seed, as in the original run); Stage 3 has its own env `downstream` (`envs/downstream.yml` + lock, GitHub packages in `envs/post_install_downstream.R`); both run through `run.sh` and are checked in the CI smoke test; the per-stage Dockerfiles and `install_packages.R` are deleted.
 
 - [x] **Build the image with the `downstream` env.** `v0.1.2`: treeio 1.25.0.001 installed and every package attached, for the Stage 3 package list.
-- [ ] **Rebuild with the Stage 4 additions** (first tag item in section 1). The env lock has changed since `v0.1.2`, so check treeio and the new packages again in the build log. If the GitHub treeio clashes with the conda builds of ggtree / enrichplot / clusterProfiler, fall back to conda's treeio 1.24.1 and record the difference.
+- [x] **Rebuild with the Stage 4 additions.** `v0.2.0`: treeio 1.25.0.001 and the new packages attached, at the expected versions.
 - [x] **Keep one `sample_map.csv`.** The Stage 0 copy is removed, and its README points at `shared/`.
 
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
@@ -90,7 +91,7 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
-- [ ] Check the build log: `post_install_cellchat.R` compiles CRAN and GitHub packages inside the env, which no other env does with compiled code.
+- [x] Check the build: `post_install_cellchat.R` compiled in `v0.2.0`, and CellChat 2.1.2, dplyr 1.2.1 and NMF 0.27 attached.
 
 ### Supplementary QC (`snrnaseq/supplementary_qc/`, record only)
 - [ ] Add the three CSVs to Supplementary Table 1, from the rerun of the tidied file, each with a note on what it covers (see the folder README).
