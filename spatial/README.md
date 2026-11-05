@@ -2,7 +2,7 @@
 
 Python analysis of the spatial (Xenium) data. This part is being set up: the notebooks have not been added yet. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
-Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. The Python env will be added to `../envs/` as a third conda env in the same Docker image, with a `run.sh` entry per stage.
+Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. The Python env will be added to `../envs/` as a new conda env in the same Docker image, with a `run.sh` entry per stage.
 
 ## Input data
 
@@ -36,6 +36,8 @@ The workflow was rerun with the archived PCA results or retained cells because t
 ## Environment
 
 `environment/` holds the records of the conda environment the analysis ran in (`xenium.squidpy`, Python 3.9.18, Ubuntu 22.04).
+
+These files are not in the repository yet: `environment/` holds only the three earlier records (see `../TODO.md`).
 
 **Current environment, captured from the active kernel:**
 

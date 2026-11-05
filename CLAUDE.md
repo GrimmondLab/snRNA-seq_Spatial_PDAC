@@ -2,16 +2,16 @@
 
 Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 for snRNA-seq, GSE282154 for spatial, + Zenodo, 10.5281/zenodo.23933322 and DOI_TBD).
 
-Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and open work), the stage READMEs under `snrnaseq/stage*/`.
+Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and open work), the READMEs under `snrnaseq/*/`, `spatial/` and `spatial_proteomics/`.
 
 ## Layout
 
 - `snrnaseq/stageN_*/`, `snrnaseq/supplementary_*/`: one folder per R stage or supplementary analysis: Rmd(s), `run_stageN.R` (renders them with `params`), `config.yml` (container paths `/data/...`, `/output`), `sessionInfo/` of the **original** runs, and a README listing every version difference from those runs.
-- `snrnaseq/stage0_*/`, `snrnaseq/supplementary_qc/`: records only, not in the image or `run.sh`.
-- `spatial/`: Python, not added yet.
+- `snrnaseq/stage0_*/`, `snrnaseq/supplementary_qc/`: records only, not in the image (excluded in `.dockerignore`) or `run.sh`.
+- `spatial/`: Python, notebooks not added yet. `README.md` has the input data, planned stages and env plan; `environment/` has env records (the `requirements_as_used.txt` set the README lists is not committed yet). Not in the image or `run.sh` yet; `.dockerignore` is an allowlist, so it needs an entry too.
 - `spatial_proteomics/`: record only (MIBI figure code from a collaborating team, kept as received), not in the image or `run.sh`.
 - `shared/`: tables used by several stages.
-- `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits); `session_info.R`.
+- `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits, plus CRAN source packages for `cellchat`); `session_info.R`.
 - `Dockerfile` + `run.sh`: **one** image holding all envs. `run.sh <stage> [config]` maps a stage to its env and folder.
 
 ## Conventions
