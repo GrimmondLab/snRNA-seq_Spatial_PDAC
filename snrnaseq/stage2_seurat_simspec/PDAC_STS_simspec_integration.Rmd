@@ -184,13 +184,15 @@ DimPlot(sts.simspec_css.sample.sct,
   DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "cell_class") 
 
 ### Adding sample details
-replicate.id <- FetchData(sts.seurat, vars = c("Sample", "Cell_Ids"))
-replicate.id <- dplyr::mutate(replicate.id, Patient_ID = gsub("\\-.*", "", Sample))
-patient.id <- replicate.id$Patient_ID
-names(patient.id) <- replicate.id$Cell_Ids
-
-stopifnot(identical(names(patient.id), colnames(sts.seurat)))
-sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
+# Commented out: sts.seurat is a list by this point (SplitObject above), so FetchData() stops the render.
+# Nothing reads sts.seurat after this, and Patient_ID is already on the integrated object (from Seurat_sample_based.Rmd).
+# replicate.id <- FetchData(sts.seurat, vars = c("Sample", "Cell_Ids"))
+# replicate.id <- dplyr::mutate(replicate.id, Patient_ID = gsub("\\-.*", "", Sample))
+# patient.id <- replicate.id$Patient_ID
+# names(patient.id) <- replicate.id$Cell_Ids
+#
+# stopifnot(identical(names(patient.id), colnames(sts.seurat)))
+# sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
 ```
 
 ```{r}

@@ -26,7 +26,7 @@ Conda env `snrnaseq` (`../../envs/snrnaseq.yml`, locked in `envs/snrnaseq-linux-
 | `config_hpc.yml` | Original settings with HPC paths (record only) |
 | `geo_samples.csv` | Links each GEO entry to the sample name used in the analysis, and sets the loading order |
 | `geo_input.R` | Prepares the GEO files for loading (used in GEO mode) |
-| `SG_sample_meta.csv` | Sample metadata; mounted at run time, not copied into the image |
+| `SG_sample_meta.csv` | Sample metadata; also in the image, but the configs read it from the `/data/meta` mount |
 | `sessionInfo/` | Session information of the original analysis (see the note inside) |
 
 ## Input

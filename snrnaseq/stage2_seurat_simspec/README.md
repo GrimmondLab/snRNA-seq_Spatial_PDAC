@@ -71,3 +71,11 @@ Results are written to `/output/Seurat_sample_based/` and `/output/PDAC_STS_sims
 
 - **Cell-type labels depend on cluster numbers.** `cell_class` and `simspec_cell_class` are assigned by cluster number (e.g. `"41" ~ "Mast"`). If clusters come out numbered differently, the labels would be wrong without any error. Compare the labels with the original annotated object before relying on a rerun.
 - **One chunk is switched off** (`eval=FALSE`, marked TODO): the old-vs-new object comparison at the start of `Seurat_sample_based.Rmd`.
+
+## Changes needed to render the original code
+
+This stopped the file from rendering from start to end. No analysis step was changed.
+
+| File | Change |
+|---|---|
+| `PDAC_STS_simspec_integration.Rmd` | Commented out the block that adds `Patient_ID` to `sts.seurat`. By then `sts.seurat` is a list of per-sample objects, so `FetchData()` fails. Nothing reads it afterwards, and the integrated object already has `Patient_ID` from `Seurat_sample_based.Rmd` |
