@@ -1,0 +1,17 @@
+sample	patient	panel	how_tested	cells	previous_rerun_same_label	stage1_run_same_label	stage1_run_same_label_as_label_table	gene_sets_compared	previous_rerun_gene_score_max_difference	stage1_run_gene_score_max_difference	nhood_labels_compared	previous_rerun_nhood_z_max_difference	stage1_run_nhood_z_max_difference	stage1_run_nhood_z_correlation	recalculated_previous_same_label	recalculated_stage1_run_same_label	recalculated_previous_nhood_z_correlation	recalculated_stage1_run_nhood_z_correlation	recalculated_labels_only_in_one_result	recalculated_cells_kept_original	recalculated_cells_kept	recalculated_kept_cells_now_removed	recalculated_removed_cells_now_kept	recalculated_kept_cells_jaccard	previous_and_stage1_run_agree
+MH065_314	MH065	314	Recalculated PCA	154206	100.0000%	100.0000%	100.0000%	33	0	0	34	0	0	1.0000	99.1225%	99.1225%	0.9991	0.9991	None	154206	154105	129	28	0.9990	Yes
+MH074_314	MH074	314	Recalculated PCA	145717	100.0000%	100.0000%	100.0000%	26	0	0	27	0	0	1.0000	98.5472%	98.5472%	0.9999	0.9999	None	NA	NA	NA	NA	NA	Yes
+MH096_314	MH096	314	Scoring only, no PCA used	174784	100.0000%	100.0000%	100.0000%	25	0	0	25	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes
+MH097_314	MH097	314	Recalculated PCA	282289	100.0000%	100.0000%	100.0000%	32	0	0	33	0	0	1.0000	97.7708%	97.7708%	0.9993	0.9993	None	282289	279123	4344	1178	0.9805	Yes
+MH099_314	MH099	314	Recalculated PCA	141568	100.0000%	100.0000%	100.0000%	23	0	0	23	0	0	1.0000	99.9274%	99.9274%	0.9997	0.9997	None	141568	141520	1046	998	0.9857	Yes
+MH104_314	MH104	314	Recalculated PCA	101830	100.0000%	100.0000%	100.0000%	30	0	0	31	0	0	1.0000	99.8566%	99.8566%	0.9998	0.9998	None	NA	NA	NA	NA	NA	Yes
+MH106_314	MH106	314	Recalculated PCA	153269	100.0000%	100.0000%	100.0000%	27	0	0	28	0	0	1.0000	100.0000%	100.0000%	0.9996	0.9996	None	153269	153271	2	4	1.0000	Yes
+MH107_314	MH107	314	Recalculated PCA	97631	100.0000%	100.0000%	100.0000%	27	0	0	27	0	0	1.0000	98.3202%	98.3202%	0.9999	0.9999	None	NA	NA	NA	NA	NA	Yes
+MH065_480	MH065	480	Scoring only, no PCA used	93891	100.0000%	100.0000%	100.0000%	31	0	0	32	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes
+MH074_480	MH074	480	Scoring only, no PCA used	264689	100.0000%	100.0000%	100.0000%	34	0	0	35	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes
+MH096_480	MH096	480	Scoring only, no PCA used	458968	100.0000%	100.0000%	100.0000%	39	0	0	40	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes
+MH097_480	MH097	480	Scoring only, no PCA used	194626	100.0000%	100.0000%	100.0000%	35	0	0	36	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes
+MH099_480	MH099	480	Recalculated PCA	144282	100.0000%	100.0000%	100.0000%	30	0	0	31	0	0	1.0000	96.5813%	96.5813%	0.9990	0.9990	None	144282	145370	4697	5785	0.9302	Yes
+MH104_480	MH104	480	Scoring only, no PCA used	162903	100.0000%	100.0000%	100.0000%	32	0	0	33	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes
+MH106_480	MH106	480	Recalculated PCA	146148	100.0000%	100.0000%	100.0000%	32	0	0	33	0	0	1.0000	99.9925%	99.9925%	0.9998	0.9998	None	146148	146104	152	108	0.9982	Yes
+MH107_480	MH107	480	Scoring only, no PCA used	214226	100.0000%	100.0000%	100.0000%	37	0	0	38	0	0	1.0000	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	Yes

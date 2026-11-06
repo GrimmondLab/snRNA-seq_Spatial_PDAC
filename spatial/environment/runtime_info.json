@@ -1,0 +1,43 @@
+{
+ "python": "3.9.18 (main, Sep 11 2023, 13:41:44) \n[GCC 11.2.0]",
+ "executable": "~/miniconda3/envs/xenium.squidpy/bin/python",
+ "platform": "Linux-5.15.0-202-generic-x86_64-with-glibc2.35",
+ "sys_path": [
+  "<analysis_folder>",
+  "~/miniconda3/envs/xenium.squidpy/lib/python39.zip",
+  "~/miniconda3/envs/xenium.squidpy/lib/python3.9",
+  "~/miniconda3/envs/xenium.squidpy/lib/python3.9/lib-dynload",
+  "",
+  "~/.local/lib/python3.9/site-packages",
+  "~/miniconda3/envs/xenium.squidpy/lib/python3.9/site-packages"
+ ],
+ "thread_settings": {
+  "OMP_NUM_THREADS": null,
+  "MKL_NUM_THREADS": null,
+  "OPENBLAS_NUM_THREADS": null,
+  "NUMBA_NUM_THREADS": null,
+  "PYTHONNOUSERSITE": null
+ },
+ "maths_libraries": [
+  {
+   "user_api": "blas",
+   "internal_api": "openblas",
+   "num_threads": 16,
+   "prefix": "libopenblas",
+   "filepath": "~/miniconda3/envs/xenium.squidpy/lib/python3.9/site-packages/numpy.libs/libopenblas64_p-r0-15028c96.3.21.so",
+   "version": "0.3.21",
+   "threading_layer": "pthreads",
+   "architecture": "Cooperlake"
+  },
+  {
+   "user_api": "blas",
+   "internal_api": "openblas",
+   "num_threads": 16,
+   "prefix": "libopenblas",
+   "filepath": "~/miniconda3/envs/xenium.squidpy/lib/python3.9/site-packages/scipy.libs/libopenblasp-r0-9f9f5dbc.3.18.so",
+   "version": "0.3.18",
+   "threading_layer": "pthreads",
+   "architecture": "Zen"
+  }
+ ]
+}

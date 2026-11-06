@@ -1,6 +1,6 @@
 # Spatial analysis (Python)
 
-Python analysis of the spatial (Xenium) data. This part is being set up: the notebooks have not been added yet. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
+Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the notebooks have not been added yet. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
 Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. The Python env will be added to `../envs/` as a third conda env in the same Docker image, with a `run.sh` entry per stage.
 

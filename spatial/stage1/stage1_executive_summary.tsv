@@ -1,0 +1,21 @@
+stage	check	result	detail
+Rerun from raw data	Cells	MATCH	16/16 samples; 2,931,027 cells in total
+Rerun from raw data	Cell order	MATCH	16/16 samples; identical
+Rerun from raw data	Genes	MATCH	16/16 samples; 314-gene and 480-gene panels
+Rerun from raw data	Raw counts	MATCH	16/16 samples; max difference=0
+Rerun from raw data	Normalised data	MATCH	16/16 samples; max difference=0
+Rerun from raw data	Saved PCA	MATCH	16/16 samples; read from the saved object; max difference=0; used for review and clustering
+Rerun from raw data	PCA recalculated from raw	DIFFERS	16/16 samples; max difference=0.00041–0.0059; not used for labels
+Rerun from raw data	UMAP recalculated	DIFFERS	16/16 samples; max difference=6.89–15.2; display only, the final notebooks load the saved UMAP
+Rerun from raw data	Leiden clusters	MATCH	16/16 samples; read from the saved object; 100.0000% of cells identical
+Rerun from raw data	cell_class_threshold	MATCH	16/16 samples; 100.0000% of cells identical
+Rerun from raw data	Gene-set scores	MATCH	16/16 samples; 23–39 sets per sample; max difference=0
+Rerun from raw data	Nhood z-scores	MATCH	16/16 samples; 23–40 labels per sample; max difference=0
+Second run with the final notebooks	cell_class_threshold, gene-set scores and Nhood z-scores	MATCH	16/16 samples; identical to the saved object and to the first rerun
+Second run with the final notebooks	Labels in the per-cell label tables	MATCH	16/16 samples; 100.0000% of cells identical
+Recalculated PCA test	Leiden clusters	DIFFERS	9/9 samples; ARI=0.60–0.83; clusters are used only for review
+Recalculated PCA test	Kept cells	SIMILAR	6/6 samples with cluster removal; Jaccard=0.9302–1.0000; 2–4,697 cells now removed, 4–5,785 now kept
+Recalculated PCA test	cell_class_threshold	SIMILAR	9/9 samples; 96.58–100.00% of cells identical (lowest MH099_480)
+Recalculated PCA test	Labels present	MATCH	9/9 samples; no label found in only one result
+Recalculated PCA test	Nhood z-scores	SIMILAR	9/9 samples; correlation=0.9990–0.9999
+Recalculated PCA test	Same results in both runs	MATCH	9/9 samples; identical in the first rerun and the final notebooks

@@ -1,0 +1,17 @@
+sample	panel	same_cell_class_threshold_label	nhood_z_correlation	how_tested
+MH065	314	99.1225%	0.9991	Recalculated PCA
+MH074	314	98.5472%	0.9999	Recalculated PCA
+MH096	314	100%	1.0000	Scoring only, no PCA used
+MH097	314	97.7708%	0.9993	Recalculated PCA
+MH099	314	99.9274%	0.9997	Recalculated PCA
+MH104	314	99.8566%	0.9998	Recalculated PCA
+MH106	314	100.0000%	0.9996	Recalculated PCA
+MH107	314	98.3202%	0.9999	Recalculated PCA
+MH065	480	100%	1.0000	Scoring only, no PCA used
+MH074	480	100%	1.0000	Scoring only, no PCA used
+MH096	480	100%	1.0000	Scoring only, no PCA used
+MH097	480	100%	1.0000	Scoring only, no PCA used
+MH099	480	96.5813%	0.9990	Recalculated PCA
+MH104	480	100%	1.0000	Scoring only, no PCA used
+MH106	480	99.9925%	0.9998	Recalculated PCA
+MH107	480	100%	1.0000	Scoring only, no PCA used

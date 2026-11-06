@@ -1,0 +1,7 @@
+Available kernels:
+  cellcharter_env      ~/.local/share/jupyter/kernels/cellcharter_env
+  cpdb                 ~/.local/share/jupyter/kernels/cpdb
+  pertpy               ~/.local/share/jupyter/kernels/pertpy
+  xenium.squidpy       ~/.local/share/jupyter/kernels/xenium.squidpy
+  xenium_oct25_test    ~/.local/share/jupyter/kernels/xenium_oct25_test
+  python3              ~/miniconda3/envs/xenium.squidpy/share/jupyter/kernels/python3

@@ -1,6 +1,6 @@
 # Spatial proteomics (MIBI)
 
-This folder is a record of the code used to generate the MIBI figures in the manuscript. The analysis was done by a collaborating team, and the scripts are kept as received. They have not been rerun in this repository.
+This folder is a record of the code used to generate the MIBI figures in the manuscript. The analysis was done by collaborators at WEHI. The scripts are kept as received. They have not been rerun in this repository.
 
 ## Docker
 
