@@ -21,7 +21,7 @@ Single-nucleus RNA sequencing (snRNA-seq) samples were processed in four batches
 | `Cellbender/cellbender_<run>.slurm` | CellBender job for one sequencing run. Runs `cellbender remove-background` on each sample's `raw_feature_bc_matrix`, with that sample's settings from the matching `_sample_cellbender_args.csv` |
 | `Cellbender/<run>_sample_cellbender_args.csv` | Per-sample CellBender settings as used, without a header: sample ID, `--expected-cells`, `--total-droplets-included`. These lists include samples that were processed but are not part of the 30 analysed (for example 2179, 2210, 2911) |
 | `samples_cellranger_cellbender.csv` | The 30 analysed samples, each linked to its sequencing run, Cell Ranger/CellBender ID, CellBender settings and GEO file (see below) |
-| `sample_map.csv` | Sample order (`orig.ident`) and ICGC donor ID for the 30 analysed samples |
+| `../../shared/sample_map.csv` | Sample order (`orig.ident`) and ICGC donor ID for the 30 analysed samples |
 
 ## The 30 analysed samples
 
