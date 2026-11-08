@@ -46,7 +46,7 @@ library('scuttle')
 ```
 
 # Load QCed SCE object.
-TODO (to revisit): this comparison needs both the original object and the August 2024 rerun object, which are not loaded here, so it is switched off for now.
+TODO (to revisit): this comparison needs both the original object and the August 2024 rerun object, which are not loaded here, so it is switched off for now.This section can be removed
 ```{r compare_old_new, eval=FALSE}
 old_obj <- qc.dbl.fltrd.sts.sce        # old final object
 new_obj <- qc.dbl.fltrd.sts.sce_Aug24          # new object with setseed
@@ -92,10 +92,6 @@ ggplot(qc, aes(status, detected)) +
 ```
 
 ```{r load_sce_object}
-# qc.dbl.fltrd.sts.sce object was performed on pdac_norm after doublet detection and fix QC
-# this object has been compared with the rerun analysis in Aug2024 and are comparable
-# because dbl filtering will generate different cell number post-filtering, to keep everything consistent we used the qc.dbl.fltrd.sts.sce.RDS generated in Jun24, that has been rerun multiple time
-# Based on above analyses of 2 QC-ed object, with 98.9% overlapping, it indicates that consistency and robustness of the QC workflow
 qc.dbl.fltrd.sts.sce <- readRDS(cfg$qc_object) # this object will be provided for reproducibility of downstream analysis and figures generation
 
 sample.no <- length(unique(qc.dbl.fltrd.sts.sce$Sample))
@@ -214,7 +210,7 @@ DimPlot(
 ```
 
 # Clustering 
-```{r clustering}
+```{r clustering fig.width=10, fig.height=14}
 sts.seurat <-
   FindNeighbors(
     sts.seurat,
@@ -232,7 +228,9 @@ clustree::clustree(sts.seurat)
 Idents(sts.seurat) <- "SCT_snn_res.0.5"
 sts.seurat$seurat_clusters <- NULL
 sts.seurat$seurat_clusters <- sts.seurat$SCT_snn_res.0.5 # see analysis below, this resolution works very well
+```
 
+```{r clustering-umap fig.width=16, fig.height=8}
 DimPlot(
   sts.seurat,
   reduction = "umap",
@@ -242,11 +240,12 @@ DimPlot(
 ) +
 DimPlot(sts.seurat, reduction = "umap", group.by = 'Sample', raster =F)
 
-saveRDS(sts.seurat, file = file.path(params$step_dir, "sts.seurat.clustered.RDS"))
+#saveRDS(sts.seurat, file = file.path(params$step_dir, "sts.seurat.clustered.RDS"))
 ```
 
+
 # Manual annotation based on marker gene expression
-```{r}
+```{r marker-expression fig.width=20, fig.height=9}
 # We know these markers label very well distinct major cell class from the previous analysis,
 # We check how well they do in defining cell classes here
 DefaultAssay(sts.seurat) <- "RNA"
@@ -276,7 +275,7 @@ DotPlot(sts.seurat, features = marker.sets, group.by = "SCT_snn_res.0.5")  + Rot
 
 # Rename clusters
 ## sts.seurat 
-```{r}
+```{r cluster-annotation fig.width=16, fig.height=8}
 # Add Cell_Ids & S_CB
 sts.seurat$Cell_Ids <- colnames(sts.seurat)
 sts.seurat$S_CB <- paste(sts.seurat$Sample, sts.seurat$Barcode, sep = "_")
