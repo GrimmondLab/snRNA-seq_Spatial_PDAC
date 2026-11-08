@@ -25,7 +25,12 @@ This part has no Docker container and is not in the project image or `run.sh`. A
 
 ## Input
 
-Input and processed files will be deposited on Zenodo (**DOI_TBD**). Both scripts read the processed object `rdata/spe.rds`, a `SpatialExperiment` of the MIBI cells.
+The input files are on Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) ("MIBI data of pancreatic cancer"):
+
+| File | Contents |
+|---|---|
+| `spe.rds` | Processed `SpatialExperiment` of the MIBI cells, read by both scripts as `rdata/spe.rds` |
+| `celltype_classifier_corrected.csv` | Per-cell table used for plotting |
 
 ## R packages
 
