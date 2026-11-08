@@ -210,7 +210,7 @@ DimPlot(
 ```
 
 # Clustering 
-```{r clustering fig.width=10, fig.height=14}
+```{r clustering, fig.width=10, fig.height=14}
 sts.seurat <-
   FindNeighbors(
     sts.seurat,
@@ -230,7 +230,7 @@ sts.seurat$seurat_clusters <- NULL
 sts.seurat$seurat_clusters <- sts.seurat$SCT_snn_res.0.5 # see analysis below, this resolution works very well
 ```
 
-```{r clustering-umap fig.width=16, fig.height=8}
+```{r clustering-umap, fig.width=16, fig.height=8}
 DimPlot(
   sts.seurat,
   reduction = "umap",
@@ -245,7 +245,7 @@ DimPlot(sts.seurat, reduction = "umap", group.by = 'Sample', raster =F)
 
 
 # Manual annotation based on marker gene expression
-```{r marker-expression fig.width=20, fig.height=9}
+```{r marker-expression, fig.width=20, fig.height=9}
 # We know these markers label very well distinct major cell class from the previous analysis,
 # We check how well they do in defining cell classes here
 DefaultAssay(sts.seurat) <- "RNA"
@@ -275,7 +275,7 @@ DotPlot(sts.seurat, features = marker.sets, group.by = "SCT_snn_res.0.5")  + Rot
 
 # Rename clusters
 ## sts.seurat 
-```{r cluster-annotation fig.width=16, fig.height=8}
+```{r cluster-annotation, fig.width=16, fig.height=8}
 # Add Cell_Ids & S_CB
 sts.seurat$Cell_Ids <- colnames(sts.seurat)
 sts.seurat$S_CB <- paste(sts.seurat$Sample, sts.seurat$Barcode, sep = "_")

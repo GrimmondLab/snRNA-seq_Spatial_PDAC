@@ -1,6 +1,6 @@
 ---
 title: "PDAC_STS_simspec_integration.Rmd"
-author: "Mai La"
+author: "Mai La & Fernando Rossello"
 date: "2024-08-12"
 output: html_document
 params:
@@ -9,7 +9,7 @@ params:
   out_root: NULL
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center")
+knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center")
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage2.R so that params are passed
@@ -25,7 +25,7 @@ library(ggplot2)
 ```
 
 # Confirm the same packages and version used as in pdacnorm
-```{r}
+```{r eval=FALSE}
 #> packageVersion("ggplot2")
 #[1] ‘3.4.2’
 #> packageVersion("Seurat")
@@ -36,7 +36,6 @@ library(ggplot2)
 
 # Load data
 ```{r}
-# Redo from scratch for this object
 # this object was generated on 'Seurat_sample_based.Rmd'
 sts.seurat <- readRDS(file.path(params$out_root, "Seurat_sample_based", "sts.seurat.RDS"))
 ```
@@ -68,17 +67,11 @@ sts.seurat[["SCT_snn_res.1"]] <- NULL
 ```{r}
 sts.seurat <- SplitObject(sts.seurat, split.by = "Sample")
 
-# For SCtransform, ncells capped at 5k, if ncells > 5k, no regression will be performed, so we need to specify ncells = ncols(object) to make sure all components within the object list being regress accordingly. 
-# See more at:  https://github.com/satijalab/seurat/issues/8148
-# Below code adapted from Fernando, to account for such condition in a list
-
 for (i in names(sts.seurat)){
   sts.seurat[[i]] <- SCTransform(sts.seurat[[i]],
     vst.flavor = "v2",
     method = "glmGamPoi",
     verbose = TRUE
-    #vars.to.regress = "subsets_mito_percent",
-    #ncells = ncol(sts.seurat[[i]])
     )
 }
 ```
@@ -131,17 +124,19 @@ sts.simspec_css.sample.sct <- FindClusters(sts.simspec_css.sample.sct, algorithm
 
 library(clustree)
 clustree::clustree(sts.simspec_css.sample.sct)
+```
 
+```{r umap-plot, fig.width=16, fig.height=8}
 DimPlot(sts.simspec_css.sample.sct, raster = F, group.by = "SCT_snn_res.1.1", label = T) + DimPlot(sts.simspec_css.sample.sct, group.by = "cell_class",label = T, repel =T, raster = F)
 saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.clustered.RDS"))
 
-Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" # this defines FRCs and correlate quite well with cell classes defined by non-integrated method
+Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" 
 sts.simspec_css.sample.sct$seurat_clusters <- NULL 
 sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn_res.1.1
 ```
 
 ## Annotation - Sample SCT -> 'orig.ident' CSS integration
-```{r}
+```{r umap-plot, fig.width=16, fig.height=8}
 Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" #try to use the same resolution to confirm similar same class
 sts.simspec_css.sample.sct$seurat_clusters <- NULL 
 sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn_res.1.1
@@ -180,7 +175,7 @@ sts.simspec_css.sample.sct <- AddMetaData(sts.simspec_css.sample.sct,
 
 DimPlot(sts.simspec_css.sample.sct,
         group.by = "simspec_cell_class", raster = F, label = T) +
-  DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "seurat_clusters") + 
+  #DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "seurat_clusters") + 
   DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "cell_class") 
 
 ### Adding sample details
@@ -195,7 +190,7 @@ DimPlot(sts.simspec_css.sample.sct,
 # sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
 ```
 
-```{r}
+```{r marker-expression, fig.width=20, fig.height=9 }
 DefaultAssay(sts.simspec_css.sample.sct) <- "RNA"
 marker.sets <- list(Malignant_PDAC = c("KRT19","MUC1","KRT17","ACTN4","LMO7"),
                     Malignant_Acinar = c("CPA1","CPA2","PRSS1","RBPJL","CEL"), # "SPINK1","GATM"
