@@ -74,7 +74,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 ## 3b. Spatial proteomics (MIBI): record only, waiting on the collaborating team
 - [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. `Fig2_efg_CellNeighbourhood.R` does not run as written: it joins on a `cell.id` column that is not there, and it is unclear whether clustering used all cells or excluded "Other". `ExtFig6f_boxplots_cell_distance.R` does not load dplyr or ggplot2 and does not define `output_folder`.
 - [ ] Get `sessionInfo()` for the scripts and add the versions to the README.
-- [ ] Deposit `spe.rds` and the other input and processed files on Zenodo, and fill in DOI_TBD.
+- [x] Deposit `spe.rds` and `celltype_classifier_corrected.csv` on Zenodo: 10.5281/zenodo.23996821.
 - [ ] Add the team's Docker container for upstream image processing and QC, or a link to it.
 - [ ] Agree how to credit the team, and get permission to publish the code.
 
