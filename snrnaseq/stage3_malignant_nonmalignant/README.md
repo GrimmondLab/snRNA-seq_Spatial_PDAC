@@ -12,7 +12,7 @@ R 4.3 · Bioconductor 3.17 · Seurat 4.3.0 · ggplot2 3.5.2 · conda env `downst
    - **Tuft cells**: reclustering, KRAS mutation status per cell, and level-2 annotation (`Lv.2.Anno`), including acinar-ductal, MUC5B+ ductal and the tuft cells with copy-number changes in patient 2221 (`Tuft.persistent`).
    - **ADM samples** (patients 2156, 2215, 2221, 2285): pseudobulk differential expression between acinar, acinar-ductal, ductal, MUC5B+ ductal and tuft cells with edgeR, and marker dot plots.
 
-The 84 cells of sample 2215 are listed in `STS_Malignant.Rmd`. They are excluded from the malignant analysis and, like all cells annotated PDAC, from the non-malignant analysis. They are included in the ADM dot plots.
+The 84 cells of sample 2215 are listed in `STS_Malignant.Rmd`. They showed no copy-number changes in inferCNV (see `../supplementary_infercnv/README.md`). They are excluded from the malignant analysis and, like all cells annotated PDAC, from the non-malignant analysis. They are included in the ADM dot plots.
 
 ## Manuscript outputs
 

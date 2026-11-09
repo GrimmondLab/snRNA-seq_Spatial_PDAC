@@ -120,6 +120,9 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.
 - [x] Annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) uploaded to 10.5281/zenodo.23933322. The DOI did not resolve on 2026-11-09 (doi.org returned 404); check the record is published.
 - [ ] Deposit on Zenodo, and replace every remaining **DOI_TBD**: `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
+- [ ] Deposit the original inferCNV output for sample 2215 (`P2215.out`), the record for the 84 excluded cells, and fill in DOI_TBD in `snrnaseq/supplementary_infercnv/README.md`. Consider also `P2221.lv2anno.out` (Extended Data Fig. 4F).
+- [x] Extended Data Fig. 1B (sample 2992, PURPLE WGS) and 4F (patient 2221 by `Lv.2.Anno`) recorded in `snrnaseq/supplementary_infercnv/original/InferCNV_extended_data_figures.R`.
+- [x] inferCNV heatmaps for 2992, 2215 and 2221 by `Lv.2.Anno` added to `snrnaseq/supplementary_infercnv/figures/` and shown in its README (the WGS plot is left out).
 - [ ] Tag a release (e.g. `v1.0`) and archive the repo on Zenodo for a citable DOI.
 - [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
       `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`

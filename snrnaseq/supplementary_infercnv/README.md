@@ -1,10 +1,47 @@
 # Supplementary: inferCNV check of the malignant cell annotation
 
-Malignant cells were identified by cell annotation in Stage 2 (clustering and marker genes, `simspec_cell_class`). inferCNV was run afterwards as a check: the annotated malignant cells show copy-number changes relative to the reference (non-malignant) cells. It is not part of the main pipeline. Its outputs are not used by any later stage and are not deposited.
+Malignant cells were identified by cell annotation in Stage 2 (clustering and marker genes, `simspec_cell_class`). inferCNV was run afterwards as a check: the annotated malignant cells show copy-number changes relative to the reference (non-malignant) cells. It is not part of the main pipeline, with one exception: 84 cells of sample 2215 were excluded from the malignant analysis because of their inferCNV profile (see [Cells excluded from the malignant analysis](#cells-excluded-from-the-malignant-analysis)).
 
 This folder records what was run, and provides a container for anyone who wants to run it. **A rerun is not expected to reproduce the original output exactly**, because inferCNV involves random steps and no seed was set (see [Randomness](#randomness)).
 
 R 4.3 · infercnv 1.20.0 · conda env `infercnv` · master script `run_infercnv.R`, which renders `InferCNV.Rmd`. `InferCNV.Rmd` runs inferCNV separately for each sample listed in `infercnv_samples.csv`.
+
+## Manuscript outputs
+
+| Output | Sample | Contents |
+|---|---|---|
+| Extended Data Fig. 1B | ICGC_0235 (sample 2992) | inferCNV output (`P2992.out`) compared with copy number from tumour whole-genome sequencing (WGS): PURPLE segments, `refNormalisedCopyNumber`, plotted with GenVisR `cnSpec()` |
+| Extended Data Fig. 4F | ICGC_0105 (patient 2221, sample 2221-section-2) | inferCNV heatmap from a separate run by `Lv.2.Anno` (PDAC, Tuft, Tuft.persistent; Endothelial and Pericytes as reference), output folder `P2221.lv2anno.out` |
+
+Both analyses are recorded, as run, in `original/InferCNV_extended_data_figures.R`. They are not part of the container stage:
+
+- **Extended Data Fig. 4F** uses the annotated object with `Lv.2.Anno` and downsamples each label to 1,000 cells at random with no seed, so a rerun picks different cells.
+- **Extended Data Fig. 1B** uses the PURPLE copy-number segments from the tumour WGS of sample 2992. These are patient data and are not deposited.
+
+### Heatmaps
+
+The original inferCNV heatmaps (`infercnv.png` from each output folder):
+
+**Extended Data Fig. 1B: sample 2992 (`P2992.out`)**
+
+![inferCNV heatmap, sample 2992](figures/infercnv_2992.png)
+
+**Extended Data Fig. 4F: patient 2221 by `Lv.2.Anno` (`P2221.lv2anno.out`)**
+
+![inferCNV heatmap, patient 2221 by Lv.2.Anno](figures/infercnv_2221Tuft.png)
+
+**Sample 2215 (`P2215.out`), the run behind the 84 excluded cells**
+
+![inferCNV heatmap, sample 2215](figures/infercnv_2215.png)
+
+## Cells excluded from the malignant analysis
+
+In the original inferCNV run for sample 2215 (`P2215.out`), the 84 cells of PDAC subcluster 4 showed no copy-number changes, a profile like that of the reference cells. They could be non-malignant cells, or malignant cells at a particular stage of the cell cycle. They were excluded from the malignant analysis:
+
+- Stage 3 (`STS_Malignant.Rmd`) lists the 84 cell IDs and removes them from the malignant analysis.
+- Stage 4 (`Plotting.Rmd`) gives them the level-1 label `unassigned`.
+
+The cell IDs are written into the code, so later stages do not depend on rerunning inferCNV. A rerun may not single out exactly the same cells (see [Randomness](#randomness)). The original output for sample 2215 is to be deposited as the record (**DOI_TBD**).
 
 ## Randomness
 
@@ -76,7 +113,8 @@ The image build saves the env's own `sessionInfo()` to `/pipeline/sessionInfo/in
 | `infercnv_samples.csv` | Per-sample settings |
 | `gene_positions.txt` | Gene positions for inferCNV |
 | `config.yml` | Input path, output folder, samples to run (container paths) |
-| `original/` | The original R Markdown file, unchanged, with a note on how this code differs |
+| `original/` | The original R Markdown file, unchanged, with a note on how this code differs; and `InferCNV_extended_data_figures.R`, the record of the Extended Data Fig. 4F run and the Extended Data Fig. 1B WGS plot |
+| `figures/` | The original inferCNV heatmaps for samples 2992, 2215 and patient 2221 |
 | `sessionInfo/` | Session information of the original runs |
 
 ## Running

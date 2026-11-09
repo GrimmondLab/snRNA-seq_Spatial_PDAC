@@ -18,4 +18,6 @@ Differences between this file and `../InferCNV.Rmd`:
 - The `gtf_to_position_file.py` command (an R chunk here, which stops knitting) is documented in `../README.md` instead of run. `gene_positions.txt` is provided as an input file.
 - Sample 2992 reloads the same object and reads `gene_positions.txt` from another folder (`data/` instead of `inferCNV_old_Jun24/`). `../InferCNV.Rmd` uses one `gene_positions.txt` for all samples.
 
+`InferCNV_extended_data_figures.R` records two analyses that are not in this file: the inferCNV run for patient 2221 by `Lv.2.Anno` (Extended Data Fig. 4F), and the WGS copy-number plot for sample 2992 (Extended Data Fig. 1B). Home-folder paths are replaced with placeholders; the code is otherwise as run.
+
 Neither file sets a random seed, so the Leiden subclustering and the MCMC step vary between runs (see `../README.md`).

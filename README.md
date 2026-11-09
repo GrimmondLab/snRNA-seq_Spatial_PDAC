@@ -32,7 +32,7 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 | 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object | Ready |
 | 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | Ready |
 
-**Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. Its outputs feed no later stage and are not deposited. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
+**Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. It also identified the 84 cells of sample 2215 that Stage 3 excludes from the malignant analysis; their IDs are written into the code, so no later stage reruns inferCNV. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
 
 **Supplementary: per-sample QC** (`snrnaseq/supplementary_qc/`, documentation only). How the per-sample QC tables and plots requested in review were made, from the annotated object and the Cell Ranger output. It adds to Stages 0 and 1.
 
