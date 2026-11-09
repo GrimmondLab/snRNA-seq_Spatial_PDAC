@@ -82,7 +82,11 @@ Results are written to `/output/Preprocessing_DoubleDetection/` and `/output/Pre
 ## Expected results (sanity checks)
 
 - 30 samples loaded (the run stops otherwise).
-- scDblFinder: 129,115 singlets / 6,867 doublets.
-- Final object after QC: 26,757 genes × 115,293 cells (Oct 26 rerun).
+From a run in the project image (Apptainer, November 2026):
+
+- scDblFinder: 129,134 singlets / 6,848 doublets.
+- Final object after QC: 26,774 genes × 115,301 cells, the same size as the August 2024 rerun.
+
+An earlier rerun outside the image (October 2026) gave 129,115 singlets / 6,867 doublets and 26,757 genes × 115,293 cells.
 
 Small numerical differences are possible against the original runs: the packages come from conda (xgboost 1.7.6, conda-forge BLAS) on a Debian base rather than Ubuntu 20.04. The original analysis did not pass a seed to the parallel workers, so this stage reproduces it closely but not exactly. The deposited post-QC object used from Stage 2 onward is 26,788 genes × 115,221 cells.

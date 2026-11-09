@@ -36,8 +36,8 @@ The plan is Batch on EC2, with data in S3.
 ### Stage 1 (env `snrnaseq`)
 - [ ] Run on the GEO input (`run.sh stage1`), and on the original CellBender folders (`run.sh stage1 config_local.yml`).
 - [ ] **Find the real memory need.** On Spartan (`sapphire`, 12 CPUs), OOM killed at 64G and at 192G, in `discard_lowq_cells` and `variance_modelling`; 400G is being tried. A coworker's run in RStudio on a 64G instance finished, so check how it differed (run in pieces, `workers`, swap) and whether Transparent Huge Pages is a factor. Then correct "64 GB" in the Stage 1 README, and recheck the 128 GB figures for Stages 2–5, which have not been tested at full scale.
-- [ ] 30 samples loaded; scDblFinder ≈ 129,115 singlets / 6,867 doublets.
-- [ ] Final object ≈ 26,757 genes × 115,293 cells (the Oct 26 rerun). Exact equality is not expected: worker seeds were not set originally, and xgboost is now 1.7.6 (originally 1.7.5.1).
+- [x] 30 samples loaded; scDblFinder in the image (Apptainer): 129,134 singlets / 6,848 doublets (129,115 / 6,867 in the earlier rerun outside the image).
+- [x] Final object in the image (Apptainer): 26,774 genes × 115,301 cells, the same size as the August 2024 rerun (original: 26,788 × 115,221). Exact equality is not expected: worker seeds were not set originally, and xgboost is now 1.7.6 (originally 1.7.5.1).
 
 ### Stage 2 (env `snrnaseq`): highest risk
 Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.

@@ -339,11 +339,12 @@ fltrd.sts.sce <-
 saveRDS(fltrd.sts.sce, file = file.path(params$step_dir, "fltrd.sts.sce.samples_dbl.RDS"))
 ```
 
-Sanity check: expected 129,115 singlets and 6,867 doublets.
+Sanity check: a run in the project image (Apptainer) gave 129,134 singlets and 6,848 doublets. An earlier rerun outside the image gave 129,115 singlets and 6,867 doublets.
 ```{r dbl_class_check, results="markup"}
 table(fltrd.sts.sce$scDblFinder.class)
 # singlet doublet 
-#  129115    6867 
+#  129115    6867   # earlier rerun outside the image
+#  129134    6848   # project image (Apptainer)
 
 plotUMAP(fltrd.sts.sce, colour_by="scDblFinder.class") +
   plotUMAP(fltrd.sts.sce, colour_by="Sample")

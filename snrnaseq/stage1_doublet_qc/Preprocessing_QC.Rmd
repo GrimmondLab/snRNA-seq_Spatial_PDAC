@@ -271,6 +271,7 @@ qc.dbl.fltrd.sts.sce <-
 dim(qc.dbl.fltrd.sts.sce)
 #[1]  26774 115301 # from Rerun_Aug24
 #[1]  26757 115293 # from Rerun_Oct26
+#[1]  26774 115301 # from the project image (Apptainer, Nov 2026)
 
 saveRDS(qc.dbl.fltrd.sts.sce, file = file.path(params$step_dir, "qc.dbl.fltrd.sts.sce.RDS"))
 # Notes: the rerun object is comparable to previously processed data 26788 x 115221, for the efficiency of the reprocessing, we will keep using the previously run object that have seen stored in pdac24_atlas VM for further processing

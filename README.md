@@ -38,7 +38,7 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 
 ### The break between Stage 1 and Stage 2
 
-Stage 1 can be rerun from the raw CellBender output, but it doesn't reproduce the original object exactly. The original run set `set.seed()` but did not pass a seed to the parallel workers (`BPPARAM` `RNGseed`), so parallel steps such as scDblFinder gave slightly different results. The rerun gives 26,757 genes × 115,293 cells, while the original object has 26,788 genes × 115,221 cells.
+Stage 1 can be rerun from the raw CellBender output, but it doesn't reproduce the original object exactly. The original run set `set.seed()` but did not pass a seed to the parallel workers (`BPPARAM` `RNGseed`), so parallel steps such as scDblFinder gave slightly different results. A rerun in the project image gives 26,774 genes × 115,301 cells, while the original object has 26,788 genes × 115,221 cells.
 
 All later stages therefore start from the **original post-QC object**, deposited at [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322). This keeps every manuscript figure exactly reproducible, while Stage 1 documents how that object was made.
 
