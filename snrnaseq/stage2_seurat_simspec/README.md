@@ -51,6 +51,7 @@ These shift PCA, UMAP and clustering slightly; see **Cell labels** above.
 | `run_stage2.R` | Master script; `Rscript run_stage2.R [config.yml]` |
 | `Seurat_sample_based.Rmd`, `PDAC_STS_simspec_integration.Rmd` | Analysis steps |
 | `config.yml` | Input paths, output folder, seed and number of workers (container paths) |
+| `stage2_spartan.slurm` | Slurm job that runs this stage on Spartan from the published `.sif`; edit the paths at the top |
 | `sessionInfo/` | Session information of the original analysis, plus glmGamPoi and simspec details (see the note inside) |
 | `original/` | The two R Markdown files before the cell labels were read from the deposited object |
 

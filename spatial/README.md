@@ -1,8 +1,8 @@
 # Spatial analysis (Python)
 
-Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the notebooks have not been added yet. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
+Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the Stage 1 notebooks are in `stage1/` (see its README), and Stages 2 and 3 have not been added yet. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
-Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. The Python env will be added to `../envs/` as a new conda env in the same Docker image, with a `run.sh` entry per stage.
+Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. Stage 1 has its own folder but not the rest yet: its notebooks are run one at a time, with the folders set in each parameters cell. The Python env will be added to `../envs/` as a new conda env in the same Docker image, with a `run.sh` entry per stage.
 
 ## Input data
 
@@ -23,21 +23,19 @@ adata.obs = df.copy()
 adata.obsm["spatial"] = adata.obs[["x_centroid", "y_centroid"]].copy().to_numpy()
 ```
 
-## Planned stages
+## Stages
 
-| Stage | Analysis | Starts from |
-|---|---|---|
-| 1 | Sample processing, cell annotation by gene scoring, neighbourhood enrichment | GEO files, with PCA results or retained cells read from the 16 processed `.h5ad` files |
-| 2 | Niche analysis: clustering cells by neighbourhood composition, using the Stage 1 gene-scoring labels | The 16 processed `.h5ad` files |
-| 3 | Focused analysis of specific regions, such as TLS and Tuft-containing regions | To be confirmed |
+| Stage | Analysis | Starts from | Status |
+|---|---|---|---|
+| 1 | Sample processing, cell annotation by gene scoring, neighbourhood enrichment | GEO files, with PCA results or retained cells read from the 16 processed `.h5ad` files | Notebooks in `stage1/` |
+| 2 | Niche analysis: clustering cells by neighbourhood composition, using the Stage 1 gene-scoring labels | The 16 processed `.h5ad` files | Planned |
+| 3 | Focused analysis of specific regions, such as TLS and Tuft-containing regions | To be confirmed | Planned |
 
 The workflow was rerun with the archived PCA results or retained cells because the environment has changed since the original objects were made. Most analyses do not use PCA or clustering; some filter cells by cluster.
 
 ## Environment
 
 `environment/` holds the records of the conda environment the analysis ran in (`xenium.squidpy`, Python 3.9.18, Ubuntu 22.04).
-
-These files are not in the repository yet: `environment/` holds only the three earlier records (see `../TODO.md`).
 
 **Current environment, captured from the active kernel:**
 
@@ -76,7 +74,7 @@ numpy (1.24.4) and tifffile (2023.8.12) were listed correctly. typing_extensions
 
 **Not included:** muon and mofapy2. They are installed in the environment but were not used in these analyses.
 
-**To confirm when the notebooks are added:** s3fs, aiobotocore and botocore (Amazon S3 access). The analyst does not recall using them, and they probably conflict with the imported fsspec 2023.10.0 and urllib3 2.1.0. Leave them out if no notebook needs them.
+**To confirm when the Stage 2 and 3 notebooks are added:** s3fs, aiobotocore and botocore (Amazon S3 access). The Stage 1 notebooks' code does not use them, the analyst does not recall using them, and they probably conflict with the imported fsspec 2023.10.0 and urllib3 2.1.0. Leave them out if no notebook needs them.
 
 **Differences from the original runs.** These records describe the environment as it is now, not as it was when the input objects were made. The notebooks will start from fixed, deposited input objects, so the earlier steps do not need to be rerun in this environment. `conda_revisions.txt` shows the conda changes made on 2026-01-06: anndata 0.10.3 to 0.10.8, array-api-compat 1.4 to 1.11.2, and the addition of muon, mudata, protobuf and mofapy2. Changes to `~/.local` are not recorded there.
 
@@ -84,8 +82,8 @@ numpy (1.24.4) and tifffile (2023.8.12) were listed correctly. typing_extensions
 
 ## Still needed
 
-- The notebooks (`.ipynb`) and any helper `.py` files they import
-- The run order, and which notebook's output feeds which
+- The Stage 2 and 3 notebooks (`.ipynb`) and any helper `.py` files they import
+- The run order within those stages, and which notebook's output feeds which
 - Where the 16 processed `.h5ad` files are deposited
 - Which notebooks produce which manuscript figure panels
-- Whether any step needs a GPU (the environment includes torch and scvi-tools)
+- Whether any Stage 2 or 3 step needs a GPU (the environment includes torch and scvi-tools; the Stage 1 notebooks' code uses neither)
