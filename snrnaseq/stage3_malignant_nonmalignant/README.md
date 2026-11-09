@@ -33,7 +33,7 @@ Figures are shown in each HTML report and also saved as PNG and PDF files, named
 
 | File | Source |
 |---|---|
-| `sts.simspec_css.sample.sct.RDS` | Annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, **DOI_TBD**). The original code read the same object as `sts.simspec_css.sample.sct.Aug24.RDS` |
+| `sts.simspec_css.sample.sct.RDS` | Annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)). The original code read the same object as `sts.simspec_css.sample.sct.Aug24.RDS` |
 | `tuft.snv.df.csv` | KRAS mutation calls per tuft cell (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) |
 | `sample_map.csv` | `shared/sample_map.csv`, included in the image at `/pipeline/shared/`. Adds ICGC donor IDs to the figures |
 

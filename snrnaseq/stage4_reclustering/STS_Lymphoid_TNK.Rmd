@@ -10,7 +10,7 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'), fig.width=16, fig.height=8)
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
@@ -77,7 +77,7 @@ lymphoid <- lapply(lymphoid, FUN= SCTransform,
 ```
 
 ## Simspec
-```{r}
+```{r, fig.width=16, fig.height=12}
 # Merge and set common features 
 int.features.split <- SelectIntegrationFeatures(object.list = lymphoid, nfeatures = 2000)
 lymphoid.simspec_css.sample.sct <- merge(x = lymphoid[[1]], y = lymphoid[2:length(lymphoid)], 

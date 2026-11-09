@@ -25,7 +25,7 @@ Stage 3 starts from the deposited annotated object, not from this rerun.
 | File | Source |
 |---|---|
 | `qc.dbl.fltrd.sts.sce.RDS` | The original post-QC object deposited with the manuscript ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)), 26,788 genes × 115,221 cells. Stage 2 starts from this object rather than from a Stage 1 rerun (see the top-level `README.md`) |
-| `sts.simspec_css.sample.sct.RDS` | The deposited annotated Stage 2 object (**DOI_TBD**), the source of `cell_class` and `simspec_cell_class`. It is also the Stage 3 input |
+| `sts.simspec_css.sample.sct.RDS` | The deposited annotated Stage 2 object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)), the source of `cell_class` and `simspec_cell_class`. It is also the Stage 3 input |
 
 ## Environment
 

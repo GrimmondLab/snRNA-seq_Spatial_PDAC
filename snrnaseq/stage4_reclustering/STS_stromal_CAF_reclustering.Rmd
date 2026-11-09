@@ -11,7 +11,7 @@ params:
 
 # Prepare environment
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8, dev=c('png', 'pdf'),
+knitr::opts_chunk$set(fig.width=16, fig.height=8, dev=c('png', 'pdf'),
                        echo=FALSE, warning=FALSE, message=FALSE)
 
 cfg <- params$cfg
@@ -738,7 +738,7 @@ endo <- IntegrateData(anchorset = endo.anchors, normalization.method = "SCT", k.
 ```
 
 # Perform integrated analysis
-```{r}
+```{r, fig.width=16, fig.height=12}
 DefaultAssay(endo) <- "integrated"
 endo <- RunPCA(endo, verbose=F)
 ElbowPlot(endo)

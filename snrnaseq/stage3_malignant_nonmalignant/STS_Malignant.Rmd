@@ -11,7 +11,7 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'), fig.width=16, fig.height=8)
 options(repr.plot.width = 5, repr.plot.height = 4)
 
 cfg <- params$cfg
@@ -278,7 +278,7 @@ stopifnot(identical(rare@assays$RNA@counts[1:5, 1:5],
 ```
 
 ## Standard processing - normalise, dimentionality reduction, clustering
-```{r}
+```{r, fig.width=16, fig.height=12}
 # SCTRANFORM
 rare <- SCTransform(rare, vst.flavor = "v2", method = "glmGamPoi", verbose = TRUE)
 

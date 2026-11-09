@@ -10,7 +10,7 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, dev=c('png', 'pdf'))
+knitr::opts_chunk$set(echo = TRUE, dev=c('png', 'pdf'), fig.width=16, fig.height=8)
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage5.R so that params are passed

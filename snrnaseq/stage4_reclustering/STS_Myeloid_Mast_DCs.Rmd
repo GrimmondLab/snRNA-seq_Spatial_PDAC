@@ -11,7 +11,7 @@ params:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'), fig.width=16, fig.height=8)
 #options(width = 60) , cache = TRUE
 #dev = c("svg","pdf") to save figures in specified format
 
@@ -47,7 +47,7 @@ myeloid <- sts.non.malignant %>% subset(subset = Sample %in% sample.high.myeloid
 
 # MYELOID analysis
 ## Normalised myeloid a whole to identify DCs
-```{r}
+```{r, fig.width=16, fig.height=12}
 # DietSeurat
 DefaultAssay(myeloid) <- "RNA"
 myeloid <- DietSeurat(myeloid, assays = "RNA", data = TRUE, counts = TRUE)
@@ -99,7 +99,7 @@ DotPlot(myeloid.v2, features = c("CLEC10A","CD1C")) + RotatedAxis() + scale_colo
 ```
 
 ## Subsetting out some mac to define Langerhans-like DCs & cDC2
-```{r}
+```{r, fig.width=16, fig.height=12}
 # myeloid.only = integrated myeloid object; myeloid.v2 = non-integrated object
 DC <- myeloid.v2 %>% subset(subset = SCT_snn_res.0.1 %in% c("6","4","2","1","5","3"))
 
@@ -220,7 +220,7 @@ myeloid.v2@meta.data %>%
 
 # TUMOUR ASSCOIATED MACROPHAGES - reclustered
 ## Normalisation by SCTransform v2 --> CSS integration
-```{r}
+```{r, fig.width=16, fig.height=12}
 mac.only <-  subset(myeloid.v2, subset = Lv.2.Anno == "TAMs")
 
 DefaultAssay(mac.only) <- "RNA"
@@ -535,12 +535,12 @@ mac.simspec.sample.sct <- AddModuleScore_UCell(mac.simspec.sample.sct, features 
                                  assay="RNA", slot = "data")
 TAMsign.names <- paste0(names(TAMsign),"_UCell")
 
-FeaturePlot(mac.simspec.sample.sct, 
-            features = TAMsign.names, 
-            max.cutoff = "q99", # q## indicates quantile 
-            ncol = 2,
-            cols = c("lightgrey", "darkred"),
-            keep.scale = "all") # to apply the same scale
+# FeaturePlot(mac.simspec.sample.sct, 
+#             features = TAMsign.names, 
+#             max.cutoff = "q99", # q## indicates quantile 
+#             ncol = 2,
+#             cols = c("lightgrey", "darkred"),
+#             keep.scale = "all") # to apply the same scale
 
 # Average expression from DotPlot
 d <- DotPlot(mac.simspec.sample.sct, features = TAMsign.names, scale = F)

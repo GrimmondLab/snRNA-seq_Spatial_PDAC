@@ -118,7 +118,8 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 
 ## 5. Before submission
 - [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.
-- [ ] Deposit on Zenodo, and replace every remaining **DOI_TBD**: the annotated Stage 2 object, `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
+- [x] Annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) uploaded to 10.5281/zenodo.23933322. The DOI did not resolve on 2026-11-09 (doi.org returned 404); check the record is published.
+- [ ] Deposit on Zenodo, and replace every remaining **DOI_TBD**: `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
 - [ ] Tag a release (e.g. `v1.0`) and archive the repo on Zenodo for a citable DOI.
 - [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
       `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`

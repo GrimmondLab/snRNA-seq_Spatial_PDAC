@@ -50,7 +50,7 @@ The original code, with one section per sample, is kept unchanged in `original/I
 
 | File | Source |
 |---|---|
-| `sts.simspec_css.sample.sct.RDS` | annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, **DOI_TBD**); mounted at run time |
+| `sts.simspec_css.sample.sct.RDS` | annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)); mounted at run time |
 | `gene_positions.txt` | gene positions (36,590 genes), included in this folder and in the image |
 
 `gene_positions.txt` was made once from the 10x Genomics GRCh38 reference GTF (`refdata-gex-GRCh38-2020-A`, `genes.gtf`) with inferCNV's [`gtf_to_position_file.py`](https://github.com/broadinstitute/infercnv/blob/master/scripts/gtf_to_position_file.py):

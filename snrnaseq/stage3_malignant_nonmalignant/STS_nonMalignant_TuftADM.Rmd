@@ -11,7 +11,7 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'))
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center", dev=c('png', 'pdf'), fig.width=16, fig.height=8)
 options(repr.plot.width = 5, repr.plot.height = 4)
 
 cfg <- params$cfg
@@ -59,7 +59,7 @@ sts.non.malignant[["SCT_snn_res.1.2"]] <- NULL
 ```
 
 ## Normalised by SCTransform v2 as a whole -> PCA 
-```{r}
+```{r, fig.width=16, fig.height=12}
 # SCTRANFORM
 sts.non.malignant <- SCTransform(sts.non.malignant, vst.flavor = "v2", 
                                  method = "glmGamPoi", verbose = TRUE
@@ -140,7 +140,7 @@ DimPlot(sts.non.malignant, group.by = "Lv.1.Anno") + DimPlot(sts.non.malignant, 
 
 # TUFT CELL ANALYSIS
 ## Reclustered of Tuft
-```{r}
+```{r, fig.width=16, fig.height=12}
 tuft <- subset(sts.non.malignant, subset = Lv.1.Anno == "Tuft")
 table(tuft$Patient_ID)
 

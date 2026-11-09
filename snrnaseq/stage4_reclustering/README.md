@@ -43,7 +43,7 @@ Figures are shown in each HTML report and also saved as PNG and PDF files, named
 | File | Source |
 |---|---|
 | `sts.nonmalignant.RDS` | Non-malignant object from Stage 3, with `Lv.1.Anno` and `Lv.2.Anno` (deposited, **DOI_TBD**) |
-| `sts.simspec_css.sample.sct.RDS` | Annotated integrated object from Stage 2 (deposited, **DOI_TBD**). Read by `Plotting.Rmd`. The original code read it as `sts.simspec_css.sample.sct_fullworkflow.RDS` |
+| `sts.simspec_css.sample.sct.RDS` | Annotated integrated object from Stage 2 (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)). Read by `Plotting.Rmd`. The original code read it as `sts.simspec_css.sample.sct_fullworkflow.RDS` |
 | `sample_map.csv` | `shared/sample_map.csv`, included in the image at `/pipeline/shared/`. Adds ICGC donor IDs to the figures |
 
 ## Environment
