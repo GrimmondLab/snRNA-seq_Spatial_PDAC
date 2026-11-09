@@ -85,6 +85,9 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Stage 2 `stage2_figures.ipynb`: removed the out-of-date "Other" count cell from the Fig. 1D section.
 - [ ] Stage 2 `stage2_figures.ipynb`: optionally restart the kernel and run all cells; the last cell (list of saved figures) never ran.
 - [x] Stage 2: Extended Data Fig. 2D comes only from `stage2_figures.ipynb`; the niche notebook makes Fig. 2A–D and Extended Data Fig. 3.
+- [x] Stage 2 `stage2_neighbourhood_profiling.ipynb`: other tests for Fig. 4E were checked by the analyst; the repeated-measures ANOVA is kept.
+- [x] Stage 2 `stage2_neighbourhood_profiling.ipynb`: Fig. 4F reproduces exactly (confirmed by the analyst); no assert added.
+- [x] Stage 2 `stage2_neighbourhood_profiling.ipynb`: removed the comment by the SPP1 vs C1QC paired t-test that said the normality assumption holds.
 - [x] Stage 2 `stage2_figures.ipynb`: Fig. 4B with `cell_class_threshold` reproduces the original plot (confirmed by the analyst).
 - [x] Stage 2 `stage2_figures.ipynb`: figures first made from earlier objects compared with the published panels (by the analyst).
 

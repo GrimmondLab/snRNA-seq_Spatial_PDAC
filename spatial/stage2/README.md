@@ -1,6 +1,6 @@
 # Stage 2: cellular neighbourhoods (niches)
 
-This stage groups the cells of all 16 samples into 15 niches by the cell types around them (`stage2_niches.ipynb`), and makes the manuscript figures that are plotted directly from single samples (`stage2_figures.ipynb`). Both notebooks start from the final Stage 1 objects.
+This stage groups the cells of all 16 samples into 15 niches by the cell types around them (`stage2_niches.ipynb`), profiles the neighbours of selected cell types (`stage2_neighbourhood_profiling.ipynb`), and makes the manuscript figures that are plotted directly from single samples (`stage2_figures.ipynb`). All three notebooks start from the final Stage 1 objects.
 
 ## Summary
 
@@ -83,7 +83,27 @@ The notebook plots only the figures used in the manuscript: Fig. 2A–D and Exte
 | Extended Data Fig. 5C–D | MH106_480 | `umap_EDFig5c_CAFs_clustering_MH106.png`, `EDFig5d_CAFs_CXCL14rep.png` |
 | Extended Data Fig. 8H–I | MH104_480 | `stacked_violin_LymphoidStromal_geneexpression.png`, `EDFig8i_lymphnode.png` |
 
+## Neighbourhood profiling
+
+`stage2_neighbourhood_profiling.ipynb` uses `cell_class_threshold`, the cell coordinates and the Nhood enrichment z-scores from Stage 1 (50 µm radius). It has no random steps.
+
+1. **Nearest-neighbour distances:** for each malignant cell, the distance to the nearest cell of each other type within 50 µm. A type with no cell within 50 µm is left out for that malignant cell, not counted as further away, so all distances are 50 µm or less. 433,949 of the 444,967 malignant cells have at least one neighbour within 50 µm. The median distance per sample is then compared across cell types.
+2. **Fig. 4E statistics:** the seven CAF and TAM subtypes are compared with a repeated-measures ANOVA (F = 25.0082, df 6 and 84, p < 0.0001, as in the original analysis), then paired t-tests with Benjamini–Hochberg correction. 15 samples are included. MH096_314 is mostly adjacent normal tissue, with only 170 malignant cells, none of which has a cell of these types within 50 µm. The notebook prints a Shapiro test for each cell type (p = 0.010 for TAMs_C1QC, 0.067–0.987 for the others). Other tests were also checked, and the repeated-measures ANOVA was kept.
+3. **Nhood enrichment:** the Stage 1 z-scores, scaled to 0–1 within each sample, then averaged across samples. Neighbour types found in fewer than 3 samples (Extended Data Fig. 6E, Fig. 5D) or 6 samples (Fig. 4F) are left out.
+4. **Neighbour composition:** for each cell of a given type, the fraction of each other cell type within 50 µm, excluding cells of the same type and unclassified cells, averaged over the cells of that type in each sample.
+
+| Figure | File |
+|---|---|
+| Extended Data Fig. 6D | `EDFig6d_Persample_median_distant_PDAC_neighbours_all.pdf` |
+| Fig. 4E | `Fig4e_Persample_median_distant_PDAC_neighbours_TAMs_CAFs.pdf`, with `Fig4e_summary.tsv`, `Fig4e_repeated_measures_anova.tsv` and `Fig4e_posthoc_paired_ttests.tsv` |
+| Extended Data Fig. 6E | `EDFig6e_PDAC_CAFs_TAM_relative_enrichment.pdf` |
+| Fig. 4F | `Fig4f_PDAC_top8_over6sample.pdf` |
+| Fig. 5D | `Fig5d_NRT_C1QC_nhood_50.pdf` |
+| Fig. 4C | `Fig4c_Malignant_cells_cross_sample_median.pdf`, with its `.tsv` |
+| Fig. 5C | `Fig5c_CAFs_NRT_cross_sample_median.pdf`, `Fig5c_TAMs_C1QC_cross_sample_median.pdf`, `Fig5c_CD4_T_cross_sample_median.pdf`, `Fig5c_CD8_T_cross_sample_median.pdf`, each with its `.tsv` |
+
 ## Running the notebooks
+
 
 
 Set the paths in each notebook's parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`). `stage2_niches.ipynb`:
@@ -94,7 +114,7 @@ Set the paths in each notebook's parameters cell, then run all cells with the `x
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
 | `ORIGINAL_COMBINED` | The original combined object, used only for the check. Set to `None` to skip the check |
 
-`stage2_figures.ipynb` uses the same `STAGE1_DIR`, and saves its figures to `FIGURE_DIR`.
+`stage2_figures.ipynb` and `stage2_neighbourhood_profiling.ipynb` use the same `STAGE1_DIR`. `stage2_figures.ipynb` saves its figures to `FIGURE_DIR`; `stage2_neighbourhood_profiling.ipynb` saves its tables to `OUTPUT_DIR` and its figures to `OUTPUT_DIR/figures`.
 
 The paths in the notebooks were replaced with these placeholders after they were run. The niche analysis needs about 64 GB of memory and no GPU.
 
@@ -108,6 +128,7 @@ The paths in the notebooks were replaced with these placeholders after they were
 | `software_versions.tsv` | The package versions used |
 | `figures/` | The niche figures |
 | `manuscript_figures/` | The figures from single samples (`FIGURE_DIR` in `stage2_figures.ipynb`) |
+| `neighbourhood_profiling/` | Neighbourhood profiling tables and figures (`OUTPUT_DIR` in `stage2_neighbourhood_profiling.ipynb`), including the distances for each malignant cell and the combined Nhood z-scores (`.csv.gz`) |
 
 ## Files
 
@@ -115,3 +136,4 @@ The paths in the notebooks were replaced with these placeholders after they were
 |---|---|
 | `stage2_niches.ipynb` | The niche analysis, from the final Stage 1 objects to the niches and figures |
 | `stage2_figures.ipynb` | Manuscript figures plotted from single Stage 1 objects |
+| `stage2_neighbourhood_profiling.ipynb` | Distances, Nhood enrichment and neighbour composition around selected cell types |
