@@ -1,0 +1,338 @@
+---
+title: "PDAC_sample_based_Seurat.Rmd"
+author: "Mai La"
+date: "2024-08-12"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+
+Based on the approach described [here](https://satijalab.org/seurat/articles/integration_introduction.html), example described in this [manuscript](https://www.cell.com/cell/fulltext/S0092-8674(19)30559-8)
+Primary processing of STS PDAC samples including IPMN using Seurat, QCed using SCRAN/SCATER (OSCA approach)
+All data input is placed in `data/`
+Plots and figures are placed in `output/plots/`
+
+# Prepare environment
+```{r global-options, include=FALSE}
+# knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+#                       echo=FALSE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T)
+options(future.globals.maxSize= 1048576000)
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage2.R so that params are passed
+
+bpp <- BiocParallel::MulticoreParam(workers = cfg$workers, RNGseed = cfg$seed)
+
+```
+
+## Libraries
+```{r import_libraries, include = TRUE, echo=TRUE, results='hide', message=FALSE}
+library("Seurat")
+library("tidyverse") 
+library("patchwork")
+library("BiocSingular")
+library("BiocParallel")
+library("pheatmap")
+library("bluster")
+library("dichromat")
+library("RColorBrewer")
+library("clustree")
+#library("schex")
+library('scuttle')
+
+```
+
+# Load QCed SCE object.
+TODO (to revisit): this comparison needs both the original object and the August 2024 rerun object, which are not loaded here, so it is switched off for now.This section can be removed
+```{r compare_old_new, eval=FALSE}
+old_obj <- qc.dbl.fltrd.sts.sce        # old final object
+new_obj <- qc.dbl.fltrd.sts.sce_Aug24          # new object with setseed
+head(colnames(old_obj)); head(colnames(new_obj))
+
+old_id <- colnames(old_obj)
+new_id <- colnames(new_obj)
+stopifnot(!anyDuplicated(old_id), !anyDuplicated(new_id))   # must pass
+
+shared <- intersect(old_id, new_id)
+cat("Old:", length(old_id), "| New:", length(new_id), "| Shared:", length(shared), "\n")
+#Old: 115221 | New: 115301 | Shared: 113987 
+cat("Recovered from old:", round(100 * length(shared) / length(old_id), 1), "%\n")
+#Recovered from old: 98.9 %
+cat("New-only:", length(setdiff(new_id, old_id)), "| Old-only:", length(setdiff(old_id, new_id)), "\n")
+#New-only: 1314 | Old-only: 1234 
+
+df <- bind_rows(
+  data.frame(bc = old_bc, Sample = old_obj$Sample, set = "old"),
+  data.frame(bc = new_bc, Sample = new_obj$Sample, set = "new")
+)
+
+res <- df %>%
+  group_by(Sample) %>%
+  summarise(old = sum(set == "old"),
+            new = sum(set == "new"),
+            shared = length(intersect(bc[set == "old"], bc[set == "new"])),
+            pct_old_recovered = 100 * shared / old)
+
+ggplot(res, aes(Sample, pct_old_recovered)) +
+  geom_col() +
+  geom_hline(yintercept = 90, linetype = "dashed") +
+  ylab("% of old cells recovered") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+qc <- as.data.frame(colData(old_obj))
+qc$status <- ifelse(rownames(qc) %in% new_id, "shared", "old_only")
+
+library(ggplot2)
+ggplot(qc, aes(status, detected)) +
+  geom_violin() + geom_boxplot(width = .1, outlier.shape = NA) +
+  scale_y_log10() + theme_bw()
+```
+
+```{r load_sce_object}
+qc.dbl.fltrd.sts.sce <- readRDS(cfg$qc_object) # this object will be provided for reproducibility of downstream analysis and figures generation
+
+sample.no <- length(unique(qc.dbl.fltrd.sts.sce$Sample))
+sample.colours  <- colorRampPalette(brewer.pal(11, "Spectral"))
+```
+
+# Create a Seurat object (QCed with Scater)
+```{r seurat_object}
+rownames(qc.dbl.fltrd.sts.sce) <-
+  uniquifyFeatureNames(rownames(qc.dbl.fltrd.sts.sce),
+                       rowData(qc.dbl.fltrd.sts.sce)$Symbol)
+# Idea from this [post](https://stackoverflow.com/questions/28244123/find-duplicated-elements-with-dplyr)
+
+rowData(qc.dbl.fltrd.sts.sce) %>% as_tibble (rownames = "rownames") %>% dplyr::filter(duplicated(Symbol) | duplicated(Symbol, fromLast = TRUE))
+
+sts.seurat <-
+  CreateSeuratObject(
+    counts = counts(qc.dbl.fltrd.sts.sce),
+    meta.data = colData(qc.dbl.fltrd.sts.sce) %>% as.data.frame()
+  )
+
+# Check whether SCE and Seurat object counts are identical
+stopifnot(identical(
+  counts(qc.dbl.fltrd.sts.sce)[25:30, 25:30],
+  sts.seurat@assays$RNA@data[25:30, 25:30]
+))
+
+# Check whether the counts and data slots are identical (after importing counts from SCE object slots should be identical)
+
+stopifnot(
+  identical(
+    sts.seurat@assays$RNA@counts[25:30, 25:30],
+    sts.seurat@assays$RNA@data[25:30, 25:30]
+  )
+)
+
+rm(qc.dbl.fltrd.sts.sce)
+
+gc()
+```
+
+# SCTransform 
+Normalisation and scaling using "v2" flavour.
+```{r sctransform}
+sts.seurat <- SCTransform(
+  sts.seurat,
+  vst.flavor = "v2",
+  method = "glmGamPoi",
+  verbose = TRUE) # default ncells set to 5000, can see it in verbose
+```
+
+
+# RNA assay
+```{r rna_assay}
+sts.seurat <- 
+  NormalizeData(
+    object = sts.seurat,
+    normalization.method = "LogNormalize",
+    scale.factor = 1e4,
+    assay = "RNA"
+  )
+
+GetAssayData(sts.seurat, slot = "counts", assay = "RNA") %>% .[1:50, 1:50]
+GetAssayData(sts.seurat, slot = "data", assay = "RNA")  %>% .[1:50, 1:50]
+
+```
+
+# Dimensionality reduction
+## PCA
+```{r pca}
+sts.seurat <-
+  RunPCA(sts.seurat,
+         verbose = TRUE,
+         assay = 'SCT',
+         reduction.name = "pca",
+         reduction.key = "PCA_")
+
+DimPlot(sts.seurat,
+        label = TRUE,
+        reduction = "pca",
+        group.by = "Sample", raster = F) + NoLegend()
+
+ 
+ElbowPlot(sts.seurat, ndims = 50)
+
+DimHeatmap(
+  object = sts.seurat,
+  dims = 1:12,
+  cells = 500,
+  balanced = TRUE
+)
+```
+
+
+## UMAP
+```{r umap}
+library(Seurat)
+sts.seurat <-
+  Seurat::RunUMAP(
+    sts.seurat,
+    dims = 1:50,
+    verbose = TRUE,
+    assay = 'SCT',
+    reduction = 'pca',
+    reduction.name = 'umap',
+    reduction.key = 'UMAP_'
+  )
+
+DimPlot(
+  sts.seurat,
+  label = F,
+  group.by = "Sample",
+  reduction = "umap",
+  raster = FALSE)
+
+```
+
+# Clustering 
+```{r clustering, fig.width=10, fig.height=14}
+sts.seurat <-
+  FindNeighbors(
+    sts.seurat,
+    reduction = 'pca',
+    dims = 1:50,
+    verbose = TRUE,
+    assay = 'SCT'
+  )
+
+sts.seurat <- FindClusters(sts.seurat, algorithm = 3, resolution = seq(0.1, 1, by = 0.1))
+
+library(clustree)
+clustree::clustree(sts.seurat) 
+
+Idents(sts.seurat) <- "SCT_snn_res.0.5"
+sts.seurat$seurat_clusters <- NULL
+sts.seurat$seurat_clusters <- sts.seurat$SCT_snn_res.0.5 # see analysis below, this resolution works very well
+```
+
+```{r clustering-umap, fig.width=16, fig.height=8}
+DimPlot(
+  sts.seurat,
+  reduction = "umap",
+  raster = F,
+  group.by = "SCT_snn_res.0.5",
+  label = T
+) +
+DimPlot(sts.seurat, reduction = "umap", group.by = 'Sample', raster =F)
+
+#saveRDS(sts.seurat, file = file.path(params$step_dir, "sts.seurat.clustered.RDS"))
+```
+
+
+# Manual annotation based on marker gene expression
+```{r marker-expression, fig.width=20, fig.height=9}
+# We know these markers label very well distinct major cell class from the previous analysis,
+# We check how well they do in defining cell classes here
+DefaultAssay(sts.seurat) <- "RNA"
+marker.sets <- list(Malignant_PDAC = c("KRT19","MUC1","KRT17","ACTN4","LMO7"),
+                    Malignant_Acinar = c("CPA1","CPA2","PRSS1","RBPJL","CEL"), # "SPINK1","GATM"
+                    Malignant_PDA_Osteoclast = c("DLX5","OMD","CA2"),#,"CTGF"
+                    IPMN = c("MUC2","FGF13","REG4","BRINP3","SPINK4"),
+                    IPMN_intestinal = c("CEMIP","TCIM","NR4A2","DNER"),
+                    Acinar_Cells = c("CPB1","CELA3A","CTRC","PNLIP","PDIA2"),
+                    Epithelium_Duct_Cells = c("CFTR","SLC4A4","PKHD1","ONECUT2","C6","CRP"),
+                    Ductal_like_2 = c("MUC6","MUC5B","MUC3A","CALN1","SERPINA1"),
+                    Quiescent_stellates = c("PDGFRB","RGS5","TRPC6","PLXDC1","GJC1"),
+                    Fibroblasts = c("COL1A1","CALD1", "COL6A3","COL1A2","FN1"),
+                    Fibroblastic_reticular = c("HAS1","PDPN","PLA2G2A","RAB7B","DAW1"),
+                    Tuft_Cells = c("TRPM5","POU2F3","AVIL","BMX","SH2D7"),
+                    Islet_Cells = c("INS","GCG","NRG1","KCNMB2","SNTG1"),
+                    Endothelial_Cells = c("VWF","CD34","EFNB2","PLVAP","FLT1"),
+                    B_Cells = c("FCRL1","MS4A1","PAX5"),
+                    Plasma_Cells = c("MZB1","SPAG4","PDK1","IGHG1"),
+                    T_Cells = c("CD3D","CD3E","CD96","CD2","CD247"), #revised
+                    Mast_Cells = c("TPSAB1", "CPA3", "MS4A2","HPGDS","KIT"),
+                    Macrophages = c("CSF1R","SIGLEC1", "CD163", "MS4A6A"))
+
+DotPlot(sts.seurat, features = marker.sets, group.by = "SCT_snn_res.0.5")  + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high = "darkred") # res 0.6 work very well
+```
+
+
+# Rename clusters
+## sts.seurat 
+```{r cluster-annotation, fig.width=16, fig.height=8}
+# Add Cell_Ids & S_CB
+sts.seurat$Cell_Ids <- colnames(sts.seurat)
+sts.seurat$S_CB <- paste(sts.seurat$Sample, sts.seurat$Barcode, sep = "_")
+
+
+clusters <- FetchData(sts.seurat, vars = c("Cell_Ids", "seurat_clusters"))
+
+clusters <-
+  clusters %>% dplyr::mutate(
+    cell_class = dplyr::case_when(
+      seurat_clusters %in% c("5") ~ "T/NK",
+      seurat_clusters == "32" ~ "Mast",
+      seurat_clusters == "1" ~ "Macrophages",
+      seurat_clusters == "28" ~ "Plasma",
+      seurat_clusters == "26" ~ "B",
+      seurat_clusters == "21" ~ "Endothelial",
+      seurat_clusters %in% c("22","15") ~ "Endocrine",
+      seurat_clusters == "31" ~ "Tuft",
+      seurat_clusters == "33" ~ "FRCs",
+      seurat_clusters == "27" ~ "Pericytes",
+      seurat_clusters == "2" ~ "CAFs",
+      seurat_clusters == "30" ~ "Ductal_MUC5B+",
+      seurat_clusters == "6" ~ "Ductal_epithelial",
+      seurat_clusters == "24" ~ "Acinar",
+      seurat_clusters %in% c("13","29") ~ "PDA_OLGC", 
+      seurat_clusters == "7" ~ "Intestinal IPMN",
+      seurat_clusters %in% c("0","10") ~ "Malignant acinar",
+      seurat_clusters %in% c("34","30","25","23","20","19","18","17","16","14","12","11","9","8","4","3") ~ "PDAC")
+  )
+stopifnot(identical(colnames(sts.seurat),
+                    rownames(clusters)))
+
+
+sts.seurat <- AddMetaData(sts.seurat,
+                          metadata = clusters[, "cell_class"],
+                          col.name = "cell_class")
+
+DimPlot(sts.seurat,
+        group.by = "seurat_clusters", raster = F, label = T) +
+  DimPlot(sts.seurat, raster = F, label = T, group.by = "cell_class", repel = T)
+
+replicate.id <- FetchData(sts.seurat, vars = c("Sample", "Cell_Ids"))
+replicate.id <- dplyr::mutate(replicate.id, Patient_ID = gsub("\\-.*", "", Sample))
+patient.id <- replicate.id$Patient_ID
+names(patient.id) <- replicate.id$Cell_Ids
+
+stopifnot(identical(names(patient.id), colnames(sts.seurat)))
+
+sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
+```
+
+# Save object
+```{r save_object}
+
+saveRDS(
+  sts.seurat,
+  file = file.path(params$step_dir, "sts.seurat.RDS")
+)
+# NOTES: This object will be used for subsequent simspec integration 'PDAC_STS_simspec_integration.Rmd' 
+```

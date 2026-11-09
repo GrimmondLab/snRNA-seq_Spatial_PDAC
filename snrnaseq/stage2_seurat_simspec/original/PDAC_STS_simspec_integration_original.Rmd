@@ -1,0 +1,217 @@
+---
+title: "PDAC_STS_simspec_integration.Rmd"
+author: "Mai La & Fernando Rossello"
+date: "2024-08-12"
+output: html_document
+params:
+  cfg: NULL
+  step_dir: NULL
+  out_root: NULL
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center")
+
+cfg <- params$cfg
+stopifnot(!is.null(cfg))   # render through run_stage2.R so that params are passed
+#options(width = 60) , cache = TRUE
+#dev = c("svg","pdf") to save figures in specified format
+```
+
+# Packages
+```{r}
+library(Seurat) # 
+library(dplyr)
+library(ggplot2)
+```
+
+# Confirm the same packages and version used as in pdacnorm
+```{r eval=FALSE}
+#> packageVersion("ggplot2")
+#[1] ‘3.4.2’
+#> packageVersion("Seurat")
+#[1] ‘4.3.0’
+#> packageVersion("dplyr")
+#[1] ‘1.1.2’
+```
+
+# Load data
+```{r}
+# this object was generated on 'Seurat_sample_based.Rmd'
+sts.seurat <- readRDS(file.path(params$out_root, "Seurat_sample_based", "sts.seurat.RDS"))
+```
+
+```{r}
+# DietSeurat
+dim(sts.seurat) #115221
+DefaultAssay(sts.seurat) <- "RNA"
+sts.seurat <- Seurat::DietSeurat(sts.seurat, assays = "RNA", data = TRUE, counts = TRUE)
+colnames(sts.seurat[[]]) #check which columns to remove
+
+sts.seurat[["nCount_SCT"]] <- NULL
+sts.seurat[["nFeature_SCT"]] <- NULL
+sts.seurat[["SCT_snn_res.0.1"]] <- NULL
+sts.seurat[["SCT_snn_res.0.2"]] <- NULL
+sts.seurat[["SCT_snn_res.0.4"]] <- NULL
+sts.seurat[["SCT_snn_res.0.3"]] <- NULL
+sts.seurat[["seurat_clusters"]] <- NULL
+sts.seurat[["SCT_snn_res.0.5"]] <- NULL
+sts.seurat[["SCT_snn_res.0.6"]] <- NULL
+sts.seurat[["SCT_snn_res.0.7"]] <- NULL
+sts.seurat[["SCT_snn_res.0.8"]] <- NULL
+sts.seurat[["SCT_snn_res.0.9"]] <- NULL
+sts.seurat[["SCT_snn_res.1"]] <- NULL
+```
+
+# GLOBAL INTEGRATION - ALL CELLS
+## SCTransform individually
+```{r}
+sts.seurat <- SplitObject(sts.seurat, split.by = "Sample")
+
+for (i in names(sts.seurat)){
+  sts.seurat[[i]] <- SCTransform(sts.seurat[[i]],
+    vst.flavor = "v2",
+    method = "glmGamPoi",
+    verbose = TRUE
+    )
+}
+```
+
+## INTEGRATION
+### CSS integration - 'orig.ident'
+```{r}
+# Codes modified from Fernando
+# Merge and set common features 
+features.ls <- SelectIntegrationFeatures(object.list = sts.seurat, nfeatures = 2000) #default nfeatures
+
+sts.simspec_css.sample.sct <- merge(x = sts.seurat[[1]], y = sts.seurat[2:length(sts.seurat)], 
+                                  merge.data = TRUE)
+
+VariableFeatures(sts.simspec_css.sample.sct) <- features.ls
+
+# PCA 
+sts.simspec_css.sample.sct <- RunPCA(sts.simspec_css.sample.sct, verbose = TRUE, assay = "SCT") #default npcs = 50
+
+# Run CSS ----
+# simspec is installed in the conda env at the commit used for the manuscript (envs/post_install.R)
+# (quadbio/simspec f4c87bfb18522d7df0110eb63843972a29415985), originally with:
+# devtools::install_github("quadbiolab/simspec")
+library(simspec)
+
+# On running simspec_CSS on SCTranformed objects https://github.com/immunogenomics/simspec_CSS/issues/41
+sts.simspec_css.sample.sct <-
+  simspec::cluster_sim_spectrum(
+    object = sts.simspec_css.sample.sct,
+    label_tag = "orig.ident", #original sample labels from pre-processing step
+    cluster_resolution = 0.4,
+    corr_method = "pearson",
+    spectrum_type = "corr_kernel"
+  )
+
+cat("Current reductions in object:", Reductions(sts.simspec_css.sample.sct)) # pca css
+# Current reductions in object: pca css
+
+# Reference codes from:  https://github.com/quadbio/simspec/blob/master/vignette/vignette.md
+sts.simspec_css.sample.sct <- RunUMAP(sts.simspec_css.sample.sct, reduction = "css", 
+                                   dims = 1:ncol(Embeddings(sts.simspec_css.sample.sct, "css")), #294
+                                   reduction.name="umap_css", reduction.key="UMAPCSS_")
+
+sts.simspec_css.sample.sct <- FindNeighbors(sts.simspec_css.sample.sct, reduction="css", 
+                                         dims = 1:ncol(Embeddings(sts.simspec_css.sample.sct, "css")))
+
+
+sts.simspec_css.sample.sct <- FindClusters(sts.simspec_css.sample.sct, algorithm = 3, resolution = c(0.8,0.9, 1.0, 1.1, 1.2))
+sts.simspec_css.sample.sct <- FindClusters(sts.simspec_css.sample.sct, algorithm = 3, resolution = 1.1)
+
+library(clustree)
+clustree::clustree(sts.simspec_css.sample.sct)
+```
+
+```{r umap-plot, fig.width=16, fig.height=8}
+DimPlot(sts.simspec_css.sample.sct, raster = F, group.by = "SCT_snn_res.1.1", label = T) + DimPlot(sts.simspec_css.sample.sct, group.by = "cell_class",label = T, repel =T, raster = F)
+saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.clustered.RDS"))
+
+Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" 
+sts.simspec_css.sample.sct$seurat_clusters <- NULL 
+sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn_res.1.1
+```
+
+## Annotation - Sample SCT -> 'orig.ident' CSS integration
+```{r umap-plot, fig.width=16, fig.height=8}
+Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" #try to use the same resolution to confirm similar same class
+sts.simspec_css.sample.sct$seurat_clusters <- NULL 
+sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn_res.1.1
+
+clusters <- FetchData(sts.simspec_css.sample.sct, vars = c("Cell_Ids", "seurat_clusters"))
+
+clusters <-
+  clusters %>% dplyr::mutate(
+    simspec_cell_class = dplyr::case_when(
+      seurat_clusters %in% c("0","2","3","4","7","9","11","12","14","15","21","22","24","27","34","40","45") ~ "PDAC",
+      seurat_clusters %in% c("39") ~ "Tuft", #check
+      seurat_clusters %in% c("5", "33") ~ "Ductal_epithelial", #check
+      seurat_clusters %in% c("30") ~ "Acinar", #check
+      seurat_clusters %in% c("43","18","6","1") ~ "Malignant acinar", #check
+      seurat_clusters %in% c("46","20","8") ~ "T/NK", #check
+      seurat_clusters %in% c("10","13","29","47") ~ "CAFs", #check
+      seurat_clusters %in% c("19","44","37","38") ~ "PDA_OLGC", #check
+      seurat_clusters ==  "41" ~ "Mast", #check
+      seurat_clusters ==  "32" ~ "B", #check
+      seurat_clusters ==  "42" ~ "FRCs", #check
+      seurat_clusters == "35" ~ "Plasma",#check
+      seurat_clusters %in% c("16","17", "25", "31") ~ "Macrophages", #check
+      seurat_clusters ==  "28" ~ "Endothelial", 
+      seurat_clusters %in%  c("23", "26") ~ "Endocrine", 
+      seurat_clusters == "36"  ~ "Pericytes" #done
+      
+    )
+  )
+stopifnot(identical(colnames(sts.simspec_css.sample.sct),
+                    rownames(clusters)))
+
+
+sts.simspec_css.sample.sct <- AddMetaData(sts.simspec_css.sample.sct,
+                          metadata = clusters[, "simspec_cell_class"],
+                          col.name = "simspec_cell_class")
+
+DimPlot(sts.simspec_css.sample.sct,
+        group.by = "simspec_cell_class", raster = F, label = T) +
+  #DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "seurat_clusters") + 
+  DimPlot(sts.simspec_css.sample.sct, raster = F, label = T, group.by = "cell_class") 
+
+### Adding sample details
+# Commented out: sts.seurat is a list by this point (SplitObject above), so FetchData() stops the render.
+# Nothing reads sts.seurat after this, and Patient_ID is already on the integrated object (from Seurat_sample_based.Rmd).
+# replicate.id <- FetchData(sts.seurat, vars = c("Sample", "Cell_Ids"))
+# replicate.id <- dplyr::mutate(replicate.id, Patient_ID = gsub("\\-.*", "", Sample))
+# patient.id <- replicate.id$Patient_ID
+# names(patient.id) <- replicate.id$Cell_Ids
+#
+# stopifnot(identical(names(patient.id), colnames(sts.seurat)))
+# sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
+```
+
+```{r marker-expression, fig.width=20, fig.height=9 }
+DefaultAssay(sts.simspec_css.sample.sct) <- "RNA"
+marker.sets <- list(Malignant_PDAC = c("KRT19","MUC1","KRT17","ACTN4","LMO7"),
+                    Malignant_Acinar = c("CPA1","CPA2","PRSS1","RBPJL","CEL"), # "SPINK1","GATM"
+                    Malignant_PDA_Osteoclast = c("DLX5","OMD","CA2"),#,"CTGF"
+                    IPMN = c("MUC2","FGF13","REG4","BRINP3","SPINK4"),
+                    IPMN_intestinal = c("CEMIP","TCIM","NR4A2","DNER"),
+                    Acinar_Cells = c("CPB1","CELA3A","CTRC","PNLIP","PDIA2"),
+                    Epithelium_Duct_Cells = c("CFTR","SLC4A4","PKHD1","ONECUT2","C6","CRP"),
+                    Ductal_like_2 = c("MUC6","MUC5B","MUC3A","CALN1","SERPINA1"),
+                    Quiescent_stellates = c("PDGFRB","RGS5","TRPC6","PLXDC1","GJC1"),
+                    Fibroblasts = c("COL1A1","CALD1", "COL6A3","COL1A2","FN1"),
+                    Fibroblastic_reticular = c("HAS1","PDPN","PLA2G2A","RAB7B","DAW1"),
+                    Tuft_Cells = c("TRPM5","POU2F3","AVIL","BMX","SH2D7"),
+                    Islet_Cells = c("INS","GCG","NRG1","KCNMB2","SNTG1"),
+                    Endothelial_Cells = c("VWF","CD34","EFNB2","PLVAP","FLT1"),
+                    B_Cells = c("FCRL1","MS4A1","PAX5"),
+                    Plasma_Cells = c("MZB1","SPAG4","PDK1","IGHG1"),
+                    T_Cells = c("CD3D","CD3E","CD96","CD2","CD247"), #revised
+                    Mast_Cells = c("TPSAB1", "CPA3", "MS4A2","HPGDS","KIT"),
+                    Macrophages = c("CSF1R","SIGLEC1", "CD163", "MS4A6A"))
+
+DotPlot(sts.simspec_css.sample.sct, features = marker.sets, group.by = "simspec_cell_class")  + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high = "darkred") # r
+saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.RDS"))  # annotated object: input to Stage 3
+```

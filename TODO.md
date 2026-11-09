@@ -41,11 +41,10 @@ The plan is Batch on EC2, with data in S3.
 
 ### Stage 2 (env `snrnaseq`): highest risk
 Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
-- [ ] Run from the deposited post-QC object (`run.sh stage2`).
-- [ ] Compare cluster sizes (`seurat_clusters`) at each resolution with the original objects.
-- [ ] **Check cell-type labels.** `cell_class` and `simspec_cell_class` are assigned by cluster number. Cross-tabulate the new labels against the original annotated object per cell (`table(new, old)`). Any off-diagonal block means clusters were renumbered and the label mapping is wrong.
+- [x] Run from the deposited post-QC object (`run.sh stage2`): PCA, UMAP and clusters shift slightly, and the cluster numbers no longer match the original label mappings.
+- [x] Read `cell_class` and `simspec_cell_class` from the deposited annotated object by cell ID (`reference_object` in `config.yml`); the original mappings are kept as a record; `original/` holds the files before this change.
+- [ ] Rerun Stage 2 with these changes, and check the reports: the original-mapping check in the integration step should be 100%, and the rerun-cluster comparisons (ARI, heatmaps, majority labels) should show the same populations.
 - [ ] Visually compare the key UMAP figures with the manuscript.
-- [ ] If clusters differ materially: keep the deposited annotated object as the starting point for Stages 3+, and describe the Stage 2 rerun as documentation (as already done for Stage 1).
 
 ### Supplementary inferCNV (env `infercnv`, `run.sh infercnv`)
 - [ ] Run one sample first to check time and memory (set `samples:` in a custom config), then all samples, one per HPC job.

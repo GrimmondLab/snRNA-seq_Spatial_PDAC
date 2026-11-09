@@ -27,7 +27,7 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 |---|---|---|---|---|
 | 0. Cell Ranger + CellBender | `snrnaseq/stage0_cellranger_cellbender/` | — (documentation only) | FASTQ | Record only |
 | 1. Doublet removal + fixed QC thresholds | `snrnaseq/stage1_doublet_qc/` | `snrnaseq` | CellBender output: from GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), or the original local folders for the reproducibility test | Ready |
-| 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | Ready |
+| 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)); cell labels from the deposited annotated Stage 2 object | Ready |
 | 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Annotated integrated object from Stage 2 (`sts.simspec_css.sample.sct.RDS`) (**DOI_TBD**) + `tuft.snv.df.csv` ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | Ready |
 | 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object | Ready |
 | 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | Ready |
@@ -50,7 +50,7 @@ All later stages therefore start from the **original post-QC object**, deposited
 | Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Other analysis objects that later stages start from (annotated Stage 2 object, Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
 | Spatial (Xenium) data | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
-| Spatial proteomics (MIBI) input and processed files | Zenodo, **DOI_TBD** |
+| Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected.csv`) | Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) |
 
 ## Build
 

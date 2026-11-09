@@ -45,52 +45,7 @@ library('scuttle')
 
 ```
 
-# Load QCed SCE object.
-TODO (to revisit): this comparison needs both the original object and the August 2024 rerun object, which are not loaded here, so it is switched off for now.This section can be removed
-```{r compare_old_new, eval=FALSE}
-old_obj <- qc.dbl.fltrd.sts.sce        # old final object
-new_obj <- qc.dbl.fltrd.sts.sce_Aug24          # new object with setseed
-head(colnames(old_obj)); head(colnames(new_obj))
-
-old_id <- colnames(old_obj)
-new_id <- colnames(new_obj)
-stopifnot(!anyDuplicated(old_id), !anyDuplicated(new_id))   # must pass
-
-shared <- intersect(old_id, new_id)
-cat("Old:", length(old_id), "| New:", length(new_id), "| Shared:", length(shared), "\n")
-#Old: 115221 | New: 115301 | Shared: 113987 
-cat("Recovered from old:", round(100 * length(shared) / length(old_id), 1), "%\n")
-#Recovered from old: 98.9 %
-cat("New-only:", length(setdiff(new_id, old_id)), "| Old-only:", length(setdiff(old_id, new_id)), "\n")
-#New-only: 1314 | Old-only: 1234 
-
-df <- bind_rows(
-  data.frame(bc = old_bc, Sample = old_obj$Sample, set = "old"),
-  data.frame(bc = new_bc, Sample = new_obj$Sample, set = "new")
-)
-
-res <- df %>%
-  group_by(Sample) %>%
-  summarise(old = sum(set == "old"),
-            new = sum(set == "new"),
-            shared = length(intersect(bc[set == "old"], bc[set == "new"])),
-            pct_old_recovered = 100 * shared / old)
-
-ggplot(res, aes(Sample, pct_old_recovered)) +
-  geom_col() +
-  geom_hline(yintercept = 90, linetype = "dashed") +
-  ylab("% of old cells recovered") +
-  theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-qc <- as.data.frame(colData(old_obj))
-qc$status <- ifelse(rownames(qc) %in% new_id, "shared", "old_only")
-
-library(ggplot2)
-ggplot(qc, aes(status, detected)) +
-  geom_violin() + geom_boxplot(width = .1, outlier.shape = NA) +
-  scale_y_log10() + theme_bw()
-```
-
+# Load QCed SCE object
 ```{r load_sce_object}
 qc.dbl.fltrd.sts.sce <- readRDS(cfg$qc_object) # this object will be provided for reproducibility of downstream analysis and figures generation
 
@@ -154,14 +109,11 @@ sts.seurat <-
     assay = "RNA"
   )
 
-GetAssayData(sts.seurat, slot = "counts", assay = "RNA") %>% .[1:50, 1:50]
-GetAssayData(sts.seurat, slot = "data", assay = "RNA")  %>% .[1:50, 1:50]
-
 ```
 
 # Dimensionality reduction
 ## PCA
-```{r pca}
+```{r pca, fig.width=10, fig.height=10}
 sts.seurat <-
   RunPCA(sts.seurat,
          verbose = TRUE,
@@ -187,7 +139,7 @@ DimHeatmap(
 
 
 ## UMAP
-```{r umap}
+```{r umap, fig.width=10, fig.height=8}
 library(Seurat)
 sts.seurat <-
   Seurat::RunUMAP(
@@ -275,12 +227,22 @@ DotPlot(sts.seurat, features = marker.sets, group.by = "SCT_snn_res.0.5")  + Rot
 
 # Rename clusters
 ## sts.seurat 
-```{r cluster-annotation, fig.width=16, fig.height=8}
-# Add Cell_Ids & S_CB
-sts.seurat$Cell_Ids <- colnames(sts.seurat)
-sts.seurat$S_CB <- paste(sts.seurat$Sample, sts.seurat$Barcode, sep = "_")
+`cell_class` was assigned to the resolution-0.5 clusters by number in the original analysis. Cluster numbers are not stable across environments, so `cell_class` is read from the deposited annotated object (`cfg$reference_object`), matched by cell ID. The original mapping is kept below as a record.
 
+```{r reference-labels}
+reference <- readRDS(cfg$reference_object)
+reference_cols <- intersect(c("Cell_Ids", "cell_class", "simspec_cell_class", "SCT_snn_res.1.1"), colnames(reference[[]]))
+stopifnot(all(c("Cell_Ids", "cell_class", "simspec_cell_class") %in% reference_cols))
+reference_labels <- reference[[]][, reference_cols]
+rm(reference)
+gc()
 
+# also read by PDAC_STS_simspec_integration.Rmd
+saveRDS(reference_labels, file = file.path(params$step_dir, "reference_labels.RDS"))
+```
+
+```{r original-mapping, eval=FALSE}
+# Original mapping of resolution-0.5 clusters to cell_class (record only, not run)
 clusters <- FetchData(sts.seurat, vars = c("Cell_Ids", "seurat_clusters"))
 
 clusters <-
@@ -307,11 +269,16 @@ clusters <-
   )
 stopifnot(identical(colnames(sts.seurat),
                     rownames(clusters)))
+```
 
+```{r cluster-annotation, fig.width=16, fig.height=8}
+# Add Cell_Ids & S_CB
+sts.seurat$Cell_Ids <- colnames(sts.seurat)
+sts.seurat$S_CB <- paste(sts.seurat$Sample, sts.seurat$Barcode, sep = "_")
 
-sts.seurat <- AddMetaData(sts.seurat,
-                          metadata = clusters[, "cell_class"],
-                          col.name = "cell_class")
+idx <- match(sts.seurat$Cell_Ids, reference_labels$Cell_Ids)
+stopifnot(!anyNA(idx), ncol(sts.seurat) == nrow(reference_labels))   # every cell must have a label
+sts.seurat$cell_class <- reference_labels$cell_class[idx]
 
 DimPlot(sts.seurat,
         group.by = "seurat_clusters", raster = F, label = T) +
@@ -325,6 +292,31 @@ names(patient.id) <- replicate.id$Cell_Ids
 stopifnot(identical(names(patient.id), colnames(sts.seurat)))
 
 sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
+```
+
+
+## Rerun clusters compared with `cell_class`
+Each rerun cluster at resolution 0.5, with the share of its cells in each `cell_class`.
+
+```{r compare-cell-class, fig.width=10, fig.height=10, results='asis'}
+compare_with_labels <- function(clusters, labels, title) {
+  clusters <- as.character(clusters)
+  labels <- as.character(labels)
+  ari <- bluster::pairwiseRand(labels, clusters, mode = "index")
+  counts <- table(cluster = clusters, label = labels)
+  shares <- prop.table(counts, margin = 1)
+  pheatmap(unclass(shares), cluster_rows = FALSE, cluster_cols = FALSE,
+           color = colorRampPalette(c("white", "darkred"))(50),
+           main = sprintf("%s (ARI %.3f)", title, ari))
+  data.frame(cluster = rownames(shares),
+             cells = as.vector(rowSums(counts)),
+             majority_label = colnames(shares)[apply(shares, 1, which.max)],
+             majority_share_pct = round(100 * apply(shares, 1, max), 1))
+}
+
+cell_class_comparison <- compare_with_labels(sts.seurat$SCT_snn_res.0.5, sts.seurat$cell_class,
+                                             "Rerun clusters vs cell_class")
+print(knitr::kable(cell_class_comparison, row.names = FALSE))
 ```
 
 # Save object

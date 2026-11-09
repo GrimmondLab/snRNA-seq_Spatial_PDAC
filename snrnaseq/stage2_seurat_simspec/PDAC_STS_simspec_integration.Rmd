@@ -22,6 +22,7 @@ stopifnot(!is.null(cfg))   # render through run_stage2.R so that params are pass
 library(Seurat) # 
 library(dplyr)
 library(ggplot2)
+library(pheatmap)
 ```
 
 # Confirm the same packages and version used as in pdacnorm
@@ -78,7 +79,7 @@ for (i in names(sts.seurat)){
 
 ## INTEGRATION
 ### CSS integration - 'orig.ident'
-```{r}
+```{r css-integration, fig.width=10, fig.height=12}
 # Codes modified from Fernando
 # Merge and set common features 
 features.ls <- SelectIntegrationFeatures(object.list = sts.seurat, nfeatures = 2000) #default nfeatures
@@ -126,7 +127,7 @@ library(clustree)
 clustree::clustree(sts.simspec_css.sample.sct)
 ```
 
-```{r umap-plot, fig.width=16, fig.height=8}
+```{r umap-clusters, fig.width=16, fig.height=8}
 DimPlot(sts.simspec_css.sample.sct, raster = F, group.by = "SCT_snn_res.1.1", label = T) + DimPlot(sts.simspec_css.sample.sct, group.by = "cell_class",label = T, repel =T, raster = F)
 saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.clustered.RDS"))
 
@@ -136,42 +137,52 @@ sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn
 ```
 
 ## Annotation - Sample SCT -> 'orig.ident' CSS integration
-```{r umap-plot, fig.width=16, fig.height=8}
-Idents(sts.simspec_css.sample.sct) <- "SCT_snn_res.1.1" #try to use the same resolution to confirm similar same class
-sts.simspec_css.sample.sct$seurat_clusters <- NULL 
-sts.simspec_css.sample.sct$seurat_clusters <- sts.simspec_css.sample.sct$SCT_snn_res.1.1
+`simspec_cell_class` was assigned to the resolution-1.1 clusters by number in the original analysis. Cluster numbers are not stable across environments, so `simspec_cell_class` is read from the deposited annotated object, matched by cell ID (`reference_labels.RDS`, written by `Seurat_sample_based.Rmd`). The original mapping is kept below, and checked against the deposited object's own clusters.
 
-clusters <- FetchData(sts.simspec_css.sample.sct, vars = c("Cell_Ids", "seurat_clusters"))
+```{r original-mapping-check, results='asis'}
+reference_labels <- readRDS(file.path(params$out_root, "Seurat_sample_based", "reference_labels.RDS"))
 
-clusters <-
-  clusters %>% dplyr::mutate(
-    simspec_cell_class = dplyr::case_when(
-      seurat_clusters %in% c("0","2","3","4","7","9","11","12","14","15","21","22","24","27","34","40","45") ~ "PDAC",
-      seurat_clusters %in% c("39") ~ "Tuft", #check
-      seurat_clusters %in% c("5", "33") ~ "Ductal_epithelial", #check
-      seurat_clusters %in% c("30") ~ "Acinar", #check
-      seurat_clusters %in% c("43","18","6","1") ~ "Malignant acinar", #check
-      seurat_clusters %in% c("46","20","8") ~ "T/NK", #check
-      seurat_clusters %in% c("10","13","29","47") ~ "CAFs", #check
-      seurat_clusters %in% c("19","44","37","38") ~ "PDA_OLGC", #check
-      seurat_clusters ==  "41" ~ "Mast", #check
-      seurat_clusters ==  "32" ~ "B", #check
-      seurat_clusters ==  "42" ~ "FRCs", #check
-      seurat_clusters == "35" ~ "Plasma",#check
-      seurat_clusters %in% c("16","17", "25", "31") ~ "Macrophages", #check
-      seurat_clusters ==  "28" ~ "Endothelial", 
-      seurat_clusters %in%  c("23", "26") ~ "Endocrine", 
-      seurat_clusters == "36"  ~ "Pericytes" #done
-      
+# Original mapping of resolution-1.1 clusters to simspec_cell_class, applied to the deposited object's clusters
+if ("SCT_snn_res.1.1" %in% colnames(reference_labels)) {
+  clusters <- data.frame(Cell_Ids = reference_labels$Cell_Ids,
+                         seurat_clusters = as.character(reference_labels$SCT_snn_res.1.1))
+
+  clusters <-
+    clusters %>% dplyr::mutate(
+      simspec_cell_class = dplyr::case_when(
+        seurat_clusters %in% c("0","2","3","4","7","9","11","12","14","15","21","22","24","27","34","40","45") ~ "PDAC",
+        seurat_clusters %in% c("39") ~ "Tuft", #check
+        seurat_clusters %in% c("5", "33") ~ "Ductal_epithelial", #check
+        seurat_clusters %in% c("30") ~ "Acinar", #check
+        seurat_clusters %in% c("43","18","6","1") ~ "Malignant acinar", #check
+        seurat_clusters %in% c("46","20","8") ~ "T/NK", #check
+        seurat_clusters %in% c("10","13","29","47") ~ "CAFs", #check
+        seurat_clusters %in% c("19","44","37","38") ~ "PDA_OLGC", #check
+        seurat_clusters ==  "41" ~ "Mast", #check
+        seurat_clusters ==  "32" ~ "B", #check
+        seurat_clusters ==  "42" ~ "FRCs", #check
+        seurat_clusters == "35" ~ "Plasma",#check
+        seurat_clusters %in% c("16","17", "25", "31") ~ "Macrophages", #check
+        seurat_clusters ==  "28" ~ "Endothelial", 
+        seurat_clusters %in%  c("23", "26") ~ "Endocrine", 
+        seurat_clusters == "36"  ~ "Pericytes" #done
+        
+      )
     )
-  )
-stopifnot(identical(colnames(sts.simspec_css.sample.sct),
-                    rownames(clusters)))
 
+  # NA (a cluster with no label) counts as a label of its own
+  same <- mean(dplyr::coalesce(clusters$simspec_cell_class, "<none>") ==
+                 dplyr::coalesce(as.character(reference_labels$simspec_cell_class), "<none>"))
+  cat(sprintf("\n\nThe original mapping, applied to the deposited object's resolution-1.1 clusters, gives the deposited `simspec_cell_class` for %.4f%% of cells.\n\n", 100 * same))
+} else {
+  cat("\n\nThe deposited object has no `SCT_snn_res.1.1` column, so the original mapping cannot be checked.\n\n")
+}
+```
 
-sts.simspec_css.sample.sct <- AddMetaData(sts.simspec_css.sample.sct,
-                          metadata = clusters[, "simspec_cell_class"],
-                          col.name = "simspec_cell_class")
+```{r annotation, fig.width=16, fig.height=8}
+idx <- match(sts.simspec_css.sample.sct$Cell_Ids, reference_labels$Cell_Ids)
+stopifnot(!anyNA(idx), ncol(sts.simspec_css.sample.sct) == nrow(reference_labels))   # every cell must have a label
+sts.simspec_css.sample.sct$simspec_cell_class <- reference_labels$simspec_cell_class[idx]
 
 DimPlot(sts.simspec_css.sample.sct,
         group.by = "simspec_cell_class", raster = F, label = T) +
@@ -188,6 +199,32 @@ DimPlot(sts.simspec_css.sample.sct,
 #
 # stopifnot(identical(names(patient.id), colnames(sts.seurat)))
 # sts.seurat <- AddMetaData(sts.seurat, metadata = patient.id, col.name = "Patient_ID")
+```
+
+
+## Rerun clusters compared with `simspec_cell_class`
+Each rerun cluster at resolution 1.1, with the share of its cells in each `simspec_cell_class`.
+
+```{r compare-simspec-cell-class, fig.width=10, fig.height=12, results='asis'}
+compare_with_labels <- function(clusters, labels, title) {
+  clusters <- as.character(clusters)
+  labels <- as.character(labels)
+  ari <- bluster::pairwiseRand(labels, clusters, mode = "index")
+  counts <- table(cluster = clusters, label = labels)
+  shares <- prop.table(counts, margin = 1)
+  pheatmap(unclass(shares), cluster_rows = FALSE, cluster_cols = FALSE,
+           color = colorRampPalette(c("white", "darkred"))(50),
+           main = sprintf("%s (ARI %.3f)", title, ari))
+  data.frame(cluster = rownames(shares),
+             cells = as.vector(rowSums(counts)),
+             majority_label = colnames(shares)[apply(shares, 1, which.max)],
+             majority_share_pct = round(100 * apply(shares, 1, max), 1))
+}
+
+simspec_comparison <- compare_with_labels(sts.simspec_css.sample.sct$SCT_snn_res.1.1,
+                                          sts.simspec_css.sample.sct$simspec_cell_class,
+                                          "Rerun clusters vs simspec_cell_class")
+print(knitr::kable(simspec_comparison, row.names = FALSE))
 ```
 
 ```{r marker-expression, fig.width=20, fig.height=9 }
