@@ -1,6 +1,6 @@
 # Stage 2: cellular neighbourhoods (niches)
 
-This stage groups the cells of all 16 samples into 15 niches by the cell types around them. It starts from the final Stage 1 objects.
+This stage groups the cells of all 16 samples into 15 niches by the cell types around them (`stage2_niches.ipynb`), and makes the manuscript figures that are plotted directly from single samples (`stage2_figures.ipynb`). Both notebooks start from the final Stage 1 objects.
 
 ## Summary
 
@@ -54,23 +54,39 @@ The 18 cells with a different niche come from 11 samples, with at most 4 in one 
 
 ## Figures
 
-The notebook plots only the figures used in the manuscript.
+The notebook plots only the figures used in the manuscript: Fig. 2A–D and Extended Data Fig. 3.
 
-| File | Contents | Manuscript panel |
+| File | Contents |
+|---|---|
+| `Niches_mean_fraction.pdf` | Mean fraction of each cell type in each niche |
+| `Niches_composition_celltype_v2.pdf` | Enrichment of each cell type across niches (z-score) |
+| `Niches_log2FC.pdf` | Enrichment or depletion of each cell type in each niche, against the overall mean |
+| `Niches_composition_CLR_reorder.pdf` | Niche composition of each sample |
+| `Samplecontributionperniche.pdf` | Share of each niche's cells from each sample |
+| `Representative_niches_<sample>.pdf` | Niches in MH097_480, MH096_314, MH106_314 and MH107_480 |
+| `PieCharts.pdf` | Top 10 cell types in each niche |
+| `<niche>_acrossPatients.pdf` | Cell types of one niche in each sample, for 7 niches |
+| `<niche>_top9_pie.pdf` | Top 9 cell types of CAFsNRT_APCs_enriched and Tumour_Neutrophils_Lymphoid_enriched |
+
+## Figures from single samples
+
+`stage2_figures.ipynb` plots single samples from their final Stage 1 objects, mostly by `cell_class_threshold`. Fig. 1D uses the broad classes from the cluster-based annotation (`anno`), and Extended Data Fig. 5C uses the Leiden clusters; both are read from the Stage 1 object, as are the UMAP coordinates. Some of these figures were originally made from earlier objects of the same samples (named in the notebook).
+
+| Figure | Sample | File |
 |---|---|---|
-| `Niches_mean_fraction.pdf` | Mean fraction of each cell type in each niche | To add |
-| `Niches_composition_celltype_v2.pdf` | Enrichment of each cell type across niches (z-score) | To add |
-| `Niches_log2FC.pdf` | Enrichment or depletion of each cell type in each niche, against the overall mean | To add |
-| `Niches_composition_CLR_reorder.pdf` | Niche composition of each sample | To add |
-| `Samplecontributionperniche.pdf` | Share of each niche's cells from each sample | To add |
-| `Representative_niches_<sample>.pdf` | Niches in MH097_480, MH096_314, MH106_314 and MH107_480 | To add |
-| `PieCharts.pdf` | Top 10 cell types in each niche | To add |
-| `<niche>_acrossPatients.pdf` | Cell types of one niche in each sample, for 7 niches | To add |
-| `<niche>_top9_pie.pdf` | Top 9 cell types of CAFsNRT_APCs_enriched and Tumour_Neutrophils_Lymphoid_enriched | To add |
+| Fig. 1D | MH065_314 | `umap_Fig1d_MH065_314.png`, `Fig1d_MH065_314_scatterplot.png` |
+| Fig. 4B | MH107_480 | `dotplot_Fig4b_TAMs_CAFs_Tu.pdf` |
+| Fig. 4D | MH106_480, MH104_480, MH096_480 | `Fig4d-1_MH106_480.pdf`, `Fig4d-2_MH104_480.pdf`, `Fig4d-3_MH096_480.pdf` |
+| Fig. 5B | MH106_480, MH107_480, MH106_314 | `Fig5b_MH106_480.pdf`, `Fig5b-2_MH107_480.pdf`, `Fig5b-3_MH106_314.pdf` |
+| Fig. 5E | MH107_480 | `stacked_violin_Fig5e_CXCL12_CXCR4_signalling.pdf` |
+| Extended Data Fig. 2D | MH106_480 | `EDFig2d-1_MH106_G12D.pdf`, `EDFig2d-2_MH106_GNAS_R844H.pdf` |
+| Extended Data Fig. 5C–D | MH106_480 | `umap_EDFig5c_CAFs_clustering_MH106.png`, `EDFig5d_CAFs_CXCL14rep.png` |
+| Extended Data Fig. 8H–I | MH104_480 | `stacked_violin_LymphoidStromal_geneexpression.png`, `EDFig8i_lymphnode.png` |
 
-## Running the notebook
+## Running the notebooks
 
-Set the paths in the parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`):
+
+Set the paths in each notebook's parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`). `stage2_niches.ipynb`:
 
 | Setting | Path |
 |---|---|
@@ -78,7 +94,9 @@ Set the paths in the parameters cell, then run all cells with the `xenium.squidp
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
 | `ORIGINAL_COMBINED` | The original combined object, used only for the check. Set to `None` to skip the check |
 
-The paths in the notebook were replaced with these placeholders after it was run. It needs about 64 GB of memory and no GPU.
+`stage2_figures.ipynb` uses the same `STAGE1_DIR`, and saves its figures to `FIGURE_DIR`.
+
+The paths in the notebooks were replaced with these placeholders after they were run. The niche analysis needs about 64 GB of memory and no GPU.
 
 ## Outputs
 
@@ -88,10 +106,12 @@ The paths in the notebook were replaced with these placeholders after it was run
 | `stage2_niche_labels.csv.gz` | Sample, cell ID, `cell_class_threshold`, K-means cluster and niche for each cell |
 | `stage2_check.tsv` | The check against the original |
 | `software_versions.tsv` | The package versions used |
-| `figures/` | The figures above |
+| `figures/` | The niche figures |
+| `manuscript_figures/` | The figures from single samples (`FIGURE_DIR` in `stage2_figures.ipynb`) |
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `stage2_niches.ipynb` | The analysis, from the final Stage 1 objects to the niches and figures |
+| `stage2_niches.ipynb` | The niche analysis, from the final Stage 1 objects to the niches and figures |
+| `stage2_figures.ipynb` | Manuscript figures plotted from single Stage 1 objects |
