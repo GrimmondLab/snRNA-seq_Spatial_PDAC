@@ -65,7 +65,12 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 
 ## 3. Spatial (Python): Stage 1 added, Stages 2 and 3 waiting on inputs
 - [x] Add the Stage 1 notebooks under `spatial/stage1/` (one per sample, plus the robustness summary).
-- [ ] Add the Stage 2 and Stage 3 notebooks and any helper `.py` files under `spatial/`.
+- [x] Add the Stage 2 notebooks under `spatial/stage2/`.
+- [x] Stage 3: add `spatial/stage3/stage3_malignant_TIL.ipynb` (malignant cells near and far from TILs, three 480-gene samples; reproduces the original exactly). MH106_314's earlier DE analysis is not part of the final analysis and was removed.
+- [ ] Stage 3: restart and run all of `stage3_malignant_TIL.ipynb`. Its saved outputs come from a run that still included MH106_314, and two cells ran out of order.
+- [x] Stage 3: manuscript panels added to `spatial/stage3/README.md` (Fig. 5H, 5I; Extended Data Fig. 7F, 7G).
+- [ ] Stage 3: add the lymphoid crops notebook. MH106_314 stays here: it is one of the four regions in the TIL composition figure.
+- [ ] Add any remaining Stage 3 notebooks and helper `.py` files under `spatial/stage3/`.
 - [x] Commit the env records under `spatial/environment/`: `requirements_as_used.txt`, `packages_with_locations.tsv`, `conda_export.yml`, `conda_explicit.txt`, `conda_revisions.txt`, `runtime_info.json`, `system.txt` and `kernels.txt`.
 - [x] Decide which env record is correct: `spatial/environment/requirements_as_used.txt`, the versions actually loaded (scanpy 1.9.5 and squidpy 1.3.1, from `~/.local`).
 - [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
