@@ -81,7 +81,12 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Stage 2: restart the kernel and run all cells, so the figures come from the same run as the check (the figure cells ran in a different session).
 - [ ] Stage 2: deposit the original niche labels (sample, cell ID, label, niche) so reviewers can run the check, and point `ORIGINAL_COMBINED` (or a smaller labels file) at it.
 - [ ] Stage 2: save the K selection results (K = 8–25) once as a TSV, so the choice of K = 15 has evidence in the repository.
-- [ ] Stage 2: fill in the manuscript panel for each figure in `spatial/stage2/README.md`.
+- [ ] Stage 2: the niche figures feed Fig. 2A–D and Extended Data Fig. 3 (now in the README). Add the panel for each file if wanted.
+- [x] Stage 2 `stage2_figures.ipynb`: removed the out-of-date "Other" count cell from the Fig. 1D section.
+- [ ] Stage 2 `stage2_figures.ipynb`: optionally restart the kernel and run all cells; the last cell (list of saved figures) never ran.
+- [x] Stage 2: Extended Data Fig. 2D comes only from `stage2_figures.ipynb`; the niche notebook makes Fig. 2A–D and Extended Data Fig. 3.
+- [x] Stage 2 `stage2_figures.ipynb`: Fig. 4B with `cell_class_threshold` reproduces the original plot (confirmed by the analyst).
+- [x] Stage 2 `stage2_figures.ipynb`: figures first made from earlier objects compared with the published panels (by the analyst).
 
 ## 3b. Spatial proteomics (MIBI): record only, waiting on the collaborating team
 - [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. `Fig2_efg_CellNeighbourhood.R` does not run as written: it joins on a `cell.id` column that is not there, and it is unclear whether clustering used all cells or excluded "Other". `ExtFig6f_boxplots_cell_distance.R` does not load dplyr or ggplot2 and does not define `output_folder`.
