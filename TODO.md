@@ -68,7 +68,12 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
   - leave low-level libraries unpinned;
   - add pip-only packages under `pip:`.
 - [ ] Lock it with `conda-lock` (see README, "Updating an env"), and add it to the `Dockerfile`, `.dockerignore` (an allowlist) and a `spatial` entry in `run.sh` (papermill or `jupyter nbconvert --execute`).
-- [ ] Check whether any notebook needs a GPU (torch / scvi-tools are in the env). If so, decide on a CPU fallback or a separate GPU image.
+- [ ] Check whether any Stage 3 notebook needs a GPU (torch / scvi-tools are in the env). Stages 1 and 2 do not; Stage 2 runs in 64 GB.
+- [x] Stage 2: notebook added under `spatial/stage2/`. Niches match the original for 99.9994% of cells (about 18 of 2,930,241 differ); all 15 names match.
+- [ ] Stage 2: restart the kernel and run all cells, so the figures come from the same run as the check (the figure cells ran in a different session).
+- [ ] Stage 2: deposit the original niche labels (sample, cell ID, label, niche) so reviewers can run the check, and point `ORIGINAL_COMBINED` (or a smaller labels file) at it.
+- [ ] Stage 2: save the K selection results (K = 8–25) once as a TSV, so the choice of K = 15 has evidence in the repository.
+- [ ] Stage 2: fill in the manuscript panel for each figure in `spatial/stage2/README.md`.
 
 ## 3b. Spatial proteomics (MIBI): record only, waiting on the collaborating team
 - [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. `Fig2_efg_CellNeighbourhood.R` does not run as written: it joins on a `cell.id` column that is not there, and it is unclear whether clustering used all cells or excluded "Other". `ExtFig6f_boxplots_cell_distance.R` does not load dplyr or ggplot2 and does not define `output_folder`.

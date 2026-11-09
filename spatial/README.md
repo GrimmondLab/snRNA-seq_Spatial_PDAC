@@ -28,7 +28,7 @@ adata.obsm["spatial"] = adata.obs[["x_centroid", "y_centroid"]].copy().to_numpy(
 | Stage | Analysis | Starts from |
 |---|---|---|
 | 1 | Sample processing, cell annotation by gene scoring, neighbourhood enrichment | GEO files, with PCA results or retained cells read from the 16 processed `.h5ad` files |
-| 2 | Niche analysis: clustering cells by neighbourhood composition, using the Stage 1 gene-scoring labels | The 16 processed `.h5ad` files |
+| 2 | Niche analysis across all 16 samples together: K-means (K = 15) of cells by the composition of their neighbours within 50 µm, using the Stage 1 labels (`cell_class_threshold`). See `stage2/README.md` | The 16 final Stage 1 objects |
 | 3 | Focused analysis of specific regions, such as TLS and Tuft-containing regions | To be confirmed |
 
 The workflow was rerun with the archived PCA results or retained cells because the environment has changed since the original objects were made. Most analyses do not use PCA or clustering; some filter cells by cluster.
@@ -88,4 +88,4 @@ numpy (1.24.4) and tifffile (2023.8.12) were listed correctly. typing_extensions
 - The run order, and which notebook's output feeds which
 - Where the 16 processed `.h5ad` files are deposited
 - Which notebooks produce which manuscript figure panels
-- Whether any step needs a GPU (the environment includes torch and scvi-tools)
+- Whether any Stage 3 step needs a GPU (Stages 1 and 2 do not)
