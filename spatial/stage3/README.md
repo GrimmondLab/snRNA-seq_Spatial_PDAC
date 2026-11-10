@@ -1,12 +1,11 @@
-# Stage 3: malignant cells, TILs and Tuft cells
+# Stage 3: malignant cells, TILs, Tuft cells and TLS
 
-Three notebooks, all following the original analysis exactly:
+Five notebooks, all following the original analysis exactly:
 
 - `stage3_malignant_TIL.ipynb`: malignant cells near and far from TILs (sections below up to Notes).
 - `stage3_TIL_regions.ipynb`: the TIL regions themselves (see [TIL regions](#til-regions)).
 - `stage3_tuft.ipynb`: Tuft cells across all samples, and three re-analysed Tuft regions (see [Tuft cells](#tuft-cells)).
-
-The TLS analysis is still to be added.
+- `stage3_TLS_regions.ipynb` and `stage3_TLS_figures.ipynb`: tertiary lymphoid structures (TLS) in PDAC and TNBC, and a lymph node reference (see [TLS](#tls)).
 
 `stage3_malignant_TIL.ipynb` compares malignant cells next to a TIL-rich area (`wTIL`) with malignant cells away from it (`noTIL`), in three 480-gene samples: MH065_480, MH106_480 and MH107_480. It starts from the final Stage 1 objects.
 
@@ -69,7 +68,7 @@ An earlier DE analysis of MH106_314 is not part of the final analysis and has be
    | MH106_314 | 1500–4500, 3000–5500 | 15 | 0.70 |
 
 2. **QC and normalisation within the region:** cells below the minimum counts and genes in fewer than 5 cells are removed, then counts are normalised and log-transformed.
-3. **Labels within the region:** each cell gets its highest-scoring label from a region-specific set of gene sets, or "Unclassified" below the threshold. These region-level labels are stored as `TIL_cell_class_threshold`, to keep them apart from the Stage 1 `cell_class_threshold`, and are used only in this notebook.
+3. **Labels within the region:** each cell gets its highest-scoring label from a region-specific set of gene sets, or "Unclassified" below the threshold. These region-level labels are stored as `TIL_cell_class_threshold`, to keep them apart from the Stage 1 `cell_class_threshold`, and are used only in this notebook. The label called `Stromal_CCL19` in the original notebooks is called `TRCs`, as in the TLS notebooks; the check maps the original name before comparing.
 4. **TIL composition:** the share of each label in each region, for labels found in at least 3 of the 4 regions.
 5. **Distance to T cells:** for each malignant-cell region from `stage3_malignant_TIL.ipynb`, the median distance from each malignant cell to its nearest T cell (CD4, CD4 Tfh, CD4 Treg, CD8 or CD8 TRM). Distances are in µm. Only T cells inside the cropped TIL region are counted, so the `noTIL` distances (1,440–2,392 µm) are in effect distances to the TIL region.
 
@@ -143,9 +142,70 @@ PCA, UMAP and Leiden clustering are not run. The one UMAP figure (Extended Data 
 - **Plot title:** the neighbour composition plot was titled "Neighborhood composition of Malignant cells ... (Top 6 + Other)" in the original, though it shows Tuft cells and the top 15 labels. It is now titled "Neighborhood composition of Tuft cells across samples (top neighbours)". The data plotted are unchanged.
 - **Hash seed:** `PYTHONHASHSEED` is set inside the notebook, which has no effect on a kernel that is already running. The labels still match exactly.
 
+## TLS
+
+`stage3_TLS_regions.ipynb` crops 13 regions from the raw Xenium output, labels the cells in each and computes neighbourhood enrichment. `stage3_TLS_figures.ipynb` makes the figures from those 13 objects.
+
+| Region | Sample | Region (x, y, µm) | Minimum counts | Score quantile |
+|---|---|---|---|---|
+| TLS_107_314 | MH107_314 | 7000–8500, 1000–4400 | 15 | 0.65 |
+| TLS_104_314 | MH104_314 | 2500–4400, 700–2000 | 12 | 0.75 |
+| TLS_065_314 | MH065_314 | 2500–4000, 3200–4200 | 20 | 0.80 |
+| TLS_096_480_n2 | MH096_480 | 600–2500, 3170–4255 | 10 | 0.80 |
+| TLS_096_480_n1 | MH096_480 | 3500–5100, 1700–3500 | 15 | 0.75 |
+| TLS_097_480_n3 | MH097_480 | 4400–6500, 1700–3500 | 15 | 0.75 |
+| TLS_097_480_n2 | MH097_480 | 4000–6500, 300–1600 | 15 | 0.75 |
+| TLS_097_480_n1 | MH097_480 | 880–2800, 50–1900 | 10 | 0.75 |
+| SLS_ref (lymph node) | MH104_480 | 7000–8700, 190–1900 | 20 | 0.70 |
+| TNBC_1 to TNBC_4 | Four TNBC sections (GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886)) | See the notebook | 10–15 | 0.70–0.75 |
+
+1. **QC and normalisation within the region:** as for the TIL and Tuft regions. A scaled layer is kept for the matrix plots.
+2. **Labels within the region:** the highest-scoring label from a region-specific set of gene sets, or "Unclassified" below the threshold, stored as `TLS_cell_class_threshold`. In SLS_ref, "Unclassified" cells are labelled "B cells", as in the original object.
+3. **Neighbourhood enrichment:** squidpy, on the 6 nearest neighbours (50 µm radius for SLS_ref), with a fixed seed per region.
+
+PCA, UMAP, Leiden clustering and Moran's I are not run.
+
+**Changes from the original notebooks:**
+
+- **TRCs:** the label `Stromal_CCL19` is renamed `TRCs`, to match the rest of the analysis. The gene sets and cells are unchanged. The check maps the original name to `TRCs` before comparing, and compares the z-scores by label name, because `TRCs` sorts in a different place.
+- **TLS_097_480_n2 FDCs gene set:** the original labels were made with an earlier FDCs set, `VCAM1, FDCSP, CR1, CR2`, before the cell was edited without relabelling. The earlier set is used: it reproduces 100% of the labels, against 98.44% for the edited set.
+- **Misspelt genes removed:** `RSG5`, `CITTA` and `IFR8`. They are not in the panels, so the scores don't change.
+
+**Reproducibility.** Compared with the original region objects:
+
+| Check | Result |
+|---|---|
+| Cells per region | Identical in all 13 regions |
+| Labels (`TLS_cell_class_threshold`) | 100% of cells identical in all 13 regions |
+| Neighbourhood enrichment z-scores | Largest difference 0 in all 13 regions |
+
+These results come from the run before the `TRCs` rename. The rename changes only the name.
+
+**Saved outputs:** both TLS notebooks were run before the rename and won't be rerun. The text outputs have been changed to `TRCs`. The saved plot images still show `Stromal_CCL19`, which is the same label; each notebook says so at the top.
+
+**Changes in `stage3_TLS_figures.ipynb`:** the original plotting notebook used some objects without defining them. The notebook defines them, and marks the ones that had to be reconstructed as *assumed*:
+
+- `color_map`, the colours of the PDAC composition and B cell neighbour plots
+- the cell subsets `TLS_96_n2_subset`, `TLS_97_n2_subset` and `TNBC1`, taken to have the same labels as the other subsets. They are used in Fig. 6G (TNBC_1) and in the PDAC violin plots.
+
+The manuscript shows one region of each kind; the notebook makes the same plots for the other regions too, to show the same pattern across samples.
+
+| Figure | File | Contents |
+|---|---|---|
+| Fig. 6B | `B_neighbours_PDAC.pdf` | Neighbour composition around B cells within 50 µm, in the PDAC TLS and the lymph node |
+| Fig. 6F | `Nhood_enrichment_PDAC.pdf` | Top neighbours of FDCs, FRCs, TRCs, migratory DCs, TAMs_C1QC and CAFs_NRT across the PDAC TLS |
+| Fig. 6G | `stacked_violin_Vln_TNBC4_CCL19_CCR7.pdf`, `stacked_violin_Vln_TNBC1_CCL19_CCR7.pdf` | CCL19 and CCR7 by label in TNBC_4 and TNBC_1 |
+| Extended Data Fig. 9D | `B_neighbours_TNBC.pdf` | Neighbour composition around B cells in the TNBC TLS |
+| Extended Data Fig. 9E | `TNBC4_TLS_PLA2G2A_IGF1.pdf`, `TNBC_stromal.pdf` | TNBC_4 labels in space with PLA2G2A and IGF1, and B cells, FDCs, FRCs and TRCs only. Saving was added after the run, so these are written on the next run |
+| Extended Data Fig. 9F | `Schwann_counts.pdf` | Schwann cells per PDAC TLS |
+| Extended Data Fig. 9I | `Nhood_enrichment_TNBC.pdf` | Top neighbours across the TNBC TLS |
+| Not used | `TLS_composition_all.pdf` | Composition of all 13 regions |
+
+Saved figures with no panel noted in the notebook: `TLS_composition_PDAC.pdf`, `B_neighbours_PDAC_boxplot.pdf`, `Moran_#2.pdf` to `Moran_#5.pdf`, `matrixplot_SLS_subset.pdf`, the PDAC and lymph node CCL19–CCR7 and CXCL12–CXCR4 violins (`stacked_violin_Vln_96n2_*`, `_96n1_*`, `_97n2_*`, `stacked_violin_vlnplot_SLS_*`) and `dotplot_97_n2_dotplot.pdf` (cell identity in TLS_097_480_n2). The TCF7, LEF1 and CCR7 plot is saved as `Moran_#5.pdf`; in the original it was also saved as `Moran_#4.pdf`, overwriting the CXCL12, MS4A1 and VWF plot.
+
 ## Running the notebooks
 
-Set the paths in each notebook's parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`). Run `stage3_malignant_TIL.ipynb` before `stage3_TIL_regions.ipynb`, which reads its malignant-cell regions. `stage3_tuft.ipynb` doesn't depend on the other two. `stage3_malignant_TIL.ipynb`:
+Set the paths in each notebook's parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`). Run `stage3_malignant_TIL.ipynb` before `stage3_TIL_regions.ipynb`, which reads its malignant-cell regions. `stage3_tuft.ipynb` doesn't depend on the others. Run `stage3_TLS_regions.ipynb` before `stage3_TLS_figures.ipynb`. `stage3_malignant_TIL.ipynb`:
 
 | Setting | Path |
 |---|---|
@@ -171,6 +231,17 @@ Set the paths in each notebook's parameters cell, then run all cells with the `x
 | `ARCHIVED_DIR` | The original region objects. Required: the MH096_480 clusters and the MH099_480 UMAP are read from them |
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
 
+`stage3_TLS_regions.ipynb`:
+
+| Setting | Path |
+|---|---|
+| `RAW_DATA_DIR` | Raw Xenium output of the PDAC samples, one subfolder per sample |
+| `TNBC_RAW_DIR` | Raw Xenium output of the four TNBC sections (GSE281886), in subfolders `TNBC_1` to `TNBC_4` |
+| `OUTPUT_DIR` | Where the 13 region objects and tables go |
+| `ARCHIVED_DIR` | The original region objects, used only for the check. Set a path to `None` to skip it |
+
+`stage3_TLS_figures.ipynb`: `REGION_DIR`, the output folder of `stage3_TLS_regions.ipynb`. Figures go to `REGION_DIR/figures`.
+
 The paths in the notebooks were replaced with these placeholders after they were run.
 
 ## Outputs
@@ -186,3 +257,5 @@ The paths in the notebooks were replaced with these placeholders after they were
 `stage3_TIL_regions.ipynb`: `<sample>_TIL_region.h5ad` (each cropped region with `TIL_cell_class_threshold`), `TIL_cell_counts.tsv`, `TIL_composition.tsv`, `malignant_to_TIL_distance.tsv`, `stage3_TIL_check.tsv` and `figures/`.
 
 `stage3_tuft.ipynb`: `Tuft_counts.tsv`, `Tuft_min_distance_profiling.csv.gz` (distance from each Tuft cell to the nearest cell of each label), `Persample_median_distant_Tuft_neighbours.tsv`, `EnrichmentAnalysisTuft.tsv`, `<sample>_Tuft_region.h5ad` (each cropped region with `predicted_cell_type_threshold`), `stage3_tuft_check.tsv` and `figures/`.
+
+`stage3_TLS_regions.ipynb`: `<region>.h5ad` for each of the 13 regions (with `TLS_cell_class_threshold` and the neighbourhood enrichment), `TLS_label_counts.tsv` and `stage3_TLS_check.tsv`. `stage3_TLS_figures.ipynb`: the figures and their tables in `figures/`.

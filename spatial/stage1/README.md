@@ -197,7 +197,7 @@ Set the four folders at the top of the parameters cell, then run all cells with 
 | Setting | Folder |
 |---|---|
 | `RAW_DATA_DIR` | Raw Xenium output, one subfolder per sample (`<sample>/cell_feature_matrix.h5` and `<sample>/cells.csv`) |
-| `SAVED_OBJECT_DIR` | The saved objects (`<sample>.h5ad`): the archived inputs and the objects to check against. Only read |
+| `SAVED_OBJECT_DIR` | The saved objects (`<sample>.h5ad`): the archived inputs and the objects to check against. Only read. They are in `Xenium_480.tar` and `Xenium_314.tar` on Zenodo ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) |
 | `LABEL_TABLE_DIR` | Per-cell label tables (`<sample>.csv`). Optional: if a sample's table is missing, that comparison is skipped |
 | `OUTPUT_ROOT` | Where results go, one subfolder per sample |
 

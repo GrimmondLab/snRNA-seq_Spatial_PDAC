@@ -77,12 +77,20 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Stage 3: Tuft figures mapped to manuscript panels in `spatial/stage3/README.md`; three are marked not used.
 - [ ] Stage 3: restart and run all of `stage3_tuft.ipynb`. The neighbour composition plot title was corrected after the run, so the saved figure still has the old title (data unchanged).
 - [ ] Deposit the three original Tuft region objects (MH096_480, MH099_480, MH106_480). `stage3_tuft.ipynb` needs the MH096_480 and MH099_480 ones to run.
-- [ ] Stage 3: add the TLS notebook and any helper `.py` files under `spatial/stage3/`.
+- [ ] Deposit the files for the Stage 1 and Stage 3 checks: the 16 per-cell label tables, the three original malignant-cell subsets (`*_malignant_SUBSET_wTILs_DE_Jan26.h5ad`) and the four original TIL region objects. The full list is in `spatial/README.md` ("Deposits"); fill in its DOI_TBD entries.
+- [ ] When GSE282154 is public (30 November 2026), check it has `cell_feature_matrix.h5` and `cells.csv` for all 16 samples.
+- [x] Stage 3: add `stage3_TLS_regions.ipynb` and `stage3_TLS_figures.ipynb`. All 13 regions match the original objects (same cells, 100% same labels, z-scores identical).
+- [x] Stage 3: TLS notebooks won't be rerun. Text outputs changed to `TRCs`; a note at the top of each says the saved plot images still show `Stromal_CCL19`.
+- [ ] Stage 3: give the manuscript panels, if any, for the TLS figures listed as unlabelled in `spatial/stage3/README.md`. Extended Data Fig. 9E is now saved, and the second `Moran_#4.pdf` is now `Moran_#5.pdf`.
+- [x] Stage 3: the *assumed* `color_map` and subsets in `stage3_TLS_figures.ipynb` are accepted: the extra regions show the same pattern as the published ones.
+- [x] Stage 3: `Stromal_CCL19` renamed `TRCs` in `stage3_TIL_regions.ipynb` too; the check maps the original name. Its saved outputs come from before the rename (the restart-and-run-all item above covers it).
+- [x] TNBC raw Xenium output: GEO GSE281886. Check it has `cell_feature_matrix.h5` and `cells.csv` for all four sections once public.
+- [ ] Deposit the 13 original TLS region objects (check only).
 - [x] Commit the env records under `spatial/environment/`: `requirements_as_used.txt`, `packages_with_locations.tsv`, `conda_export.yml`, `conda_explicit.txt`, `conda_revisions.txt`, `runtime_info.json`, `system.txt` and `kernels.txt`.
 - [x] Decide which env record is correct: `spatial/environment/requirements_as_used.txt`, the versions actually loaded (scanpy 1.9.5 and squidpy 1.3.1, from `~/.local`).
 - [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
-- [ ] When the Stage 3 notebooks arrive, search them and their helper files for s3fs, aiobotocore, botocore and `s3://`. The Stage 1 and Stage 2 notebooks' code has none (Stage 2 has no helper files), and the analyst does not recall using Amazon S3. If nothing needs them, leave these three out: they probably conflict with the imported fsspec 2023.10.0 and urllib3 2.1.0, so the env may not solve with them.
-- [ ] Deposit the 16 processed `.h5ad` files (they also hold the PCA results that Stage 1 reads), and record their DOI.
+- [x] Searched the code of all spatial notebooks for s3fs, aiobotocore, botocore and `s3://`: none uses them (and there are no helper `.py` files). Leave these three out of `envs/spatial.yml`.
+- [ ] Deposit the 16 processed `.h5ad` files on 10.5281/zenodo.23933322: `Xenium_480.tar` uploaded, `Xenium_314.tar` uploading. Then list both archives and check the file names inside match what the Stage 1 notebooks read from `SAVED_OBJECT_DIR`.
 - [ ] Write `envs/spatial.yml`, using conda-forge/bioconda only (no `defaults`):
   - pin the analysis packages (scanpy, squidpy, anndata, …) to `requirements_as_used.txt` with the corrections in `spatial/README.md`, leaving out muon and mofapy2 (not used);
   - leave low-level libraries unpinned;
