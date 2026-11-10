@@ -1,6 +1,6 @@
 # Spatial analysis (Python)
 
-Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the Stage 1 notebooks are in `stage1/` (see its README), and Stages 2 and 3 have not been added yet. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
+Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the notebooks are in `stage1/`, `stage2/` and `stage3/`, each with its own README. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
 Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. Stage 1 has its own folder but not the rest yet: its notebooks are run one at a time, with the folders set in each parameters cell. The Python env will be added to `../envs/` as a new conda env in the same Docker image, with a `run.sh` entry per stage.
 
@@ -23,13 +23,39 @@ adata.obs = df.copy()
 adata.obsm["spatial"] = adata.obs[["x_centroid", "y_centroid"]].copy().to_numpy()
 ```
 
+## Deposits
+
+Besides the GEO files, the notebooks read the files below. Only the first table is needed to run them. The second is used only for the checks against the original analysis: without it, the notebooks still run, but the exact match can't be confirmed.
+
+**Needed to run the notebooks:**
+
+| Files | Used by | Where |
+|---|---|---|
+| `cell_feature_matrix.h5` and `cells.csv`, for each of the 16 samples | Stage 1; Stage 3 TIL and Tuft regions | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
+| The 16 processed `.h5ad` files, in two archives: `Xenium_480.tar` and `Xenium_314.tar` | Stage 1: saved PCA, UMAP and kept cells. Extract both into `SAVED_OBJECT_DIR` | Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| Raw Xenium output (`cell_feature_matrix.h5` and `cells.csv`) of the four TNBC sections | `stage3/stage3_TLS_regions.ipynb`: the TNBC TLS | GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886) |
+| The original MH096_480 and MH099_480 Tuft region objects (`MH096_ADM_cropped_setseed.h5ad`, `_MH099_ADM_cropped_highmag_ss_Dec25.h5ad`) | `stage3/stage3_tuft.ipynb`: the MH096_480 clusters (`anno`) and the MH099_480 UMAP | DOI_TBD |
+
+Stages 2 and 3 otherwise start from the Stage 1 outputs. Stage 1 reproduces exactly, so these don't need to be deposited.
+
+**Needed only for the checks:**
+
+| Files | Check | Where |
+|---|---|---|
+| The 16 per-cell label tables (`<sample>.csv`) | Stage 1 labels (`LABEL_TABLE_DIR`) | DOI_TBD |
+| The original niche labels (`stage2_niche_labels*.csv.gz`) | Stage 2 niches | DOI_TBD |
+| The three original malignant-cell subsets (`MH065_malignant_SUBSET_wTILs_DE_Jan26.h5ad`, and the same for MH106 and MH107) | `stage3/stage3_malignant_TIL.ipynb` | DOI_TBD |
+| The four original TIL region objects (MH065_480, MH107_480, MH106_480, MH106_314) | `stage3/stage3_TIL_regions.ipynb` | DOI_TBD |
+| The original MH106_480 Tuft region object (`MH106_ADM_PDAC_highmag_ss.h5ad`) | `stage3/stage3_tuft.ipynb` (MH096_480 and MH099_480 are checked with the objects above) | DOI_TBD |
+| The 13 original TLS region objects (8 PDAC TLS, the lymph node reference and 4 TNBC) | `stage3/stage3_TLS_regions.ipynb` | DOI_TBD |
+
 ## Stages
 
 | Stage | Analysis | Starts from | Status |
 |---|---|---|---|
 | 1 | Sample processing, cell annotation by gene scoring, neighbourhood enrichment | GEO files, with PCA results or retained cells read from the 16 processed `.h5ad` files | Notebooks in `stage1/` |
 | 2 | Niche analysis across all 16 samples together: K-means (K = 15) of cells by the composition of their neighbours within 50 µm, using the Stage 1 labels (`cell_class_threshold`). See `stage2/README.md` | The 16 final Stage 1 objects | Notebook in `stage2/` |
-| 3 | Malignant cells next to and away from TIL-rich areas in three 480-gene samples (DE, pathway scores, paired t-tests). See `stage3/README.md`. More focused analyses, such as the lymphoid regions and Tuft-containing regions, to be added | The final Stage 1 objects | In progress |
+| 3 | Malignant cells next to and away from TIL-rich areas, the TIL regions themselves, Tuft cells, and TLS in PDAC and TNBC. See `stage3/README.md` | The final Stage 1 objects; the TIL, Tuft and TLS regions are cropped from the raw Xenium output | Notebooks in `stage3/` |
 
 The workflow was rerun with the archived PCA results or retained cells because the environment has changed since the original objects were made. Most analyses do not use PCA or clustering; some filter cells by cluster.
 
@@ -82,8 +108,4 @@ numpy (1.24.4) and tifffile (2023.8.12) were listed correctly. typing_extensions
 
 ## Still needed
 
-- The Stage 3 notebooks (`.ipynb`) and any helper `.py` files they import (Stage 2 is in `stage2/`)
-- The run order within Stage 3, and which notebook's output feeds which
-- Where the 16 processed `.h5ad` files are deposited
-- Which notebooks produce which manuscript figure panels
-- Whether any Stage 3 step needs a GPU (Stages 1 and 2 do not)
+- The DOIs of the deposits above

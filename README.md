@@ -49,7 +49,9 @@ All later stages therefore start from the **original post-QC object**, deposited
 | snRNA-seq CellBender output (`<sample>_cellbender_filtered.h5` and 10x matrix files) | GEO [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918) |
 | Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`), annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Other analysis objects that later stages start from (Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
-| Spatial (Xenium) data | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
+| Spatial (Xenium) data, PDAC | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
+| Spatial (Xenium) data, TNBC (TLS comparison in Stage 3) | GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886) |
+| Spatial (Xenium) processed objects, 16 PDAC samples (`Xenium_480.tar`, `Xenium_314.tar`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected.csv`) | Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) |
 
 ## Build
