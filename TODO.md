@@ -69,8 +69,15 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Stage 3: add `spatial/stage3/stage3_malignant_TIL.ipynb` (malignant cells near and far from TILs, three 480-gene samples; reproduces the original exactly). MH106_314's earlier DE analysis is not part of the final analysis and was removed.
 - [ ] Stage 3: restart and run all of `stage3_malignant_TIL.ipynb`. Its saved outputs come from a run that still included MH106_314, and two cells ran out of order.
 - [x] Stage 3: manuscript panels added to `spatial/stage3/README.md` (Fig. 5H, 5I; Extended Data Fig. 7F, 7G).
-- [ ] Stage 3: add the lymphoid crops notebook. MH106_314 stays here: it is one of the four regions in the TIL composition figure.
-- [ ] Add any remaining Stage 3 notebooks and helper `.py` files under `spatial/stage3/`.
+- [x] Stage 3: add `spatial/stage3/stage3_TIL_regions.ipynb` (four TIL regions, including MH106_314). Cells, labels and distances to T cells match the original exactly.
+- [ ] Stage 3: give the manuscript panel for the MH107_480 immune marker dot plot (`dotplot_Marker_Immunregulatory.pdf`).
+- [ ] Stage 3: restart and run all of `stage3_TIL_regions.ipynb`. The region-level labels were renamed `TIL_cell_class_threshold` after the run, so the saved outputs come from the code before the rename (results unchanged).
+- [ ] Stage 3: compare the figures with the published versions by eye.
+- [x] Stage 3: add `spatial/stage3/stage3_tuft.ipynb`. Tuft counts match, and the three re-analysed regions match the original objects (same cells, 100% same labels).
+- [x] Stage 3: Tuft figures mapped to manuscript panels in `spatial/stage3/README.md`; three are marked not used.
+- [ ] Stage 3: restart and run all of `stage3_tuft.ipynb`. The neighbour composition plot title was corrected after the run, so the saved figure still has the old title (data unchanged).
+- [ ] Deposit the three original Tuft region objects (MH096_480, MH099_480, MH106_480). `stage3_tuft.ipynb` needs the MH096_480 and MH099_480 ones to run.
+- [ ] Stage 3: add the TLS notebook and any helper `.py` files under `spatial/stage3/`.
 - [x] Commit the env records under `spatial/environment/`: `requirements_as_used.txt`, `packages_with_locations.tsv`, `conda_export.yml`, `conda_explicit.txt`, `conda_revisions.txt`, `runtime_info.json`, `system.txt` and `kernels.txt`.
 - [x] Decide which env record is correct: `spatial/environment/requirements_as_used.txt`, the versions actually loaded (scanpy 1.9.5 and squidpy 1.3.1, from `~/.local`).
 - [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
