@@ -1,14 +1,22 @@
-# PDAC snRNA-seq and spatial analysis: reproducible environment
+# Single-cell spatial profiling identifies recurrent spatial niches in pancreatic cancer microenvironment
 
-Code and environment definitions for the analyses in the manuscript. The repository has three parts:
+Analysis code, environments and reproducibility checks for the manuscript.
+
+This repository holds:
+
+- **Code for every analysis in the manuscript:** snRNA-seq, inferCNV, spatial transcriptomics (Xenium) and spatial proteomics (MIBI).
+- **A container to rerun the snRNA-seq and Xenium analyses:** one Docker image (also as an Apptainer `.sif`) with pinned conda environments.
+- **Checks against the original analysis:** each stage README compares the rerun with the original objects and explains any difference.
+- **A map from figures to code:** the stage READMEs list which notebook or Rmd makes each manuscript panel.
+- **Records of steps that are not rerun here:** Cell Ranger and CellBender (snRNA-seq Stage 0), the MIBI figure code, and saved values used where a step doesn't reproduce exactly (for example the Xenium PCA and UMAP).
 
 | Folder | Language | Contents |
 |---|---|---|
-| `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5 |
-| `spatial/` | Python | Spatial (Xenium) analysis, being added (see `spatial/README.md`) |
+| `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5, and the supplementary inferCNV analysis |
+| `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
 | `spatial_proteomics/` | R | Record of the code for the MIBI figures; no Docker container (see `spatial_proteomics/README.md`) |
 
-The snRNA-seq and Xenium analyses run from **one Docker image** that holds one conda env per group of stages. The envs are built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see below).
+The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env is not in the image yet: its notebooks currently run in the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
 ## Environments
 
