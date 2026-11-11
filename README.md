@@ -1,6 +1,6 @@
-# Single-cell spatial profiling identifies recurrent spatial niches in pancreatic cancer microenvironment
+# Analysis code, environments and reproducibility checks
 
-Analysis code, environments and reproducibility checks for the manuscript.
+For the manuscript "Single-cell spatial profiling identifies recurrent spatial niches in pancreatic cancer microenvironment" (link to be added on publication).
 
 This repository holds:
 
