@@ -24,6 +24,7 @@ As a separate check, PCA and clustering were recalculated in the nine samples wi
 | Cells with the same `cell_class_threshold` label | 96.58–100.00% |
 | Labels present | Same labels in both results |
 | Nhood z-score correlation | 0.9990–0.9999 |
+
 Recomputed Leiden clustering showed moderate-to-high agreement with the original cluster assignments (ARI = 0.60–0.83), reflecting sensitivity to small numerical differences in PCA. However, cell-type annotation was primarily based on gene-set scoring using curated markers from our custom-designed PDAC-specific panels. 
 
 Where cells were removed, the test removes a recalculated cluster if at least half its cells were originally removed, so it tests stability rather than being an independent reanalysis. Results for each sample are under [Robustness](#robustness).
