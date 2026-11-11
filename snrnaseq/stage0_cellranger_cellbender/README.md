@@ -11,7 +11,7 @@ Single-nucleus RNA sequencing (snRNA-seq) samples were processed in four batches
 | Step | Software | Settings |
 |---|---|---|
 | Alignment and counting | Cell Ranger 6.1.1, `cellranger count` | Reference `refdata-gex-GRCh38-2020-A` (10x Genomics), `--include-introns` (single-nucleus data) |
-| Ambient RNA removal | CellBender **version TBD**, `cellbender remove-background`, run on CPU | `--expected-cells` and `--total-droplets-included` set per sample (table below); all other settings at that version's defaults |
+| Ambient RNA removal | CellBender 0.2.0, `cellbender remove-background`, run on CPU | `--expected-cells` and `--total-droplets-included` set per sample (table below); all other settings at that version's defaults |
 
 ## Files
 

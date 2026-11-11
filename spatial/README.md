@@ -2,7 +2,16 @@
 
 Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the notebooks are in `stage1/`, `stage2/` and `stage3/`, each with its own README. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
-Each stage will follow the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, a master script that runs the notebooks in order (with papermill), and a `config.yml` with container paths. Stage 1 has its own folder but not the rest yet: its notebooks are run one at a time, with the folders set in each parameters cell. The Python env will be added to `../envs/` as a new conda env in the same Docker image, with a `run.sh` entry per stage.
+Each stage follows the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, with a README listing inputs, figures and the check against the original. Still to add: a master script per stage that runs the notebooks in order with papermill, a `config.yml` with container paths, one conda env for all spatial stages in `../envs/` (in the same Docker image), and a `run.sh` entry per stage.
+
+**Running with papermill.** In every notebook, the folders and input files are in one cell tagged `parameters`, holding only plain path settings. The paths built from them (per-sample folders, `FIGURE_DIR` and so on) are in the next cell, so values papermill injects carry through. For example:
+
+```bash
+papermill stage3_malignant_TIL.ipynb out.ipynb -k xenium.squidpy \
+  -p STAGE1_DIR /output/spatial/stage1 -p OUTPUT_DIR /output/spatial/stage3/malignant_TIL -p ARCHIVED_DIR None
+```
+
+`stage3_tuft.ipynb` reads `TUFT_INPUT_DIR = "tuft_inputs"`, relative to `stage3/`: run it with `--cwd` set to `stage3/`, or pass an absolute path.
 
 ## Input data
 
@@ -23,6 +32,38 @@ adata.obs = df.copy()
 adata.obsm["spatial"] = adata.obs[["x_centroid", "y_centroid"]].copy().to_numpy()
 ```
 
+**Folder layout.** The notebooks expect the two files of each sample in a folder named after the sample, under `RAW_DATA_DIR` (for example `RAW_DATA_DIR/MH107_314/cell_feature_matrix.h5`). The table maps each GEO sample to its folder. The sample names use `MH`; some records use `MHP` for the same patient (e.g. MHP099).
+
+| GEO sample | GEO title | Xenium slide and region | Patient | Folder (sample name in the notebooks) |
+|---|---|---|---|---|
+| GSM8636953 | PDAC_untreated_Xenium_1 | 0010614_Region_1 | MH065 | `MH065_314` |
+| GSM8636954 | PDAC_untreated_Xenium_2 | 0010614_Region_2 | MH099 | `MH099_314` |
+| GSM8636955 | PDAC_untreated_Xenium_3 | 0010614_Region_3 | MH097 | `MH097_314` |
+| GSM8636956 | PDAC_untreated_Xenium_4 | 0010614_Region_4 | MH096 | `MH096_314` |
+| GSM8636957 | PDAC_untreated_Xenium_5 | 0010617_Region_1 | MH104 | `MH104_314` |
+| GSM8636958 | PDAC_untreated_Xenium_6 | 0010617_Region_2 | MH107 | `MH107_314` |
+| GSM8636959 | PDAC_untreated_Xenium_7 | 0010617_Region_3 | MH106 | `MH106_314` |
+| GSM8636960 | PDAC_untreated_Xenium_8 | 0010617_Region_4 | MH074 | `MH074_314` |
+| GSM9285470 | PDAC_untreated_Xenium_480_1 | 0027518 | MH074 | `MH074_480` |
+| GSM9285471 | PDAC_untreated_Xenium_480_2 | 0027518 | MH104 | `MH104_480` |
+| GSM9285472 | PDAC_untreated_Xenium_480_3 | 0027518 | MH106 | `MH106_480` |
+| GSM9285473 | PDAC_untreated_Xenium_480_4 | 0027518 | MH107 | `MH107_480` |
+| GSM9285474 | PDAC_untreated_Xenium_480_5 | 0027721 | MH065 | `MH065_480` |
+| GSM9285475 | PDAC_untreated_Xenium_480_6 | 0027721 | MH096 | `MH096_480` |
+| GSM9285476 | PDAC_untreated_Xenium_480_7 | 0027721 | MH097 | `MH097_480` |
+| GSM9285477 | PDAC_untreated_Xenium_480_8 | 0027721 | MH099 | `MH099_480` |
+
+For the 480-gene panel, the slide is the Xenium slide in the raw output folder name (`output-XETG00115__<slide>__<slide>-<patient>__20250117__002027`).
+
+The four TNBC sections (GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886)) go under `TNBC_RAW_DIR`. The notebook folder numbers come from the original analysis and differ from the GEO numbers:
+
+| GEO sample | GEO title | Xenium slide and section | Subject ID | Folder (name in the notebooks) |
+|---|---|---|---|---|
+| GSM8631780 | Breast_TNBC_untreated_Xenium_1 | 0010466, bottom | 3946 | `TNBC_2` |
+| GSM8631781 | Breast_TNBC_untreated_Xenium_2 | 0010544, bottom | 3962 | `TNBC_4` |
+| GSM8631782 | Breast_TNBC_untreated_Xenium_3 | 0010544, top | 4497-1 | `TNBC_3` |
+| GSM8631783 | Breast_TNBC_untreated_Xenium_4 | 0010466, top | 4754 | `TNBC_1` |
+
 ## Deposits
 
 Besides the GEO files, the notebooks need only the files below.
@@ -31,7 +72,7 @@ Besides the GEO files, the notebooks need only the files below.
 |---|---|---|
 | `cell_feature_matrix.h5` and `cells.csv`, for each of the 16 samples | Stage 1; Stage 3 TIL, Tuft and TLS regions | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
 | Raw Xenium output (`cell_feature_matrix.h5` and `cells.csv`) of the four TNBC sections | `stage3/stage3_TLS_regions.ipynb`: the TNBC TLS | GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886) |
-| The 16 processed `.h5ad` files, in two archives: `Xenium_480.tar` and `Xenium_314.tar` | Stage 1: saved PCA, UMAP and kept cells. Extract both into `SAVED_OBJECT_DIR` | Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| The 16 processed `.h5ad` files, in two archives: `Xenium_480.tar` and `Xenium_314.tar` | Stage 1: saved PCA, UMAP and kept cells. Extract both into `SAVED_OBJECT_DIR` and keep the file names: each Stage 1 notebook reads its file by the name in the archive | Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | `MH096_480_anno.csv.gz` and `MH099_480_umap.csv.gz` | `stage3/stage3_tuft.ipynb`: the saved MH096_480 clusters and MH099_480 UMAP | This repository, `stage3/tuft_inputs/` |
 
 Stages 2 and 3 otherwise start from the Stage 1 outputs, which reproduce exactly.

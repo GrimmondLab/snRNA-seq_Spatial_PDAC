@@ -80,6 +80,9 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Run `stage3_tuft.ipynb` once with the two tables, to test the code that reads them (it replaced reading the original objects).
 - [x] Original objects used only for the checks are not deposited; the check results are recorded in the READMEs and saved outputs.
 - [ ] When GSE282154 is public (30 November 2026), check it has `cell_feature_matrix.h5` and `cells.csv` for all 16 samples.
+- [x] Map the GEO samples to the notebook folders: table in `spatial/README.md` ("Folder layout").
+- [x] 480-gene GEO order confirmed: `_480_1` to `_8` are MH074, MH104, MH106, MH107 (slide 0027518), then MH065, MH096, MH097, MH099 (slide 0027721).
+- [x] TNBC GSM IDs added (GSM8631780–GSM8631783). The GEO order (Xenium_1 to 4 = subjects 3946, 3962, 4497-1, 4754) is taken from the order of the identifier table; the folders follow the original analysis (`TNBC_1` = 4754, `TNBC_2` = 3946, `TNBC_3` = 4497, `TNBC_4` = 3962, as in the original paths).
 - [x] Stage 3: add `stage3_TLS_regions.ipynb` and `stage3_TLS_figures.ipynb`. All 13 regions match the original objects (same cells, 100% same labels, z-scores identical).
 - [x] Stage 3: add `stage3_MH097_PanIN.ipynb` (Fig. 4H). Same 3,472 cells, regions and pathway scores as the original subset.
 - [ ] Stage 3 PanIN: give the panels, if any, for `MH097_PanIN_signalling.pdf` and `MH097_PanIN_signalling_2.pdf`, and add the one or two remaining plots. The notebook computes a UMAP but saves no UMAP figure.
@@ -92,11 +95,13 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Decide which env record is correct: `spatial/environment/requirements_as_used.txt`, the versions actually loaded (scanpy 1.9.5 and squidpy 1.3.1, from `~/.local`).
 - [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
 - [x] Searched the code of all spatial notebooks for s3fs, aiobotocore, botocore and `s3://`: none uses them (and there are no helper `.py` files). Leave these three out of `envs/spatial.yml`.
-- [ ] Deposit the 16 processed `.h5ad` files on 10.5281/zenodo.23933322: `Xenium_480.tar` uploaded, `Xenium_314.tar` uploading. Then list both archives and check the file names inside match what the Stage 1 notebooks read from `SAVED_OBJECT_DIR`.
+- [ ] Deposit the 16 processed `.h5ad` files on 10.5281/zenodo.23933322: `Xenium_480.tar` uploaded, `Xenium_314.tar` uploading. File names listed (flat, no subfolder) and written into each Stage 1 notebook's `SAVED_OBJECT` line.
 - [ ] Write `envs/spatial.yml`, using conda-forge/bioconda only (no `defaults`):
   - pin the analysis packages (scanpy, squidpy, anndata, …) to `requirements_as_used.txt` with the corrections in `spatial/README.md`, leaving out muon and mofapy2 (not used);
   - leave low-level libraries unpinned;
   - add pip-only packages under `pip:`.
+- [x] Spatial notebooks are papermill-ready: each has one cell tagged `parameters` with only the path settings; derived paths are in the next cell. Stage 1 output placeholder unified as `/path/to/stage1_output`.
+- [ ] Add papermill (and ipykernel, with a kernel named `xenium.squidpy` or pass `-k`) to the spatial env: they weren't needed in the original interactive runs.
 - [ ] Lock it with `conda-lock` (see README, "Updating an env"), and add it to the `Dockerfile`, `.dockerignore` (an allowlist) and a `spatial` entry in `run.sh` (papermill or `jupyter nbconvert --execute`).
 - [ ] Check whether any Stage 3 notebook needs a GPU (torch / scvi-tools are in the env). Stages 1 and 2 do not; Stage 2 runs in 64 GB.
 - [x] Stage 2: notebook added under `spatial/stage2/`. Niches match the original for 99.9994% of cells (about 18 of 2,930,241 differ); all 15 names match.
@@ -141,6 +146,7 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 ## 5. Before submission
 - [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.
 - [x] Annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) uploaded to 10.5281/zenodo.23933322. The DOI did not resolve on 2026-11-09 (doi.org returned 404); check the record is published.
+- [ ] After the snRNA-seq and Xenium record is published, check its DOIs. The repository cites 10.5281/zenodo.23933322 (30 places, 9 files), taken to be the concept DOI, which opens the latest version; the version DOI given for the record is 10.5281/zenodo.23933323. Neither resolved on 2026-11-11. Once published, check that 23933322 opens the record, and update the links if it doesn't. The MIBI links use that record's version DOI (10.5281/zenodo.23996821; concept DOI 23996820).
 - [ ] Deposit on Zenodo, and replace every remaining **DOI_TBD**: `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
 - [ ] Deposit the original inferCNV output for sample 2215 (`P2215.out`), the record for the 84 excluded cells, and fill in DOI_TBD in `snrnaseq/supplementary_infercnv/README.md`. Consider also `P2221.lv2anno.out` (Extended Data Fig. 4F).
 - [x] Extended Data Fig. 1B (sample 2992, PURPLE WGS) and 4F (patient 2221 by `Lv.2.Anno`) recorded in `snrnaseq/supplementary_infercnv/original/InferCNV_extended_data_figures.R`.
