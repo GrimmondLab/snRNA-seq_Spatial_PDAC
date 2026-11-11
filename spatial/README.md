@@ -25,29 +25,18 @@ adata.obsm["spatial"] = adata.obs[["x_centroid", "y_centroid"]].copy().to_numpy(
 
 ## Deposits
 
-Besides the GEO files, the notebooks read the files below. Only the first table is needed to run them. The second is used only for the checks against the original analysis: without it, the notebooks still run, but the exact match can't be confirmed.
-
-**Needed to run the notebooks:**
+Besides the GEO files, the notebooks need only the files below.
 
 | Files | Used by | Where |
 |---|---|---|
-| `cell_feature_matrix.h5` and `cells.csv`, for each of the 16 samples | Stage 1; Stage 3 TIL and Tuft regions | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
-| The 16 processed `.h5ad` files, in two archives: `Xenium_480.tar` and `Xenium_314.tar` | Stage 1: saved PCA, UMAP and kept cells. Extract both into `SAVED_OBJECT_DIR` | Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| `cell_feature_matrix.h5` and `cells.csv`, for each of the 16 samples | Stage 1; Stage 3 TIL, Tuft and TLS regions | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
 | Raw Xenium output (`cell_feature_matrix.h5` and `cells.csv`) of the four TNBC sections | `stage3/stage3_TLS_regions.ipynb`: the TNBC TLS | GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886) |
-| The original MH096_480 and MH099_480 Tuft region objects (`MH096_ADM_cropped_setseed.h5ad`, `_MH099_ADM_cropped_highmag_ss_Dec25.h5ad`) | `stage3/stage3_tuft.ipynb`: the MH096_480 clusters (`anno`) and the MH099_480 UMAP | DOI_TBD |
+| The 16 processed `.h5ad` files, in two archives: `Xenium_480.tar` and `Xenium_314.tar` | Stage 1: saved PCA, UMAP and kept cells. Extract both into `SAVED_OBJECT_DIR` | Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| `MH096_480_anno.csv.gz` and `MH099_480_umap.csv.gz` | `stage3/stage3_tuft.ipynb`: the saved MH096_480 clusters and MH099_480 UMAP | This repository, `stage3/tuft_inputs/` |
 
-Stages 2 and 3 otherwise start from the Stage 1 outputs. Stage 1 reproduces exactly, so these don't need to be deposited.
+Stages 2 and 3 otherwise start from the Stage 1 outputs, which reproduce exactly.
 
-**Needed only for the checks:**
-
-| Files | Check | Where |
-|---|---|---|
-| The 16 per-cell label tables (`<sample>.csv`) | Stage 1 labels (`LABEL_TABLE_DIR`) | DOI_TBD |
-| The original niche labels (`stage2_niche_labels*.csv.gz`) | Stage 2 niches | DOI_TBD |
-| The three original malignant-cell subsets (`MH065_malignant_SUBSET_wTILs_DE_Jan26.h5ad`, and the same for MH106 and MH107) | `stage3/stage3_malignant_TIL.ipynb` | DOI_TBD |
-| The four original TIL region objects (MH065_480, MH107_480, MH106_480, MH106_314) | `stage3/stage3_TIL_regions.ipynb` | DOI_TBD |
-| The original MH106_480 Tuft region object (`MH106_ADM_PDAC_highmag_ss.h5ad`) | `stage3/stage3_tuft.ipynb` (MH096_480 and MH099_480 are checked with the objects above) | DOI_TBD |
-| The 13 original TLS region objects (8 PDAC TLS, the lymph node reference and 4 TNBC) | `stage3/stage3_TLS_regions.ipynb` | DOI_TBD |
+**Original objects used for the checks are not deposited.** Each notebook ends with a check against the original objects (the Stage 1 label tables, the original combined niche object, and the original Stage 3 subset and region objects). These checks were run, and their results are recorded in the stage READMEs and the saved notebook outputs: all matched. Without the original objects, the checks are skipped and the notebooks still run.
 
 ## Stages
 
@@ -55,7 +44,7 @@ Stages 2 and 3 otherwise start from the Stage 1 outputs. Stage 1 reproduces exac
 |---|---|---|---|
 | 1 | Sample processing, cell annotation by gene scoring, neighbourhood enrichment | GEO files, with PCA results or retained cells read from the 16 processed `.h5ad` files | Notebooks in `stage1/` |
 | 2 | Niche analysis across all 16 samples together: K-means (K = 15) of cells by the composition of their neighbours within 50 µm, using the Stage 1 labels (`cell_class_threshold`). See `stage2/README.md` | The 16 final Stage 1 objects | Notebook in `stage2/` |
-| 3 | Malignant cells next to and away from TIL-rich areas, the TIL regions themselves, Tuft cells, and TLS in PDAC and TNBC. See `stage3/README.md` | The final Stage 1 objects; the TIL, Tuft and TLS regions are cropped from the raw Xenium output | Notebooks in `stage3/` |
+| 3 | Malignant cells next to and away from TIL-rich areas, the TIL regions themselves, Tuft cells, TLS in PDAC and TNBC, and malignant cells in a PanIN-like and a PDAC region of MH097_480. See `stage3/README.md` | The final Stage 1 objects; the TIL, Tuft and TLS regions are cropped from the raw Xenium output | Notebooks in `stage3/` |
 
 The workflow was rerun with the archived PCA results or retained cells because the environment has changed since the original objects were made. Most analyses do not use PCA or clustering; some filter cells by cluster.
 

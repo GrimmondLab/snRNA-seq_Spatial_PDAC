@@ -12,6 +12,8 @@
 *.mtx.gz
 *.tsv.gz
 *.csv.gz
+# Small saved inputs that stage3_tuft.ipynb needs to run
+!spatial/stage3/tuft_inputs/*.csv.gz
 *.parquet
 *.tar
 *.tar.gz

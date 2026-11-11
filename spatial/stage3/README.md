@@ -1,11 +1,12 @@
-# Stage 3: malignant cells, TILs, Tuft cells and TLS
+# Stage 3: malignant cells, TILs, Tuft cells, TLS and PanIN
 
-Five notebooks, all following the original analysis exactly:
+Six notebooks, all following the original analysis exactly, listed in the order they are run:
 
 - `stage3_malignant_TIL.ipynb`: malignant cells near and far from TILs (sections below up to Notes).
-- `stage3_TIL_regions.ipynb`: the TIL regions themselves (see [TIL regions](#til-regions)).
 - `stage3_tuft.ipynb`: Tuft cells across all samples, and three re-analysed Tuft regions (see [Tuft cells](#tuft-cells)).
+- `stage3_TIL_regions.ipynb`: the TIL regions themselves (see [TIL regions](#til-regions)).
 - `stage3_TLS_regions.ipynb` and `stage3_TLS_figures.ipynb`: tertiary lymphoid structures (TLS) in PDAC and TNBC, and a lymph node reference (see [TLS](#tls)).
+- `stage3_MH097_PanIN.ipynb`: malignant cells in a PanIN-like and a PDAC region of MH097_480 (see [PanIN](#panin)).
 
 `stage3_malignant_TIL.ipynb` compares malignant cells next to a TIL-rich area (`wTIL`) with malignant cells away from it (`noTIL`), in three 480-gene samples: MH065_480, MH106_480 and MH107_480. It starts from the final Stage 1 objects.
 
@@ -114,7 +115,7 @@ Within each region, cells below the minimum counts and genes in fewer than 5 cel
 - **MH099_480:** "Unclassified" cells are labelled "Malignant cells".
 - **MH096_480:** 103 cells scored as Endocrine but outside the Endocrine cluster are relabelled "Ductal MUC5B" if their cluster was Ductal MUC5B+, otherwise "Unclassified". The clusters come from the region's Leiden clustering, which doesn't reproduce exactly, so they are read from the original region object.
 
-PCA, UMAP and Leiden clustering are not run. The one UMAP figure (Extended Data Fig. 4B, MH099_480) uses the UMAP saved in the original region object, so it keeps the published layout. The notebook stops if the region's cells differ from the original's. So the original MH096_480 and MH099_480 region objects are needed to run the notebook, not only for the check.
+PCA, UMAP and Leiden clustering are not run. The one UMAP figure (Extended Data Fig. 4B, MH099_480) uses the UMAP saved in the original region object, so it keeps the published layout. The notebook stops if the region's cells differ from the original's. Both are saved in `tuft_inputs/` (`MH096_480_anno.csv.gz`, `MH099_480_umap.csv.gz`), written from the original region objects by `tuft_inputs/export_tuft_inputs.py`. They are needed to run the notebook.
 
 **Reproducibility.** Compared with the original values and region objects:
 
@@ -203,15 +204,47 @@ The manuscript shows one region of each kind; the notebook makes the same plots 
 
 Saved figures with no panel noted in the notebook: `TLS_composition_PDAC.pdf`, `B_neighbours_PDAC_boxplot.pdf`, `Moran_#2.pdf` to `Moran_#5.pdf`, `matrixplot_SLS_subset.pdf`, the PDAC and lymph node CCL19–CCR7 and CXCL12–CXCR4 violins (`stacked_violin_Vln_96n2_*`, `_96n1_*`, `_97n2_*`, `stacked_violin_vlnplot_SLS_*`) and `dotplot_97_n2_dotplot.pdf` (cell identity in TLS_097_480_n2). The TCF7, LEF1 and CCR7 plot is saved as `Moran_#5.pdf`; in the original it was also saved as `Moran_#4.pdf`, overwriting the CXCL12, MS4A1 and VWF plot.
 
+## PanIN
+
+`stage3_MH097_PanIN.ipynb` compares malignant cells in two regions of MH097_480: a region that is PanIN by pathology but malignant by expression, and a PDAC region where malignant cells are surrounded by SPP1+ TAMs, OLR1+ TAMs and myofibroblasts.
+
+| Region | x, y (µm) |
+|---|---|
+| PanIN | 2200–5000, 1000–4000 |
+| PDAC | 8200–9500, 3500–4500 |
+
+1. **Fig. 4H:** the tumour niches of MH097_480, read from the Stage 2 combined object, and the malignant cells in the same window with the two regions marked.
+2. **Malignant cells:** cells in either region labelled "Malignant cells" (`cell_class_threshold`) in the final Stage 1 object. As in the original, cells whose saved cluster annotation (`anno`) is another cell type are dropped; `Malignant cells` and `Ductal_MUC6_REG1A` are kept. Three cells that were vSMCs or CAFs_MYO in the original object are `Mixed_vSMCs_CAFs` or `CAFs_CXCL14` in the final Stage 1 object, so those names are dropped too. This leaves 2,814 PDAC and 658 PanIN cells.
+3. **Pathway scores:** raw counts normalised and log-transformed again, then hypoxia, IFNG and IL6 scored with `sc.tl.score_genes` (`ctrl_size = 20`, `random_state = 22`) and z-scored across both regions.
+
+PCA, neighbours and UMAP are computed, but no UMAP figure is saved. DE, the other pathway scores and Leiden clustering are left out.
+
+**Reproducibility.** Compared with the original subset object: the same 3,472 cells, 100% the same region, and the three pathway scores identical (max difference 0).
+
+| Figure | File | Contents |
+|---|---|---|
+| Fig. 4H | `Fig4h_Representative_niches_97_480_zoom.pdf` | Tumour niches of MH097_480 |
+| Fig. 4H | `Fig4h_Malignant_cells_97_480_zoom.pdf` | Malignant cells of MH097_480, with the PanIN and PDAC regions |
+| Not labelled | `MH097_PanIN_signalling.pdf`, `MH097_PanIN_signalling_2.pdf` | IL6, IFNG and hypoxia scores (z-scores) in space |
+
 ## Running the notebooks
 
-Set the paths in each notebook's parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`). Run `stage3_malignant_TIL.ipynb` before `stage3_TIL_regions.ipynb`, which reads its malignant-cell regions. `stage3_tuft.ipynb` doesn't depend on the others. Run `stage3_TLS_regions.ipynb` before `stage3_TLS_figures.ipynb`. `stage3_malignant_TIL.ipynb`:
+Set the paths in each notebook's parameters cell, then run all cells with the `xenium.squidpy` kernel (see `../environment/`). Run them in this order:
+
+1. `stage3_malignant_TIL.ipynb`
+2. `stage3_tuft.ipynb`
+3. `stage3_TIL_regions.ipynb`, which reads the malignant-cell regions from step 1
+4. `stage3_TLS_regions.ipynb`
+5. `stage3_TLS_figures.ipynb`, which reads the region objects from step 4
+6. `stage3_MH097_PanIN.ipynb`, which also reads the Stage 2 combined object
+
+`stage3_malignant_TIL.ipynb`:
 
 | Setting | Path |
 |---|---|
 | `STAGE1_DIR` | The final Stage 1 objects, one subfolder per sample (`<sample>/<sample>.h5ad`) |
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
-| `ARCHIVED_DIR` | The original subset objects, used only for the check. Set to `None` to skip it |
+| `ARCHIVED_DIR` | The original subset objects, not deposited, used only for the check. Set to `None` to skip it |
 
 `stage3_TIL_regions.ipynb`:
 
@@ -220,7 +253,7 @@ Set the paths in each notebook's parameters cell, then run all cells with the `x
 | `RAW_DATA_DIR` | Raw Xenium output, one subfolder per sample (`<sample>/cell_feature_matrix.h5` and `<sample>/cells.csv`) |
 | `MALIGNANT_DIR` | The output folder of `stage3_malignant_TIL.ipynb` |
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
-| `ARCHIVED_DIR` | The original region objects, used only for the check. Set to `None` to skip it |
+| `ARCHIVED_DIR` | The original region objects, not deposited, used only for the check. Set to `None` to skip it |
 
 `stage3_tuft.ipynb`:
 
@@ -228,7 +261,8 @@ Set the paths in each notebook's parameters cell, then run all cells with the `x
 |---|---|
 | `STAGE1_DIR` | The final Stage 1 objects, one subfolder per sample (`<sample>/<sample>.h5ad`) |
 | `RAW_DATA_DIR` | Raw Xenium output, one subfolder per sample (`<sample>/cell_feature_matrix.h5` and `<sample>/cells.csv`) |
-| `ARCHIVED_DIR` | The original region objects. Required: the MH096_480 clusters and the MH099_480 UMAP are read from them |
+| `TUFT_INPUT_DIR` | `tuft_inputs/` in this folder (the default). Required: the saved MH096_480 clusters and MH099_480 UMAP |
+| `ARCHIVED_DIR` | The original region objects, not deposited, used only for the check, which is skipped for any that are missing |
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
 
 `stage3_TLS_regions.ipynb`:
@@ -238,11 +272,20 @@ Set the paths in each notebook's parameters cell, then run all cells with the `x
 | `RAW_DATA_DIR` | Raw Xenium output of the PDAC samples, one subfolder per sample |
 | `TNBC_RAW_DIR` | Raw Xenium output of the four TNBC sections (GSE281886), in subfolders `TNBC_1` to `TNBC_4` |
 | `OUTPUT_DIR` | Where the 13 region objects and tables go |
-| `ARCHIVED_DIR` | The original region objects, used only for the check. Set a path to `None` to skip it |
+| `ARCHIVED_DIR` | The original region objects, not deposited, used only for the check. Set a path to `None` to skip it |
 
 `stage3_TLS_figures.ipynb`: `REGION_DIR`, the output folder of `stage3_TLS_regions.ipynb`. Figures go to `REGION_DIR/figures`.
 
-The paths in the notebooks were replaced with these placeholders after they were run.
+`stage3_MH097_PanIN.ipynb`:
+
+| Setting | Path |
+|---|---|
+| `STAGE1_DIR` | The final Stage 1 objects, one subfolder per sample (`<sample>/<sample>.h5ad`) |
+| `STAGE2_COMBINED` | `Combined_CLR_transform_global_CN_stage2.h5ad`, written by `../stage2/stage2_niches.ipynb` |
+| `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
+| `ARCHIVED_FILE` | The original subset object, not deposited, used only for the check. Set to `None` to skip it |
+
+The paths in the notebooks were replaced with these placeholders after they were run. The original objects used by the checks are not deposited; the check results are recorded above and in the saved outputs.
 
 ## Outputs
 
@@ -259,3 +302,5 @@ The paths in the notebooks were replaced with these placeholders after they were
 `stage3_tuft.ipynb`: `Tuft_counts.tsv`, `Tuft_min_distance_profiling.csv.gz` (distance from each Tuft cell to the nearest cell of each label), `Persample_median_distant_Tuft_neighbours.tsv`, `EnrichmentAnalysisTuft.tsv`, `<sample>_Tuft_region.h5ad` (each cropped region with `predicted_cell_type_threshold`), `stage3_tuft_check.tsv` and `figures/`.
 
 `stage3_TLS_regions.ipynb`: `<region>.h5ad` for each of the 13 regions (with `TLS_cell_class_threshold` and the neighbourhood enrichment), `TLS_label_counts.tsv` and `stage3_TLS_check.tsv`. `stage3_TLS_figures.ipynb`: the figures and their tables in `figures/`.
+
+`stage3_MH097_PanIN.ipynb`: `MH097_malignant_PanIN_regions.h5ad` (the malignant cells of both regions, with the pathway scores), `stage3_PanIN_check.tsv` and `figures/`.

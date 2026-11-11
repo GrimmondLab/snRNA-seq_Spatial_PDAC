@@ -112,7 +112,7 @@ Set the paths in each notebook's parameters cell, then run all cells with the `x
 |---|---|
 | `STAGE1_DIR` | The final Stage 1 objects, one subfolder per sample (`<sample>/<sample>.h5ad`) |
 | `OUTPUT_DIR` | Where results go. Figures go to `OUTPUT_DIR/figures` |
-| `ORIGINAL_COMBINED` | The original combined object, used only for the check. Set to `None` to skip the check |
+| `ORIGINAL_COMBINED` | The original combined object, not deposited, used only for the check. Set to `None` to skip the check |
 
 `stage2_figures.ipynb` and `stage2_neighbourhood_profiling.ipynb` use the same `STAGE1_DIR`. `stage2_figures.ipynb` saves its figures to `FIGURE_DIR`; `stage2_neighbourhood_profiling.ipynb` saves its tables to `OUTPUT_DIR` and its figures to `OUTPUT_DIR/figures`.
 

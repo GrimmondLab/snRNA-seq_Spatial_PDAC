@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 for snRNA-seq, GSE282154 for spatial, + Zenodo, 10.5281/zenodo.23933322 (snRNA-seq), 10.5281/zenodo.23996821 (MIBI) and DOI_TBD).
+Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 for snRNA-seq, GSE282154 for spatial PDAC, GSE281886 for spatial TNBC (TLS comparison), + Zenodo, 10.5281/zenodo.23933322 (snRNA-seq objects and the 16 processed Xenium objects), 10.5281/zenodo.23996821 (MIBI) and DOI_TBD).
 
 Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and open work), the READMEs under `snrnaseq/*/`, `spatial/` and `spatial_proteomics/`.
 
@@ -8,7 +8,12 @@ Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and 
 
 - `snrnaseq/stageN_*/`, `snrnaseq/supplementary_*/`: one folder per R stage or supplementary analysis: Rmd(s), `run_stageN.R` (renders them with `params`), `config.yml` (container paths `/data/...`, `/output`), `sessionInfo/` of the **original** runs, and a README listing every version difference from those runs.
 - `snrnaseq/stage0_*/`, `snrnaseq/supplementary_qc/`: records only, not in the image (excluded in `.dockerignore`) or `run.sh`.
-- `spatial/`: Python, Xenium data from 16 samples of 8 PURPLE registry patients (a 314-gene and a 480-gene panel each), a different cohort from the snRNA-seq samples. `README.md` has the input data, planned stages and env plan. `stage1/` has one notebook per sample (`<sample>_stage1.ipynb`, e.g. `MH065_314`), the robustness summary notebook and result tables, and a README; Stages 2 and 3 are not added yet. `environment/` has the env records, including `requirements_as_used.txt`. The notebooks ran on the `xenium.squidpy` kernel and have `/path/to/...` placeholders in their parameters cell: no `config.yml`, master script or `envs/spatial.yml` yet. Not in the image or `run.sh` yet; `.dockerignore` is an allowlist, so it needs an entry too.
+- `spatial/stageN/`: Python notebooks, organised like the snRNA-seq stages (one folder per stage, README listing inputs, figures and the check against the original). The one difference: **one env for all spatial stages** (`xenium.squidpy`, scanpy 1.9.5, squidpy 1.3.1), not one per group of stages. Xenium data from 16 samples of 8 PURPLE registry patients (a 314-gene and a 480-gene panel each), a different cohort from the snRNA-seq samples, plus 4 TNBC sections for the TLS comparison.
+  - `stage1/`: one notebook per sample (`<sample>_stage1.ipynb`), the robustness summary notebook and result tables.
+  - `stage2/`: niches, figures and neighbourhood profiling notebooks.
+  - `stage3/`: malignant–TIL, Tuft, TIL regions, TLS regions, TLS figures and MH097 PanIN notebooks, run in that order; `tuft_inputs/` holds the two small saved inputs the Tuft notebook needs (MH096 clusters, MH099 UMAP).
+  - `environment/`: the env records, including `requirements_as_used.txt` (corrections in `spatial/README.md`).
+  - The notebooks have `/path/to/...` placeholders in their parameters cell: no `config.yml`, master script or `envs/spatial.yml` yet. Not in the image or `run.sh` yet; `.dockerignore` is an allowlist, so it needs an entry too.
 - `spatial_proteomics/`: record only (MIBI figure code from collaborators at WEHI, kept as received), not in the image or `run.sh`.
 - `shared/`: tables used by several stages.
 - `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits, plus CRAN source packages for `cellchat`); `session_info.R`.
@@ -24,7 +29,8 @@ Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and 
 - After editing `envs/<env>.yml`, regenerate its lock (command in `README.md`, "Updating an env") and commit both.
 - Cell-type labels are assigned by cluster number in several Rmds. Any change that could renumber clusters needs a per-cell cross-tab against the original object.
 - snRNA-seq Stage 1 doesn't reproduce the original post-QC object exactly (no worker seeds). Later stages start from the deposited object, not from a Stage 1 rerun.
-- Spatial Stage 1 reads the saved PCA, UMAP, clusters and kept cells from the 16 processed `.h5ad` files (not deposited yet), because PCA and UMAP don't reproduce exactly, and recomputes everything else from raw data. Its 16 final objects are the only input to spatial Stage 2.
+- Spatial Stage 1 reads the saved PCA, UMAP, clusters and kept cells from the 16 processed `.h5ad` files (Zenodo, `Xenium_480.tar` and `Xenium_314.tar`), because PCA and UMAP don't reproduce exactly, and recomputes everything else from raw data. Its 16 final objects are the input to spatial Stages 2 and 3; Stage 3 region analyses also crop from the raw Xenium output.
+- Spatial checks against the original objects are optional and skipped when those objects are missing: the originals are not deposited, and the check results are recorded in the stage READMEs. Deposit only what a notebook needs to run.
 
 ## CI
 
