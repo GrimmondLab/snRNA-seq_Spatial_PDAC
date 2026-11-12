@@ -65,6 +65,7 @@ The differences from the original runs are those in the Stage 3 README ("Environ
 | `run_stage4.R` | Master script; `Rscript run_stage4.R [config.yml]` |
 | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd`, `Plotting.Rmd` | The analysis |
 | `config.yml` | Input paths and output folder (container paths) |
+| `add_labels_to_final_object.R` | Not part of the run. Run once on the original objects before depositing the final object: copies the Stage 3 and 4 labels that are not in it (malignant clusters, Stage 3 `Lv.1.Anno` and `Lv.2.Anno`, subset labels, endothelial subtypes) and the Fig. 1C subset UMAPs into new `stage3_*` and `stage4_*` columns, matched by cell ID. It also restores the label `TAMs_MHC_II`, which had been renamed `TAMs_HLA+` by hand in the final object after `Plotting.Rmd`; the manuscript and the code use `TAMs_MHC_II`. No other existing column is changed |
 | `sessionInfo/` | Session information of the original runs |
 
 ## Run
