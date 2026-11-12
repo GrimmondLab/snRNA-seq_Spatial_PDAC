@@ -16,7 +16,7 @@ This repository holds:
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
 | `spatial_proteomics/` | R | Record of the code for the MIBI figures; no Docker container (see `spatial_proteomics/README.md`) |
 
-The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) has been added to the image definition, but no image with it has been built or run yet: the Xenium results so far come from the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
+The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image from `v0.3.0`, but no notebook has been run in the image yet: the Xenium results so far come from the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
 ## Environments
 
@@ -81,7 +81,7 @@ All three use the env `spatial`. Each stage folder has a `config.yml` with the c
 docker build --platform linux/amd64 -t pdac-snrnaseq:1.0 .
 ```
 
-The image is linux/amd64 only, because bioconda's R 4.3 builds are only available for linux-64. On an Apple Silicon Mac it builds and runs under emulation, which is slower.
+The image is linux/amd64 only, because bioconda's R 4.3 builds are only available for linux-64. On an Apple Silicon Mac it builds and runs under emulation, which is slower. `v0.3.0` is 13.7 GB as a Docker image and 2.7 GB as a `.sif`.
 
 ### Prebuilt image (GitHub Actions)
 
@@ -121,7 +121,7 @@ docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnase
 
 ### Running the spatial stages
 
-The image with the `spatial` env has not been built or run yet, so these commands are untested.
+The `spatial` env is in the image from `v0.3.0`: it builds, and scanpy, squidpy and the other packages import. No notebook has been run in the image yet, so the commands below are untested.
 
 Put the inputs in one folder, laid out as below, and mount it at `/data/input`. The sample folder names are in `spatial/README.md` ("Folder layout").
 

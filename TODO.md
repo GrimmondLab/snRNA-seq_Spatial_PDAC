@@ -1,18 +1,19 @@
 # TODO
 
 Next steps after the move to one conda-based Docker image (`Dockerfile`, `envs/`, `run.sh`).
-`v0.2.2` is published as a Docker image and a `.sif`, with all four envs and Stages 1–5. Stages 1 and 2 have finished full runs on Spartan (exit code 0), but neither output has been checked yet (see section 2). Stage 1 needs far more memory than documented.
+`v0.3.0` is published as a Docker image (13.7 GB) and a `.sif` (2.7 GB), with five envs: the four R envs for snRNA-seq Stages 1–5 and inferCNV, and `spatial` for the Xenium stages. No spatial notebook has been run in the image yet. Stages 1 and 2 have finished full runs on Spartan (exit code 0), but neither output has been checked yet (see section 2). Stage 1 needs far more memory than documented.
 
 ## 1. Build and move the image to the HPC
 
 - [x] Publish a first image: `v0.1.2` built, passed the smoke test and pushed `:0.1.2` and `:0.1.2-sif` (so the org allows Actions to publish packages).
 - [x] Push a tag with Stages 4 and 5: `v0.2.0` built, passed the smoke test and pushed `:0.2.0`.
 - [x] Publish a `.sif` with Stages 4 and 5: `v0.2.2` pushed `:0.2.2` and `:0.2.2-sif`, and the `.sif` matches the Docker image.
+- [x] Publish an image with the `spatial` env: `v0.3.0` (run 43156695593, 53 min) built, passed the smoke test and pushed `:0.3.0` and `:0.3.0-sif`; the `.sif` matches the Docker image. Sizes: Docker 13.7 GB (`v0.2.3`: 11.5 GB), `.sif` 2.7 GB (2.1 GB).
 - [ ] Pass a `GITHUB_PAT` to the Docker build as a BuildKit secret. `install_github` runs unauthenticated, so a rebuild can fail on GitHub's rate limit (`v0.2.1` did, and a rerun passed).
 - [ ] The repo is private, so the package will be private. Make it public (package settings → visibility) before sharing with reviewers, or use a `docker login ghcr.io` with a PAT that has `read:packages` on the HPC.
 - [x] Pull the prebuilt `.sif` on the HPC and check that the runner starts (it should print usage):
       ```bash
-      apptainer pull pdac-snrnaseq.sif oras://ghcr.io/grimmondlab/snrna-seq_spatial_pdac:0.2.2-sif
+      apptainer pull pdac-snrnaseq.sif oras://ghcr.io/grimmondlab/snrna-seq_spatial_pdac:0.3.0-sif
       apptainer run pdac-snrnaseq.sif
       ```
       Private package: run `apptainer registry login -u <github-user> oras://ghcr.io` first, with a PAT that has `read:packages`.
@@ -27,7 +28,7 @@ The plan is Batch on EC2, with data in S3.
 - [ ] Choose the AWS account and region, and check the data-use terms allow it: the data are patient-derived, and the analysis objects are not deposited yet.
 - [ ] Run full Stage 1 once on a single EC2 instance (size from the Spartan peak; `r6i.4xlarge` is probably too small, Docker, `aws s3 sync`, `config_local.yml`, mounting `samples/` only). This gives the peak memory and runtime to size the jobs, and tests reproducibility.
 - [ ] Create the S3 bucket: encrypted, public access blocked, reached through a VPC endpoint.
-- [ ] Mirror the image to ECR in the same region (10 GB; the GHCR package is private).
+- [ ] Mirror the image to ECR in the same region (13.7 GB uncompressed; the GHCR package is private).
 - [ ] Add a thin wrapper image: download inputs to `/data`, call `run.sh`, upload `/output` (also on failure). The image has no S3 tools, and the analysis image stays unchanged.
 - [ ] Write the CDK stack (TypeScript, as in `nemo-infra`): Batch on memory-optimised x86 EC2 scaling to zero, one job definition per stage, launch template with a large EBS volume. Use on-demand, not Spot: stages have no checkpoints. A 128 GB job won't fit on a 128 GiB instance, so Stages 2–5 probably need `r6i.8xlarge` at least; size them from measured peaks (Spartan: Stage 1 258 GB, Stage 2 108 GB).
 - [ ] Keep the `workers` values from each stage's config: parallel settings can change results.
@@ -96,14 +97,14 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
 - [x] Searched the code of all spatial notebooks for s3fs, aiobotocore, botocore and `s3://`: none uses them (and there are no helper `.py` files). Leave these three out of `envs/spatial.yml`.
 - [ ] Deposit the 16 processed `.h5ad` files on 10.5281/zenodo.23933322: `Xenium_480.tar` uploaded, `Xenium_314.tar` uploading. File names listed (flat, no subfolder) and written into each Stage 1 notebook's `SAVED_OBJECT` line.
-- [x] Write `envs/spatial.yml` (conda-forge/bioconda only) and lock it (`envs/spatial-linux-64.lock`, 403 packages). squidpy 1.3.1 and spatialdata 0.2.5.post0 are not on conda: `envs/post_install_spatial.txt`, installed with `pip install --no-deps`. Nearest versions where the recorded one has no Python 3.9 conda build: pandas 2.2.3 (2.3.3), tqdm 4.67.1 (4.67.3), pooch 1.8.2 (1.9.0), xarray-spatial 0.4.0 (0.5.3). The env has only been solved, not built or run.
+- [x] Write `envs/spatial.yml` (conda-forge/bioconda only) and lock it (`envs/spatial-linux-64.lock`, 403 packages). squidpy 1.3.1 and spatialdata 0.2.5.post0 are not on conda: `envs/post_install_spatial.txt`, installed with `pip install --no-deps`. Nearest versions where the recorded one has no Python 3.9 conda build: pandas 2.2.3 (2.3.3), tqdm 4.67.1 (4.67.3), pooch 1.8.2 (1.9.0), xarray-spatial 0.4.0 (0.5.3). Built in `v0.3.0`.
 - [x] The four version differences are recorded in the main `README.md` ("Environments"), with the spatial run instructions.
-- [ ] Update the spatial run instructions in `README.md` once the image is built and one stage has run: they are untested.
+- [ ] Update the spatial run instructions in `README.md` once one stage has run in the image: they are untested.
 - [x] Spatial notebooks are papermill-ready: each has one cell tagged `parameters` with only the path settings; derived paths are in the next cell. Stage 1 output placeholder unified as `/path/to/stage1_output`.
 - [x] papermill 2.5.0 and ipykernel 6.29.0 added to the spatial env.
 - [x] Kernel `xenium.squidpy` registered inside the env in the `Dockerfile`; the CI smoke test checks it.
 - [x] Spatial env added to the `Dockerfile` (lock, then `pip install --no-deps -r envs/post_install_spatial.txt`), `.dockerignore`, the CI smoke test and `run.sh` (`spatial1`, `spatial2`, `spatial3`). `spatial/run_notebooks.py` runs the notebooks listed in `spatial/stageN/config.yml` with papermill.
-- [ ] Build the image with the `spatial` env: it has not been built yet (only solved). The build imports scanpy, squidpy and the other packages (`envs/session_info.py`), so a broken env fails there.
+- [x] Build the image with the `spatial` env: `v0.3.0`. The env installed from the lock, squidpy and spatialdata installed with `--no-deps`, every package imported (`envs/session_info.py`), and the kernel `xenium.squidpy` is registered.
 - [ ] Run `spatial1` on one sample in the image (copy `spatial/stage1/config.yml` and shorten `notebooks`), with Docker and with the read-only `.sif`.
 - [ ] Check whether any Stage 3 notebook needs a GPU (torch / scvi-tools are in the env). Stages 1 and 2 do not; Stage 2 runs in 64 GB.
 - [x] Stage 2: notebook added under `spatial/stage2/`. Niches match the original for 99.9994% of cells (about 18 of 2,930,241 differ); all 15 names match.

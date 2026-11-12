@@ -2,7 +2,7 @@
 
 Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the notebooks are in `stage1/`, `stage2/` and `stage3/`, each with its own README. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
-Each stage follows the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, with a README listing inputs, figures and the check against the original. All spatial stages share one conda env (`../envs/spatial.yml`, in the same Docker image). Each stage has a `config.yml` with container paths and the notebooks in run order; `run_notebooks.py` runs them with papermill, through `run.sh spatial1`, `spatial2` or `spatial3`. The image with this env has not been built or run yet.
+Each stage follows the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, with a README listing inputs, figures and the check against the original. All spatial stages share one conda env (`../envs/spatial.yml`, in the same Docker image). Each stage has a `config.yml` with container paths and the notebooks in run order; `run_notebooks.py` runs them with papermill, through `run.sh spatial1`, `spatial2` or `spatial3`. The env is in the image from `v0.3.0`; no notebook has been run in the image yet.
 
 **Running with papermill.** In every notebook, the folders and input files are in one cell tagged `parameters`, holding only plain path settings. The paths built from them (per-sample folders, `FIGURE_DIR` and so on) are in the next cell, so values papermill injects carry through. For example:
 
