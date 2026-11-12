@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs one analysis stage in its own conda env.
 # Usage: run.sh <stage> [config.yml]
-#   stage: stage1 | stage2 | stage3 | stage4 | stage5 | infercnv
+#   stage: stage1 | stage2 | stage3 | stage4 | stage5 | infercnv | spatial1 | spatial2 | spatial3
 #   config defaults to the stage's config.yml (container paths: /data/..., /output)
 set -euo pipefail
 
@@ -20,6 +20,10 @@ case "$stage" in
   stage4) env=downstream; dir=snrnaseq/stage4_reclustering; script=run_stage4.R ;;
   stage5) env=cellchat; dir=snrnaseq/stage5_cellchat; script=run_stage5.R ;;
   infercnv) env=infercnv; dir=snrnaseq/supplementary_infercnv; script=run_infercnv.R ;;
+  # Spatial (Python): one shared script runs the notebooks listed in the stage's config with papermill
+  spatial1) env=spatial; dir=spatial/stage1; script=../run_notebooks.py; runner=python ;;
+  spatial2) env=spatial; dir=spatial/stage2; script=../run_notebooks.py; runner=python ;;
+  spatial3) env=spatial; dir=spatial/stage3; script=../run_notebooks.py; runner=python ;;
   *) echo "Unknown stage: $stage" >&2; usage 1 >&2 ;;
 esac
 
@@ -35,4 +39,4 @@ fi
 export PATH="$ENVS_DIR/$env/bin:$PATH"
 cd "$PIPELINE_DIR/$dir"
 echo ">>> $stage: env=$env dir=$dir config=$config"
-exec Rscript "$script" "$config"
+exec "${runner:-Rscript}" "$script" "$config"

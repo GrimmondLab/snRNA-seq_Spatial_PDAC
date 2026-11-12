@@ -1,0 +1,20 @@
+# Container paths. Mount your data to these locations (see README.md and ../README.md).
+# `parameters` are the values for each notebook's `parameters` cell; a notebook gets only those it has.
+parameters:
+  # Output of spatial Stage 1: one subfolder per sample, with <sample>.h5ad
+  STAGE1_DIR: /output/spatial/stage1
+# Executed copies of the notebooks
+executed_dir: /output/spatial/stage2/notebooks
+# Run in this order
+notebooks:
+  - name: stage2_niches.ipynb
+    parameters:
+      OUTPUT_DIR: /output/spatial/stage2
+      # The original combined object, used only for a check; not deposited, so the check is skipped
+      ORIGINAL_COMBINED: null
+  - name: stage2_figures.ipynb
+    parameters:
+      FIGURE_DIR: /output/spatial/stage2/manuscript_figures
+  - name: stage2_neighbourhood_profiling.ipynb
+    parameters:
+      OUTPUT_DIR: /output/spatial/stage2/neighbourhood_profiling

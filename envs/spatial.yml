@@ -1,0 +1,93 @@
+# Spatial (Xenium) Stages 1-3: Python 3.9, scanpy 1.9.5, squidpy 1.3.1. One env for all spatial stages.
+# Versions follow spatial/environment/requirements_as_used.txt (the packages loaded in the original
+# `xenium.squidpy` env), with the corrections in spatial/README.md (scikit-image, imageio, fsspec,
+# PyWavelets, typing_extensions: the imported versions, not the listed ones).
+# Pinned: the packages the notebooks import, and the scanpy / squidpy / spatialdata dependencies.
+# Everything else (low-level libraries, Jupyter, ...) is left to the solver and fixed by the lock.
+# Differences from the original runs:
+#   the original env mixed conda (`defaults` + conda-forge) and pip installs in ~/.local; here the
+#   packages come from conda-forge, so builds and low-level libraries (BLAS, HDF5, ...) differ
+#   packages with no Python 3.9 conda build of the recorded version use the nearest one (marked below)
+#   left out, installed in the original env but not used by any spatial notebook: muon, mofapy2,
+#   s3fs / aiobotocore / botocore, torch, scvi-tools, jax, napari, cellcharter, pertpy, pyscenic, ...
+#   added: papermill, to run the notebooks non-interactively (the original runs were interactive)
+# squidpy 1.3.1 and spatialdata 0.2.5.post0 are not on conda at these versions; installed from PyPI
+# with `pip install --no-deps -r envs/post_install_spatial.txt` (their dependencies are pinned below).
+# --no-deps is needed: their metadata asks for scikit-image <= 0.20 and fsspec <= 2023.6, but the
+# original env ran them with scikit-image 0.22.0 and fsspec 2023.10.0.
+name: spatial
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.9.18
+  # Packages the notebooks import
+  - scanpy==1.9.5
+  - anndata==0.10.8
+  - numpy==1.24.4
+  - scipy==1.9.1
+  - pandas==2.2.3           # 2.3.3 has no Python 3.9 build
+  - scikit-learn==1.3.2
+  - statsmodels==0.14.1
+  - pingouin==0.5.5
+  - matplotlib-base==3.8.0
+  - seaborn-base==0.12.2
+  # scanpy / squidpy dependencies used by the calls in the notebooks (leiden, neighbours, UMAP,
+  # PCA, plotting, reading .h5 / .h5ad), pinned so the env matches what ran together
+  - leidenalg==0.10.1
+  - python-igraph==0.10.8
+  - umap-learn==0.5.4
+  - pynndescent==0.5.10
+  - numba==0.60.0
+  - llvmlite==0.43.0
+  - h5py==3.10.0
+  - joblib==1.3.2
+  - threadpoolctl==3.2.0
+  - networkx==3.2.1
+  - natsort==8.4.0
+  - patsy==0.5.4
+  - session-info==1.0.0
+  - tqdm==4.67.1            # 4.67.3 has no Python 3.9 build
+  - packaging==23.1
+  - pillow==10.0.1
+  - cycler==0.11.0
+  - kiwisolver==1.4.4
+  - contourpy==1.2.0
+  - pyparsing==3.0.9
+  - matplotlib-scalebar==0.8.1
+  - pandas-flavor==0.7.0   # pingouin
+  - tabulate==0.9.0        # pingouin
+  # squidpy's other dependencies (imported with squidpy, not used by the notebooks' calls)
+  - scikit-image==0.22.0   # listed as 0.20.0, see spatial/README.md
+  - imageio==2.31.5        # listed as 2.33.0
+  - tifffile==2023.8.12
+  - pywavelets==1.4.1      # listed as 1.5.0
+  - dask==2024.8.0
+  - dask-image==2023.8.1
+  - xarray==2023.10.1
+  - zarr==2.16.1
+  - numcodecs==0.12.1
+  - fsspec==2023.10.0      # listed as 2022.11.0
+  - omnipath==1.0.7
+  - docrep==0.3.2
+  - validators==0.22.0
+  - aiohttp==3.8.6
+  # spatialdata's dependencies (squidpy imports spatialdata; the notebooks do not use it)
+  - geopandas==0.14.0
+  - shapely==2.0.7
+  - multiscale-spatial-image==1.0.0
+  - spatial-image==1.1.0
+  - ome-zarr==0.10.2
+  - xarray-datatree==0.0.12
+  - xarray-schema==0.0.3
+  - xarray-spatial==0.4.0  # 0.5.3 has no Python 3.9 build
+  - pyarrow==13.0.0
+  - pooch==1.8.2           # 1.9.0 has no Python 3.9 build
+  - rich==13.6.0
+  - click==8.1.7
+  - typing_extensions==4.13.0  # listed as 4.8.0
+  - pip                    # for envs/post_install_spatial.txt
+  # Running the notebooks (not part of the original interactive runs)
+  - papermill==2.5.0
+  - ipykernel==6.29.0

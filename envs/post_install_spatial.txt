@@ -1,0 +1,6 @@
+# PyPI-only packages for the `spatial` env: not on conda-forge/bioconda at these versions.
+# Install after creating the env from spatial-linux-64.lock:
+#   pip install --no-deps -r envs/post_install_spatial.txt
+# --no-deps: every dependency is already pinned in spatial.yml (see the note at its top).
+squidpy==1.3.1
+spatialdata==0.2.5.post0

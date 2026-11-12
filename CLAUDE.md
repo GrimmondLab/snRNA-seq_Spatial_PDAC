@@ -13,7 +13,7 @@ Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and 
   - `stage2/`: niches, figures and neighbourhood profiling notebooks.
   - `stage3/`: malignant–TIL, Tuft, TIL regions, TLS regions, TLS figures and MH097 PanIN notebooks, run in that order; `tuft_inputs/` holds the two small saved inputs the Tuft notebook needs (MH096 clusters, MH099 UMAP).
   - `environment/`: the env records, including `requirements_as_used.txt` (corrections in `spatial/README.md`).
-  - The notebooks have `/path/to/...` placeholders in their parameters cell: no `config.yml`, master script or `envs/spatial.yml` yet. Not in the image or `run.sh` yet; `.dockerignore` is an allowlist, so it needs an entry too.
+  - The notebooks have `/path/to/...` placeholders in their parameters cell. `stageN/config.yml` gives the container paths for them and lists the notebooks in run order; `run_notebooks.py` runs them with papermill (`run.sh spatial1|spatial2|spatial3`). Env `spatial` (`envs/spatial.yml` + lock; squidpy and spatialdata from PyPI with `--no-deps`, `envs/post_install_spatial.txt`). `environment/` is not in the image.
 - `spatial_proteomics/`: record only (MIBI figure code from collaborators at WEHI, kept as received), not in the image or `run.sh`.
 - `shared/`: tables used by several stages.
 - `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits, plus CRAN source packages for `cellchat`); `session_info.R`.

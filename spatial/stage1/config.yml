@@ -1,0 +1,34 @@
+# Container paths. Mount your data to these locations (see README.md and ../README.md).
+# `parameters` are the values for each notebook's `parameters` cell; a notebook gets only those it has.
+parameters:
+  # Raw Xenium output (GEO GSE282154): one subfolder per sample (e.g. MH107_314/), each with
+  # cell_feature_matrix.h5 and cells.csv
+  RAW_DATA_DIR: /data/input/xenium_raw
+  # The 16 processed .h5ad files (Zenodo, Xenium_480.tar and Xenium_314.tar), extracted into one folder
+  SAVED_OBJECT_DIR: /data/input/xenium_saved_objects
+  # Original per-cell label tables, used only for a check; not deposited, and the check is skipped
+  # when they are missing
+  LABEL_TABLE_DIR: /data/input/xenium_label_tables
+  # One subfolder per sample is written here; this folder is the input to Stages 2 and 3
+  OUTPUT_ROOT: /output/spatial/stage1
+# Executed copies of the notebooks
+executed_dir: /output/spatial/stage1/notebooks
+# Run in this order. To run some samples only, copy this file and shorten the list.
+notebooks:
+  - MH065_314_stage1.ipynb
+  - MH074_314_stage1.ipynb
+  - MH096_314_stage1.ipynb
+  - MH097_314_stage1.ipynb
+  - MH099_314_stage1.ipynb
+  - MH104_314_stage1.ipynb
+  - MH106_314_stage1.ipynb
+  - MH107_314_stage1.ipynb
+  - MH065_480_stage1.ipynb
+  - MH074_480_stage1.ipynb
+  - MH096_480_stage1.ipynb
+  - MH097_480_stage1.ipynb
+  - MH099_480_stage1.ipynb
+  - MH104_480_stage1.ipynb
+  - MH106_480_stage1.ipynb
+  - MH107_480_stage1.ipynb
+  - stage1_robustness_summary.ipynb   # needs all 16 samples

@@ -1,10 +1,11 @@
-# PDAC snRNA-seq analysis: one image, one conda env per group of stages.
+# PDAC snRNA-seq and spatial analysis: one image, one conda env per group of stages.
 #   snrnaseq  R 4.3, Bioconductor 3.17, Seurat 4     stages 1, 2
 #   downstream R 4.3, Bioconductor 3.17, Seurat 4,   stages 3, 4
 #              ggplot2 3.5.2, edgeR, clusterProfiler
 #   cellchat  R 4.3, Bioconductor 3.17, Seurat 4,    stage 5
 #              CellChat 2.1.2, dplyr 1.2.1
 #   infercnv  R 4.3, inferCNV 1.20.0, Seurat 5       supplementary inferCNV
+#   spatial   Python 3.9, scanpy 1.9.5, squidpy 1.3.1 spatial stages 1, 2, 3
 # Envs are built from the explicit lock files in envs/ (bioconda + conda-forge only).
 # Bioconda's R 4.3 builds are linux-64 only, hence linux/amd64.
 FROM --platform=linux/amd64 mambaorg/micromamba:1.5.10
@@ -34,6 +35,13 @@ RUN micromamba create -y -n cellchat -f envs/cellchat-linux-64.lock \
     && micromamba clean -a -y
 RUN micromamba create -y -n infercnv -f envs/infercnv-linux-64.lock \
     && micromamba clean -a -y
+# squidpy and spatialdata come from PyPI without their dependencies (see envs/spatial.yml).
+# The notebooks name the kernel `xenium.squidpy`, so it is registered inside the env.
+RUN micromamba create -y -n spatial -f envs/spatial-linux-64.lock \
+    && micromamba run -n spatial pip install --no-cache-dir --no-deps -r envs/post_install_spatial.txt \
+    && micromamba run -n spatial python -m ipykernel install --prefix "$MAMBA_ROOT_PREFIX/envs/spatial" \
+         --name xenium.squidpy --display-name xenium.squidpy \
+    && micromamba clean -a -y
 
 # Record the real environment of each env
 RUN mkdir -p sessionInfo \
@@ -48,11 +56,15 @@ RUN mkdir -p sessionInfo \
     && micromamba run -n cellchat Rscript envs/session_info.R sessionInfo/cellchat.txt \
          yaml rmarkdown CellChat dplyr patchwork Seurat presto NMF \
     && micromamba run -n infercnv Rscript envs/session_info.R sessionInfo/infercnv.txt \
-         yaml rmarkdown infercnv dplyr SeuratObject rjags
+         yaml rmarkdown infercnv dplyr SeuratObject rjags \
+    && micromamba run -n spatial python envs/session_info.py sessionInfo/spatial.txt \
+         scanpy squidpy anndata numpy scipy pandas sklearn statsmodels pingouin matplotlib seaborn \
+         leidenalg igraph umap pynndescent numba h5py papermill
 
 # Pipeline code (data is mounted at run time: /data/... read-only, /output read-write)
 COPY --chown=$MAMBA_USER:$MAMBA_USER run.sh ./
 COPY --chown=$MAMBA_USER:$MAMBA_USER shared/ shared/
 COPY --chown=$MAMBA_USER:$MAMBA_USER snrnaseq/ snrnaseq/
+COPY --chown=$MAMBA_USER:$MAMBA_USER spatial/ spatial/
 
 ENTRYPOINT ["/pipeline/run.sh"]

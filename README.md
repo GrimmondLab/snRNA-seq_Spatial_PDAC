@@ -16,7 +16,7 @@ This repository holds:
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
 | `spatial_proteomics/` | R | Record of the code for the MIBI figures; no Docker container (see `spatial_proteomics/README.md`) |
 
-The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env is not in the image yet: its notebooks currently run in the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
+The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) has been added to the image definition, but no image with it has been built or run yet: the Xenium results so far come from the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
 ## Environments
 
@@ -26,8 +26,11 @@ The snRNA-seq analysis uses one conda env per group of stages, and the Xenium an
 | `downstream` | `envs/downstream.yml` | `envs/downstream-linux-64.lock` | R 4.3, Bioconductor 3.17, Seurat 4.3.0, ggplot2 3.5.2, edgeR, clusterProfiler, simspec + treeio (GitHub, pinned commits), UCell, SingleR, EnhancedVolcano, ReactomePA | 3, 4 |
 | `cellchat` | `envs/cellchat.yml` | `envs/cellchat-linux-64.lock` | R 4.3, Bioconductor 3.17, Seurat 4.3.0, CellChat 2.1.2 (GitHub), dplyr 1.2.1 and NMF 0.27 (CRAN source) | 5 |
 | `infercnv` | `envs/infercnv.yml` | `envs/infercnv-linux-64.lock` | R 4.3, infercnv 1.20.0, Seurat 5.1.0 | Supplementary inferCNV |
+| `spatial` | `envs/spatial.yml` | `envs/spatial-linux-64.lock` | Python 3.9, scanpy 1.9.5, squidpy 1.3.1 and spatialdata 0.2.5.post0 (PyPI, `envs/post_install_spatial.txt`), papermill | Spatial 1, 2, 3 |
 
-All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pinned to its original version where conda has an R 4.3 build. Each stage README lists the exceptions. The build saves each env's `sessionInfo()` to `/pipeline/sessionInfo/<env>.txt` inside the image.
+All snRNA-seq stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pinned to its original version where conda has an R 4.3 build. Each stage README lists the exceptions. The build saves each env's `sessionInfo()` to `/pipeline/sessionInfo/<env>.txt` inside the image.
+
+The `spatial` env uses Python 3.9. The packages the notebooks import, and the scanpy, squidpy and spatialdata dependencies, are pinned to the versions loaded in the original env (`spatial/environment/requirements_as_used.txt`, with the corrections in `spatial/README.md`). Four have no Python 3.9 conda build of that version and use the nearest one: pandas 2.2.3 (originally 2.3.3), tqdm 4.67.1 (4.67.3), pooch 1.8.2 (1.9.0) and xarray-spatial 0.4.0 (0.5.3). The build saves the installed versions to `/pipeline/sessionInfo/spatial.txt`.
 
 ## snRNA-seq stages
 
@@ -49,6 +52,16 @@ All stages use R 4.3. Every R package recorded in a stage's `sessionInfo/` is pi
 Stage 1 can be rerun from the raw CellBender output, but it doesn't reproduce the original object exactly. The original run set `set.seed()` but did not pass a seed to the parallel workers (`BPPARAM` `RNGseed`), so parallel steps such as scDblFinder gave slightly different results. A rerun in the project image gives 26,774 genes × 115,301 cells, while the original object has 26,788 genes × 115,221 cells.
 
 All later stages therefore start from the **original post-QC object**, deposited at [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322). This keeps every manuscript figure exactly reproducible, while Stage 1 documents how that object was made.
+
+## Spatial (Xenium) stages
+
+| Stage | Folder | `run.sh` stage | Input | Notebooks |
+|---|---|---|---|---|
+| 1. Sample processing, cell annotation, neighbourhood enrichment | `spatial/stage1/` | `spatial1` | Raw Xenium output of the 16 samples (GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154)) and the 16 processed `.h5ad` files ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | One per sample, then the robustness summary |
+| 2. Niches, figures, neighbourhood profiling | `spatial/stage2/` | `spatial2` | Stage 1 output | 3 |
+| 3. Malignant–TIL, Tuft, TIL regions, TLS, MH097 PanIN | `spatial/stage3/` | `spatial3` | Stage 1 and Stage 2 output, raw Xenium output of the 16 samples and of the four TNBC sections (GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886)) | 6 |
+
+All three use the env `spatial`. Each stage folder has a `config.yml` with the container paths and the notebooks in run order; `spatial/run_notebooks.py` runs them with papermill. See [Running the spatial stages](#running-the-spatial-stages).
 
 ## Data
 
@@ -96,7 +109,7 @@ apptainer pull pdac-snrnaseq.sif oras://ghcr.io/grimmondlab/snrna-seq_spatial_pd
 docker run --rm -v <input>:/data/...:ro -v <output>:/output pdac-snrnaseq:1.0 <stage> [config.yml]
 ```
 
-- `<stage>` is `stage1`, `stage2`, `stage3`, `stage4`, `stage5` or `infercnv`.
+- `<stage>` is `stage1`, `stage2`, `stage3`, `stage4`, `stage5` or `infercnv` (snRNA-seq), or `spatial1`, `spatial2` or `spatial3` (Xenium).
 - `[config.yml]` defaults to the stage's own `config.yml`. You can also give the name of another config in the stage folder (e.g. `config_local.yml`), or the path of a config you have mounted into the container.
 - Each stage README lists the mounts it needs and gives a full example.
 
@@ -105,6 +118,48 @@ To copy the recorded session information out of the image:
 ```bash
 docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt
 ```
+
+### Running the spatial stages
+
+The image with the `spatial` env has not been built or run yet, so these commands are untested.
+
+Put the inputs in one folder, laid out as below, and mount it at `/data/input`. The sample folder names are in `spatial/README.md` ("Folder layout").
+
+```
+<input>/
+  xenium_raw/<sample>/            cell_feature_matrix.h5 and cells.csv, for each of the 16 samples (e.g. MH107_314)
+  xenium_raw_tnbc/TNBC_<1-4>/     the same two files for the four TNBC sections (Stage 3 only)
+  xenium_saved_objects/           the 16 .h5ad files from Xenium_480.tar and Xenium_314.tar (Stage 1 only)
+```
+
+Run the stages in order, with the same output folder: Stages 2 and 3 read the Stage 1 output from `/output/spatial/stage1`, and Stage 3 also reads the combined object that Stage 2 writes.
+
+```bash
+docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0 spatial1
+docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0 spatial2
+docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0 spatial3
+```
+
+With Apptainer:
+
+```bash
+apptainer run --cleanenv --no-home --bind <input>:/data/input --bind <output>:/output \
+  pdac-snrnaseq.sif spatial1
+```
+
+Each stage writes to `/output/spatial/stage<N>/`: the results and figures of each notebook, and the executed notebooks in `notebooks/`.
+
+- **Some samples or notebooks only.** Copy the stage's `config.yml`, shorten its `notebooks` list, mount the copy and give its path. For example, for one Stage 1 sample:
+
+  ```bash
+  docker run --rm -v <input>:/data/input:ro -v <output>:/output \
+    -v $PWD/my_config.yml:/config/my_config.yml:ro \
+    pdac-snrnaseq:1.0 spatial1 /config/my_config.yml
+  ```
+
+  The Stage 1 robustness summary needs all 16 samples, and in Stage 3 the TIL regions notebook needs the malignant–TIL output and the TLS figures notebook the TLS regions.
+- **Other paths.** The `parameters` in the config are the values for each notebook's `parameters` cell; change them in a copy of the config.
+- **Checks against the original objects** are skipped: those objects are not deposited. The results of the checks are in the stage READMEs.
 
 ### Apptainer/Singularity (HPC)
 
@@ -137,10 +192,10 @@ docker run --rm -it --entrypoint bash \
   pdac-snrnaseq:1.0
 ```
 
-The shell starts in `/pipeline`, which holds `run.sh`, `snrnaseq/`, `envs/` and `sessionInfo/`. No env is active. Put one first on `PATH`, the same way `run.sh` does:
+The shell starts in `/pipeline`, which holds `run.sh`, `snrnaseq/`, `spatial/`, `envs/` and `sessionInfo/`. No env is active. Put one first on `PATH`, the same way `run.sh` does:
 
 ```bash
-export PATH=/opt/conda/envs/snrnaseq/bin:$PATH   # or downstream (Stages 3, 4), cellchat (Stage 5), infercnv
+export PATH=/opt/conda/envs/snrnaseq/bin:$PATH   # or downstream (Stages 3, 4), cellchat (Stage 5), infercnv, spatial
 R                                                # interactive R in that env
 ./run.sh stage1                                  # or run a whole stage from the shell
 ```
@@ -166,3 +221,5 @@ Edit `envs/<env>.yml`, then regenerate its lock file and rebuild the image:
 cd envs
 conda-lock lock -f <env>.yml -p linux-64 --kind explicit --filename-template '<env>-{platform}.lock'
 ```
+
+An explicit lock holds conda packages only. The two PyPI packages of the `spatial` env are pinned in `envs/post_install_spatial.txt` and installed with `pip install --no-deps` in the `Dockerfile`.
