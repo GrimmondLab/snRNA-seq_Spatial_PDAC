@@ -1,7 +1,8 @@
 # Container paths. Mount your data to these locations (see README.md).
-# Input: the non-malignant object with Lv.1.Anno and Lv.2.Anno, from Stage 3
-nonmalignant_object: /data/input/sts.nonmalignant.RDS
-# Input to Plotting.Rmd: the annotated integrated object from Stage 2
-integrated_object: /data/input/sts.simspec_css.sample.sct.RDS
+# Input: the deposited final annotated object. Stage 4 takes from it the Stage 3 non-malignant cells and their Stage 3
+# labels (stage3_Lv.1.Anno, stage3_Lv.2.Anno), the subset labels and the Fig. 1C UMAPs (stage4_* columns), matched by
+# cell ID. It replaces the Stage 3 output sts.nonmalignant.RDS, which Stage 4 read originally.
+final_object: /data/input/sts.simspec_css.sample.sct_final.RDS
 sample_map_csv: /pipeline/shared/sample_map.csv   # shared/sample_map.csv, included in the image
+label_checks: /pipeline/shared/label_checks.R      # shared/label_checks.R, included in the image
 output_dir: /output

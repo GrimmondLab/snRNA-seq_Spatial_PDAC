@@ -17,6 +17,8 @@ knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+source(cfg$label_checks)   # shared/label_checks.R: labels from the deposited object, agreement with the rerun
+unlink(file.path(params$step_dir, "label_agreement.tsv"))
 ```
 
 # Installing packages
@@ -33,7 +35,7 @@ library(openxlsx)
 
 # Data loading
 ```{r}
-sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+sts.non.malignant <- read_nonmalignant(cfg$final_object)   # Stage 3 non-malignant cells and labels, from the deposited final object
 sample.high.myeloid <- as.data.frame(sts.non.malignant@meta.data) %>%
                                   group_by(Sample) %>% 
                                   dplyr::count(Lv.1.Anno) %>% 
@@ -172,7 +174,10 @@ cDC1.CB <- cDC1@meta.data %>% pull(Cell_Ids) # only 36 cells
 ```
 
 ## Annotation - myeloid subsets - non-integrated
-```{r}
+The dendritic cell subsets were picked partly by cluster number in the original analysis (the DC clusters at resolution 0.1, and cycling myeloid cells, migratory DCs and cDC1 at resolution 0.8). Cluster numbers can change between environments, so `Lv.2.Anno` is read from the deposited object (`stage4_myeloid_Lv.2.Anno`), matched by cell ID. The original selection is still applied to the rerun, as `Lv.2.Anno_by_cluster`, and compared with it.
+
+```{r myeloid-annotation, fig.width=8, fig.height=6, results='asis'}
+# Original mapping
 metadata <- myeloid.v2@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
 metadata %>% mutate(Lv.2.Anno = case_when(Lv.1.Anno == "Mast" ~ "Mast",
@@ -182,10 +187,16 @@ metadata %>% mutate(Lv.2.Anno = case_when(Lv.1.Anno == "Mast" ~ "Mast",
                                           Cell_Ids %in% aDCs.CB ~ "Migratory DCs",
                                           Cell_Ids %in% cycling.CB ~ "Cycling myeloid",
                                           TRUE ~ "TAMs")) -> metadata
-metadata %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
-Lv.2.Anno <- metadata$Lv.2.Anno 
-names(Lv.2.Anno) <- metadata$S_CB
-myeloid.v2 <- AddMetaData(object = myeloid.v2, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+stopifnot(identical(metadata$S_CB, colnames(myeloid.v2)))
+myeloid.v2$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
+
+# Lv.2.Anno from the deposited object
+myeloid.v2$Lv.2.Anno <- deposited_labels(myeloid.v2, "stage4_myeloid_Lv.2.Anno")
+myeloid.v2@meta.data %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
+print(knitr::kable(compare_clusters(myeloid.v2$SCT_snn_res.0.8, myeloid.v2$Lv.2.Anno,
+                                    "Myeloid: rerun clusters (res 0.8) vs Lv.2.Anno", params$step_dir), row.names = FALSE))
+print(knitr::kable(compare_labels(myeloid.v2$Lv.2.Anno_by_cluster, myeloid.v2$Lv.2.Anno,
+                                  "Myeloid: Lv.2.Anno by cluster vs deposited", params$step_dir), row.names = FALSE))
 saveRDS(myeloid.v2, file = file.path(params$step_dir, "myeloid.nonintegrated.RDS"))
 ```
 
@@ -302,23 +313,33 @@ rm(mac.only)
 ```
 
 ## Annotation - mac subsets - simspec integration
-```{r}
+`Lv.2.Anno` of the TAMs was assigned to the resolution-0.2 clusters by number in the original analysis. As above, it is read from the deposited object (`stage4_TAM_Lv.2.Anno`), and the original mapping is kept as `Lv.2.Anno_by_cluster` and compared with it. The Fig. 1C UMAP is drawn from the stored coordinates (`stage4_TAM_UMAP_1`, `_2`); the rerun UMAP is kept as `umap_css_rerun`.
+
+```{r tam-annotation, fig.width=8, fig.height=6, results='asis'}
+# Original mapping
 metadata <- mac.simspec.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
 metadata %>% mutate(Lv.2.Anno = case_when(SCT_snn_res.0.2 %in% c("0","2") ~ "TAMs_SPP1+",
                                           SCT_snn_res.0.2 == "1" ~ "TAMs_C1QC+",
                                           SCT_snn_res.0.2 == "3" ~ "TAMs_MHC_II",
                                           SCT_snn_res.0.2 == "4" ~ "TAMs_OLR1+")) -> metadata
-metadata %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
-Lv.2.Anno <- metadata$Lv.2.Anno 
-names(Lv.2.Anno) <- metadata$S_CB
-mac.simspec.sample.sct <- AddMetaData(object = mac.simspec.sample.sct, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+stopifnot(identical(metadata$S_CB, colnames(mac.simspec.sample.sct)))
+mac.simspec.sample.sct$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
+
+# Lv.2.Anno and the Fig. 1C UMAP from the deposited object
+mac.simspec.sample.sct$Lv.2.Anno <- deposited_labels(mac.simspec.sample.sct, "stage4_TAM_Lv.2.Anno")
+mac.simspec.sample.sct@meta.data %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
+print(knitr::kable(compare_clusters(mac.simspec.sample.sct$SCT_snn_res.0.2, mac.simspec.sample.sct$Lv.2.Anno,
+                                    "TAMs: rerun clusters (res 0.2) vs Lv.2.Anno", params$step_dir), row.names = FALSE))
+print(knitr::kable(compare_labels(mac.simspec.sample.sct$Lv.2.Anno_by_cluster, mac.simspec.sample.sct$Lv.2.Anno,
+                                  "TAMs: Lv.2.Anno by cluster vs deposited", params$step_dir), row.names = FALSE))
+mac.simspec.sample.sct <- use_deposited_umap(mac.simspec.sample.sct, "stage4_TAM_UMAP")
 saveRDS(mac.simspec.sample.sct, file = file.path(params$step_dir, "mac.only.simspec.RDS"))
 ```
 
 ```{r fig-1c-tam, fig.width=6, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
 mac.col <- c('#c5b0d5', "#442883","#DD51AD",'#17becf')
-DimPlot(mac.simspec.sample.sct, group.by = 'Lv.2.Anno', cols = mac.col)
+DimPlot(mac.simspec.sample.sct, reduction = "umap_css", group.by = 'Lv.2.Anno', cols = mac.col)   # stored original UMAP
 ```
 
 ## Pseudobulk analysis 

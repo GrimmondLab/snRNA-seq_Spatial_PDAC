@@ -1,8 +1,8 @@
 # Container paths. Mount your data to these locations (see README.md).
 # Input: the original post-QC object deposited with the manuscript (26,788 genes x 115,221 cells).
 qc_object: /data/input/qc.dbl.fltrd.sts.sce.RDS
-# The deposited annotated Stage 2 object (also the Stage 3 input). cell_class and simspec_cell_class are read from it by cell ID.
-reference_object: /data/input/sts.simspec_css.sample.sct.RDS
+# The deposited final annotated object (also the input to Stages 3-5). cell_class and simspec_cell_class are read from it by cell ID.
+reference_object: /data/input/sts.simspec_css.sample.sct_final.RDS
 output_dir: /output
 seed: 1234
 workers: 28

@@ -1,8 +1,9 @@
 # Container paths. Mount your data to these locations (see README.md).
-# Input: the annotated integrated object from Stage 2 (with simspec_cell_class), deposited on Zenodo.
-# It is the same object that the original code read as sts.simspec_css.sample.sct.Aug24.RDS.
-integrated_object: /data/input/sts.simspec_css.sample.sct.RDS
+# Input: the deposited final annotated object (Zenodo). It is the integrated Stage 2 object (with simspec_cell_class) that
+# the original code read as sts.simspec_css.sample.sct.Aug24.RDS, with the Stage 3 and 4 labels added; its data are unchanged.
+integrated_object: /data/input/sts.simspec_css.sample.sct_final.RDS
 # Per-cell KRAS mutation calls for the tuft cells, deposited on Zenodo
 tuft_snv_csv: /data/input/tuft.snv.df.csv
 sample_map_csv: /pipeline/shared/sample_map.csv   # shared/sample_map.csv, included in the image
+label_checks: /pipeline/shared/label_checks.R      # shared/label_checks.R, included in the image
 output_dir: /output

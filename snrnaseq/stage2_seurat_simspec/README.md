@@ -25,7 +25,7 @@ Stage 3 starts from the deposited annotated object, not from this rerun.
 | File | Source |
 |---|---|
 | `qc.dbl.fltrd.sts.sce.RDS` | The original post-QC object deposited with the manuscript ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)), 26,788 genes × 115,221 cells. Stage 2 starts from this object rather than from a Stage 1 rerun (see the top-level `README.md`) |
-| `sts.simspec_css.sample.sct.RDS` | The deposited annotated Stage 2 object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)), the source of `cell_class` and `simspec_cell_class`. It is also the Stage 3 input |
+| `sts.simspec_css.sample.sct_final.RDS` | The deposited final annotated object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)), the source of `cell_class` and `simspec_cell_class`. It is the original Stage 2 object with the Stage 3 and 4 labels added; its data, reductions and Stage 2 columns are unchanged. It is also the input to Stages 3–5 |
 
 ## Environment
 
@@ -59,7 +59,7 @@ These shift PCA, UMAP and clustering slightly; see **Cell labels** above.
 
 | Container path | Mount | Mode |
 |---|---|---|
-| `/data/input` | folder containing `qc.dbl.fltrd.sts.sce.RDS` and `sts.simspec_css.sample.sct.RDS` | read-only |
+| `/data/input` | folder containing `qc.dbl.fltrd.sts.sce.RDS` and `sts.simspec_css.sample.sct_final.RDS` | read-only |
 | `/output` | where results go | read-write |
 
 ```bash
@@ -83,7 +83,7 @@ Results are written to `/output/Seurat_sample_based/` and `/output/PDAC_STS_sims
 | `Seurat_sample_based/` | `reference_labels.RDS` | Cell labels and resolution-1.1 clusters from the deposited object; read by the integration step |
 | | `sts.seurat.RDS` | adds `cell_class`, `Cell_Ids`, `S_CB`, `Patient_ID`; input to the integration step |
 | `PDAC_STS_simspec_integration/` | `sts.simspec_css.sample.sct.clustered.RDS` | CSS-integrated object after clustering, before annotation |
-| | `sts.simspec_css.sample.sct.RDS` | CSS-integrated object with `simspec_cell_class`. Stage 3 reads the deposited copy of this file, not the rerun |
+| | `sts.simspec_css.sample.sct.RDS` | CSS-integrated object with `simspec_cell_class`. Compare with the deposited `sts.simspec_css.sample.sct_final.RDS`; Stage 3 reads the deposited object, not this rerun |
 
 ## Changes needed to render the original code
 

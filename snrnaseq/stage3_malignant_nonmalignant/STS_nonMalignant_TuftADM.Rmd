@@ -16,6 +16,8 @@ options(repr.plot.width = 5, repr.plot.height = 4)
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage3.R so that params are passed
+source(cfg$label_checks)   # shared/label_checks.R: labels from the deposited object, agreement with the rerun
+unlink(file.path(params$step_dir, "label_agreement.tsv"))
 ```
 
 # Attach libraries
@@ -30,7 +32,7 @@ library(openxlsx)
 
 # Adding metadata
 ```{r}
-# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; the same object is now named sts.simspec_css.sample.sct.RDS
+# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; now the deposited sts.simspec_css.sample.sct_final.RDS (the same object, with labels added)
 sts.simspec.sct <- readRDS(cfg$integrated_object)
 ```
 
@@ -109,9 +111,12 @@ DotPlot(sts.non.malignant, features = unique(top5$gene)) + RotatedAxis() + scale
 ```
 
 ## Cell assignment 
-```{r}
+`Lv.1.Anno` was assigned to the resolution-0.7 clusters by number in the original analysis. Cluster numbers can change between environments, so `Lv.1.Anno` is read from the deposited object (`stage3_Lv.1.Anno`), matched by cell ID. The original mapping is still applied to the rerun clusters, as `Lv.1.Anno_by_cluster`, and compared with it.
+
+```{r lv1-annotation, fig.width=12, fig.height=10, results='asis'}
 metadata <- sts.non.malignant@meta.data %>% as.data.frame() 
 metadata$S_CB <- rownames(metadata)
+# Original mapping of resolution-0.7 clusters to Lv.1.Anno
 metadata %>% mutate(Lv.1.Anno = case_when(SCT_snn_res.0.7 %in% c("1","19","17","20","27","28") ~ "Myeloid", #check
                                           SCT_snn_res.0.7 %in% c("0","3","25") ~ "CAFs", #check
                                           SCT_snn_res.0.7 == "14" ~ "Pericytes", #check
@@ -131,10 +136,19 @@ metadata %>% mutate(Lv.1.Anno = case_when(SCT_snn_res.0.7 %in% c("1","19","17","
                                           SCT_snn_res.0.7 == "13" ~ "B",
                                           SCT_snn_res.0.7 == "31" ~ "B:GC")) -> metadata
                                           
-metadata %>% group_by(Lv.1.Anno) %>% dplyr::count() %>% print(n=51)
-Lv.1.Anno <- metadata$Lv.1.Anno
-names(Lv.1.Anno) <- metadata$S_CB
-sts.non.malignant <- AddMetaData(object = sts.non.malignant, metadata = Lv.1.Anno, col.name = "Lv.1.Anno")
+stopifnot(identical(metadata$S_CB, colnames(sts.non.malignant)))
+sts.non.malignant$Lv.1.Anno_by_cluster <- metadata$Lv.1.Anno
+
+# Lv.1.Anno from the deposited object
+sts.non.malignant$Lv.1.Anno <- deposited_labels(sts.non.malignant, "stage3_Lv.1.Anno")
+sts.non.malignant@meta.data %>% group_by(Lv.1.Anno) %>% dplyr::count() %>% print(n=51)
+
+print(knitr::kable(compare_clusters(sts.non.malignant$SCT_snn_res.0.7, sts.non.malignant$Lv.1.Anno,
+                                    "Non-malignant: rerun clusters (res 0.7) vs Lv.1.Anno", params$step_dir),
+                   row.names = FALSE))
+print(knitr::kable(compare_labels(sts.non.malignant$Lv.1.Anno_by_cluster, sts.non.malignant$Lv.1.Anno,
+                                  "Non-malignant: Lv.1.Anno by cluster vs deposited", params$step_dir),
+                   row.names = FALSE))
 DimPlot(sts.non.malignant, group.by = "Lv.1.Anno") + DimPlot(sts.non.malignant, group.by = "cell_class")
 ```
 
@@ -228,18 +242,22 @@ tuft.merged <- AddMetaData(object = tuft.merged, metadata = chr12_25245351_G, co
 ```
 
 ## Tuft with CNA in 2221/ICGC_0105
-```{r}
+`Lv.2.Anno` was assigned partly by cluster number in the original analysis: `Tuft.persistent` is tuft clusters 2 and 3 at resolution 0.9, and `Ductal_MUC5B+` is non-malignant clusters 5 and 18 at resolution 0.7. As for `Lv.1.Anno`, it is read from the deposited object (`stage3_Lv.2.Anno`), and the original mapping, applied to the rerun clusters and to `Lv.1.Anno_by_cluster`, is kept as `Lv.2.Anno_by_cluster` and compared with it.
+
+```{r lv2-annotation, fig.width=8, fig.height=6, results='asis'}
+# Original mapping
 # Patient 2221 contain multiple cell types that could be malignant, we confirmed by inferCNV that all tuft have CNAs
 tuft.malignant <- subset(tuft.merged, subset = SCT_snn_res.0.9 %in% c("2","3"))
 tuft.malignant.BC <- tuft.malignant$Cell_Ids %>% as.character() # total 106 cells
 
 # add labelling 
-AD.cells <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.1.Anno == "Acinar" & cell_class == "Ductal_epithelial") %>% pull(Cell_Ids) %>% as.character()
+AD.cells <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.1.Anno_by_cluster == "Acinar" & cell_class == "Ductal_epithelial") %>% pull(Cell_Ids) %>% as.character()
 Muc5b <- sts.non.malignant@meta.data %>% dplyr::filter(SCT_snn_res.0.7 %in% c("5","18")) %>% pull(Cell_Ids) %>% as.character()
 
 # Update STS_non_malignant object
 metadata <- sts.non.malignant@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
+metadata$Lv.1.Anno <- metadata$Lv.1.Anno_by_cluster   # the original mapping builds on the original Lv.1.Anno mapping
 metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% AD.cells ~ "Acinar-Ductal", #344
                                           Lv.1.Anno == "Acinar" ~ "Acinar", 
                                           Lv.1.Anno == "B" ~ "B",
@@ -259,10 +277,20 @@ metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% AD.cells ~ "Acinar-Ducta
                                           Lv.1.Anno == "Schwann" ~ "Schwann",
                                           Cell_Ids %in% tuft.malignant.BC ~ "Tuft.persistent",
                                           Lv.1.Anno == "Tuft" ~ "Tuft")) -> metadata
-metadata %>% group_by(Lv.1.Anno) %>% count(Lv.2.Anno)
-Lv.2.Anno <- metadata$Lv.2.Anno
-names(Lv.2.Anno) <- metadata$S_CB
-sts.non.malignant <- AddMetaData(object = sts.non.malignant, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+stopifnot(identical(metadata$S_CB, colnames(sts.non.malignant)))
+sts.non.malignant$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
+
+# Lv.2.Anno from the deposited object
+sts.non.malignant$Lv.2.Anno <- deposited_labels(sts.non.malignant, "stage3_Lv.2.Anno")
+sts.non.malignant@meta.data %>% group_by(Lv.1.Anno) %>% count(Lv.2.Anno) %>% print(n=51)
+
+tuft.persistent <- deposited_labels(tuft.merged, "stage3_Lv.2.Anno") == "Tuft.persistent"
+print(knitr::kable(compare_clusters(tuft.merged$SCT_snn_res.0.9, ifelse(tuft.persistent, "Tuft.persistent", "Tuft"),
+                                    "Tuft (4 ADM patients): rerun clusters (res 0.9) vs Tuft.persistent", params$step_dir),
+                   row.names = FALSE))
+print(knitr::kable(compare_labels(sts.non.malignant$Lv.2.Anno_by_cluster, sts.non.malignant$Lv.2.Anno,
+                                  "Non-malignant: Lv.2.Anno by cluster vs deposited", params$step_dir),
+                   row.names = FALSE))
 # Saved once, with both Lv.1.Anno and Lv.2.Anno
 saveRDS(sts.non.malignant, file = file.path(params$step_dir, "sts.nonmalignant.RDS"))
 ```

@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+source(cfg$label_checks)   # shared/label_checks.R: labels from the deposited object, agreement with the rerun
+unlink(file.path(params$step_dir, "label_agreement.tsv"))
 ```
 
 # Libraries
@@ -31,7 +33,7 @@ library(here)
 
 # Data loading
 ```{r}
-sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+sts.non.malignant <- read_nonmalignant(cfg$final_object)   # Stage 3 non-malignant cells and labels, from the deposited final object
 sample.high.lymphoid <- as.data.frame(sts.non.malignant@meta.data) %>%
                                   group_by(Sample) %>%
                                   dplyr::count(Lv.1.Anno) %>%
@@ -127,7 +129,9 @@ markers <- FindAllMarkers(lymphoid.simspec_css.sample.sct, logfc.threshold = 0.2
 ```
 
 ## Annotation
-```{r}
+`Lv.2.Anno` was assigned to the resolution-1.2 clusters by number in the original analysis. Cluster numbers can change between environments, so `Lv.2.Anno` is read from the deposited object (`stage4_lymphoid_Lv.2.Anno`), matched by cell ID. The original mapping is still applied to the rerun clusters, as `Lv.2.Anno_by_cluster`, and compared with it. The Fig. 1C UMAP is drawn from the stored coordinates (`stage4_lymphoid_UMAP_1`, `_2`); the rerun UMAP is kept as `umap_css_rerun`.
+
+```{r lymphoid-annotation, fig.width=8, fig.height=6, results='asis'}
 lymphoid.col <- c("#E1DF5F","#E27258", "darkgreen","#FDB462",
                   "#82CCDE","#778CD3","#B8C9E4" ,
                   "#C8AF7C","#DF649A",
@@ -154,18 +158,25 @@ metadata %>% mutate(Lv.2.Anno = case_when(SCT_snn_res.1.2 == "0" ~ "B",
                                           SCT_snn_res.1.2 == "19" ~ "B:GC", #checked
                                           TRUE ~ "CD3+ T"
                                           )) -> metadata
-metadata %>% group_by(SCT_snn_res.0.7) %>% count(Lv.2.Anno)
-Lv.2.Anno <- metadata$Lv.2.Anno 
-names(Lv.2.Anno) <- metadata$S_CB
-lymphoid.simspec_css.sample.sct <- AddMetaData(object = lymphoid.simspec_css.sample.sct, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
-DimPlot(lymphoid.simspec_css.sample.sct, group.by = "SCT_snn_res.1.2", label = T) + 
-  DimPlot(lymphoid.simspec_css.sample.sct, group.by = "Lv.2.Anno", label = T, cols = lymphoid.color)
+stopifnot(identical(metadata$S_CB, colnames(lymphoid.simspec_css.sample.sct)))
+lymphoid.simspec_css.sample.sct$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
+
+# Lv.2.Anno and the Fig. 1C UMAP from the deposited object
+lymphoid.simspec_css.sample.sct$Lv.2.Anno <- deposited_labels(lymphoid.simspec_css.sample.sct, "stage4_lymphoid_Lv.2.Anno")
+lymphoid.simspec_css.sample.sct@meta.data %>% group_by(SCT_snn_res.0.7) %>% count(Lv.2.Anno)
+print(knitr::kable(compare_clusters(lymphoid.simspec_css.sample.sct$SCT_snn_res.1.2, lymphoid.simspec_css.sample.sct$Lv.2.Anno,
+                                    "Lymphoid: rerun clusters (res 1.2) vs Lv.2.Anno", params$step_dir), row.names = FALSE))
+print(knitr::kable(compare_labels(lymphoid.simspec_css.sample.sct$Lv.2.Anno_by_cluster, lymphoid.simspec_css.sample.sct$Lv.2.Anno,
+                                  "Lymphoid: Lv.2.Anno by cluster vs deposited", params$step_dir), row.names = FALSE))
+lymphoid.simspec_css.sample.sct <- use_deposited_umap(lymphoid.simspec_css.sample.sct, "stage4_lymphoid_UMAP")
+DimPlot(lymphoid.simspec_css.sample.sct, reduction = "umap_css_rerun", group.by = "SCT_snn_res.1.2", label = T) + 
+  DimPlot(lymphoid.simspec_css.sample.sct, reduction = "umap_css", group.by = "Lv.2.Anno", label = T, cols = lymphoid.color)
 saveRDS(lymphoid.simspec_css.sample.sct, file = file.path(params$step_dir, "lymphoid.simspec.RDS"))
 ```
 
 # PLOTTING
 ```{r fig-1c-lymphoid, fig.width=7, fig.height=7, dpi=300, message=FALSE, warning=FALSE}
-DimPlot(lymphoid.simspec_css.sample.sct, cols = lymphoid.color, group.by = 'Lv.2.Anno')
+DimPlot(lymphoid.simspec_css.sample.sct, reduction = "umap_css", cols = lymphoid.color, group.by = 'Lv.2.Anno')   # stored original UMAP
 ```
 
 # PSEUDOBULK

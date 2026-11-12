@@ -14,6 +14,8 @@ knitr::opts_chunk$set(dev=c('png', 'pdf'), fig.width=16, fig.height=8)
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+source(cfg$label_checks)   # shared/label_checks.R: labels from the deposited object, agreement with the rerun
+unlink(file.path(params$step_dir, "label_agreement.tsv"))
 ```
 
 # Installing packages
@@ -63,7 +65,7 @@ endo <- readRDS(file.path(params$out_root, "STS_stromal_CAF_reclustering", "endo
 endothelial <- endo@meta.data %>% dplyr::filter(cell_names %in% c("Endothelial:Angiogenic tip cells","Endothelial:reactive EndMT","Endothelial:Stalk-like","Endothelial:Tip-like")) %>% pull(Cell_Ids)
 LEC <-  endo@meta.data %>% dplyr::filter(cell_names == "Lymphatic endothelial") %>% pull(Cell_Ids)
 
-sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+sts.non.malignant <- read_nonmalignant(cfg$final_object)   # Stage 3 non-malignant cells and labels, from the deposited final object
 acinar <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Acinar") %>% pull(Cell_Ids)
 adm <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Acinar-Ductal") %>% pull(Cell_Ids)
 ductal <- sts.non.malignant@meta.data %>% dplyr::filter(Lv.2.Anno == "Ductal epithelial") %>% pull(Cell_Ids)
@@ -85,8 +87,10 @@ vSMC <- fib.only@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "Vascular smoot
 
 # Assign Lv.2.Anno into sts.object
 ```{r}
-# Originally read as sts.simspec_css.sample.sct_fullworkflow.RDS
-sts.simspec_css.sample.sct <- readRDS(cfg$integrated_object)
+# Originally read as sts.simspec_css.sample.sct_fullworkflow.RDS. Now the deposited final object, which is that object with
+# the labels added; Lv.1.Anno and Lv.2.Anno are rebuilt below and checked against the deposited ones.
+sts.simspec_css.sample.sct <- readRDS(cfg$final_object)
+deposited_final <- sts.simspec_css.sample.sct@meta.data[, c("Lv.1.Anno", "Lv.2.Anno")]
 metadata <- sts.simspec_css.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
 metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% MYO ~ "CAFs_MYO", 
@@ -140,6 +144,9 @@ metadata %>% group_by(Lv.2.Anno) %>% count(Lv.2.Anno) %>% print(n=45)
 Lv.2.Anno <- metadata$Lv.2.Anno 
 names(Lv.2.Anno) <- metadata$Lv.2.Anno
 sts.simspec_css.sample.sct <- AddMetaData(object = sts.simspec_css.sample.sct, metadata = Lv.2.Anno, col.name = "Lv.2.Anno")
+# Rebuilt from the Stage 4 subset labels, which come from the deposited object: expected to match the deposited Lv.2.Anno exactly
+print(knitr::kable(compare_labels(sts.simspec_css.sample.sct$Lv.2.Anno, deposited_final$Lv.2.Anno,
+                                  "Final Lv.2.Anno: rebuilt vs deposited", params$step_dir), row.names = FALSE))
 ```
 
 ## Lv.1.Anno
@@ -178,6 +185,8 @@ Lv.1.Anno <- metadata$Lv.1.Anno
 names(Lv.1.Anno) <- metadata$Cell_Ids
 stopifnot(identical(names(Lv.1.Anno), colnames(sts.simspec_css.sample.sct)))
 sts.simspec_css.sample.sct <- AddMetaData(object = sts.simspec_css.sample.sct, metadata = Lv.1.Anno, col.name = "Lv.1.Anno")
+print(knitr::kable(compare_labels(sts.simspec_css.sample.sct$Lv.1.Anno, deposited_final$Lv.1.Anno,
+                                  "Final Lv.1.Anno: rebuilt vs deposited", params$step_dir), row.names = FALSE))
 DimPlot(sts.simspec_css.sample.sct, group.by = "Lv.1.Anno", raster =F, label = T) + DimPlot(sts.simspec_css.sample.sct, group.by = "simspec_cell_class", raster = F, label = T)
 ```
 

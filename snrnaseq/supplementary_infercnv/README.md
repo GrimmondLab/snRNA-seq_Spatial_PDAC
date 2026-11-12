@@ -87,7 +87,7 @@ The original code, with one section per sample, is kept unchanged in `original/I
 
 | File | Source |
 |---|---|
-| `sts.simspec_css.sample.sct.RDS` | annotated integrated object from Stage 2, with `simspec_cell_class` (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)); mounted at run time |
+| `sts.simspec_css.sample.sct_final.RDS` | final annotated object: the integrated Stage 2 object, with `simspec_cell_class` and the later labels (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)); mounted at run time |
 | `gene_positions.txt` | gene positions (36,590 genes), included in this folder and in the image |
 
 `gene_positions.txt` was made once from the 10x Genomics GRCh38 reference GTF (`refdata-gex-GRCh38-2020-A`, `genes.gtf`) with inferCNV's [`gtf_to_position_file.py`](https://github.com/broadinstitute/infercnv/blob/master/scripts/gtf_to_position_file.py):
@@ -119,11 +119,11 @@ The image build saves the env's own `sessionInfo()` to `/pipeline/sessionInfo/in
 
 ## Running
 
-Use the project image (see the top-level `README.md` to build or pull it). Mount the folder containing `sts.simspec_css.sample.sct.RDS` at `/data/input` (read-only) and an output folder at `/output`:
+Use the project image (see the top-level `README.md` to build or pull it). Mount the folder containing `sts.simspec_css.sample.sct_final.RDS` at `/data/input` (read-only) and an output folder at `/output`:
 
 | Container path | Mount | Mode |
 |---|---|---|
-| `/data/input` | folder containing `sts.simspec_css.sample.sct.RDS` | read-only |
+| `/data/input` | folder containing `sts.simspec_css.sample.sct_final.RDS` | read-only |
 | `/output` | where results go | read-write |
 
 ```bash

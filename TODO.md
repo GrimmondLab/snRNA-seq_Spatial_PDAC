@@ -61,7 +61,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Write a Spartan Slurm script, based on `snrnaseq/stage2_seurat_simspec/stage2_spartan.slurm`.
 - [ ] Run from the deposited Stage 2 annotated object and `tuft.snv.df.csv`. This doesn't depend on the Stage 2 rerun, so it can start alongside those checks.
 - [ ] `STS_Malignant.Rmd` should find 6 clusters at resolution 0.1 (it stops otherwise).
-- [ ] Cross-tabulate `Lv.1.Anno`, `Lv.2.Anno` and `Tuft.persistent` in `sts.nonmalignant.RDS` against the original object per cell. They are assigned by cluster number, so renumbered clusters would mislabel cells.
+- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in both output folders and record the agreement (ARI, % same label) in the Stage 3 README. Labels no longer depend on cluster numbers; the table shows how closely the rerun clusters reproduce them.
 - [ ] Compare Extended Data Fig. 1C–E and 4A/C/G/H, and Supplementary Table 3, with the manuscript.
 
 ## 3. Spatial (Python): Stage 1 added, Stages 2 and 3 waiting on inputs
@@ -137,7 +137,8 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [x] **Keep one `sample_map.csv`.** The Stage 0 copy is removed, and its README points at `shared/`.
 
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
-- [ ] Cross-tabulate `Lv.2.Anno` in each saved object against the original objects per cell. They are assigned by cluster number.
+- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in each output folder: `Plotting/` should show 100% for the rebuilt final `Lv.1.Anno` and `Lv.2.Anno`. Record the agreement of the rerun clusters in the Stage 4 README.
+- [ ] Compare Fig. 1C and Extended Data Fig. 5A–B (now on the stored UMAPs) with the published panels.
 - [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
@@ -149,10 +150,11 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 ## 5. Before submission
 - [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.
 - [x] Annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) uploaded to 10.5281/zenodo.23933322. The DOI did not resolve on 2026-11-09 (doi.org returned 404); check the record is published.
+- [x] Removed `sts.simspec_css.sample.sct.RDS` from the Zenodo record (2026-11-13). Checked on 2026-11-13: the new final object has the same cells, assays, reductions and columns, plus the 14 added ones; only `Lv.2.Anno` differs (the TAM rename). It already had `Lv.1.Anno`, `Lv.2.Anno` and `ICGC_ID`. Stages 2, 3, 4 and inferCNV now read the final object.
 - [ ] After the snRNA-seq and Xenium record is published, check its DOIs. The repository cites 10.5281/zenodo.23933322 (30 places, 9 files), taken to be the concept DOI, which opens the latest version; the version DOI given for the record is 10.5281/zenodo.23933323. Neither resolved on 2026-11-11. Once published, check that 23933322 opens the record, and update the links if it doesn't. The MIBI links use that record's version DOI (10.5281/zenodo.23996821; concept DOI 23996820).
-- [ ] Rerun `snrnaseq/stage4_reclustering/add_labels_to_final_object.R` on the original objects (set the paths at the top) and deposit the object it writes as `sts.simspec_css.sample.sct_final.RDS`. The first run (2026-11-12) checked out (lymphoid 100%, TAM 84.58%, CAF 98.91% the same as the final `Lv.2.Anno`; every difference a renamed label), but showed that the final object says `TAMs_HLA+`, renamed by hand, where the manuscript and the code say `TAMs_MHC_II`. The script now renames it back; check that it prints "Renamed in Lv.2.Anno: 894 cells" and TAM 100%.
-- [ ] Then change Stages 3 and 4 to read their labels from the deposited final object by cell ID, as Stage 2 does: keep each original cluster-to-label mapping as a check, report agreement (ARI, % same label, heatmap), and plot Fig. 1C from the stored subset UMAPs. Once done, `sts.nonmalignant.RDS` is needed only for comparison.
-- [ ] Deposit on Zenodo, and replace every remaining **DOI_TBD**: `sts.nonmalignant.RDS` (Stage 3 output, input to Stage 4) and `sts.simspec_css.sample.sct_final.RDS` (Stage 4 output, input to Stage 5).
+- [x] Rerun `snrnaseq/stage4_reclustering/add_labels_to_final_object.R` on the original objects (set the paths at the top) and deposit the object it writes as `sts.simspec_css.sample.sct_final.RDS`. The first run (2026-11-12) checked out (lymphoid 100%, TAM 84.58%, CAF 98.91% the same as the final `Lv.2.Anno`; every difference a renamed label), but showed that the final object says `TAMs_HLA+`, renamed by hand, where the manuscript and the code say `TAMs_MHC_II`. The script now renames it back; check that it prints "Renamed in Lv.2.Anno: 894 cells" and TAM 100%.
+- [x] Stages 3 and 4 read their labels from the deposited final object by cell ID (`shared/label_checks.R`), keep each original cluster mapping as a `_by_cluster` column, report agreement in `label_agreement.tsv`, and plot Fig. 1C from the stored UMAPs. Stage 4 now reads the final object instead of `sts.nonmalignant.RDS`. Not run yet (2026-11-13): the image needs rebuilding.
+- [x] Uploaded `sts.simspec_css.sample.sct_final.RDS` to 10.5281/zenodo.23933322 (2026-11-13; 8.77 GB, md5 5996b8bfd886974b46dc3d39cb6c5428). The record now holds 5 files, with checksums in `README.md` ("Data"). `sts.nonmalignant.RDS` no longer needs depositing: no stage reads it.
 - [ ] Deposit the original inferCNV output for sample 2215 (`P2215.out`), the record for the 84 excluded cells, and fill in DOI_TBD in `snrnaseq/supplementary_infercnv/README.md`. Consider also `P2221.lv2anno.out` (Extended Data Fig. 4F).
 - [x] Extended Data Fig. 1B (sample 2992, PURPLE WGS) and 4F (patient 2221 by `Lv.2.Anno`) recorded in `snrnaseq/supplementary_infercnv/original/InferCNV_extended_data_figures.R`.
 - [x] inferCNV heatmaps for 2992, 2215 and 2221 by `Lv.2.Anno` added to `snrnaseq/supplementary_infercnv/figures/` and shown in its README (the WGS plot is left out).

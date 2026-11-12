@@ -1,6 +1,6 @@
 # Container paths. Mount your data to these locations (see README.md).
-# Input: the annotated integrated object from Stage 2 (with simspec_cell_class).
-integrated_object: /data/input/sts.simspec_css.sample.sct.RDS
+# Input: the deposited final annotated object (the integrated Stage 2 object, with simspec_cell_class and the labels added).
+integrated_object: /data/input/sts.simspec_css.sample.sct_final.RDS
 gene_order_file: gene_positions.txt   # included in the image
 samples_csv: infercnv_samples.csv
 output_dir: /output

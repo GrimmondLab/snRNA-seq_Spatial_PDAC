@@ -38,12 +38,12 @@ The `spatial` env uses Python 3.9. The packages the notebooks import, and the sc
 |---|---|---|---|---|
 | 0. Cell Ranger + CellBender | `snrnaseq/stage0_cellranger_cellbender/` | — (documentation only) | FASTQ | Record only |
 | 1. Doublet removal + fixed QC thresholds | `snrnaseq/stage1_doublet_qc/` | `snrnaseq` | CellBender output: from GEO ([GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918)), or the original local folders for the reproducibility test | Ready |
-| 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)); cell labels from the deposited annotated Stage 2 object | Ready |
-| 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Annotated integrated object from Stage 2 (`sts.simspec_css.sample.sct.RDS`) + `tuft.snv.df.csv` ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | Ready |
-| 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` | `sts.nonmalignant.RDS` from Stage 3, Stage 2 annotated object | Ready |
-| 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | `sts.simspec_css.sample.sct_final.RDS` from Stage 4 | Ready |
+| 2. Seurat processing + Simspec integration | `snrnaseq/stage2_seurat_simspec/` | `snrnaseq` | Deposited post-QC object ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)); cell labels from the deposited final annotated object | Ready |
+| 3. Malignant vs non-malignant (incl. rare malignancies, tuft, ADM) | `snrnaseq/stage3_malignant_nonmalignant/` | `downstream` | Deposited final annotated object (`sts.simspec_css.sample.sct_final.RDS`) + `tuft.snv.df.csv` ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) | Ready |
+| 4. Reclustering (lymphoid, myeloid, stromal) + final annotation and plots | `snrnaseq/stage4_reclustering/` | `downstream` Deposited final annotated object | Ready |
+| 5. CellChat | `snrnaseq/stage5_cellchat/` | `cellchat` | Deposited final annotated object (`sts.simspec_css.sample.sct_final.RDS`), as made by Stage 4 | Ready |
 
-**Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. It also identified the 84 cells of sample 2215 that Stage 3 excludes from the malignant analysis; their IDs are written into the code, so no later stage reruns inferCNV. Input: the Stage 2 annotated object + `gene_positions.txt` (included).
+**Supplementary: inferCNV** (`snrnaseq/supplementary_infercnv/`, env `infercnv`, `run.sh infercnv`). A check that the cells annotated as malignant in Stage 2 show copy-number changes. It also identified the 84 cells of sample 2215 that Stage 3 excludes from the malignant analysis; their IDs are written into the code, so no later stage reruns inferCNV. Input: the deposited final annotated object + `gene_positions.txt` (included).
 
 **Supplementary: per-sample QC** (`snrnaseq/supplementary_qc/`, documentation only). How the per-sample QC tables and plots requested in review were made, from the annotated object and the Cell Ranger output. It adds to Stages 0 and 1.
 
@@ -68,12 +68,21 @@ All three use the env `spatial`. Each stage folder has a `config.yml` with the c
 | Data | Where |
 |---|---|
 | snRNA-seq CellBender output (`<sample>_cellbender_filtered.h5` and 10x matrix files) | GEO [GSE282918](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282918) |
-| Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`), annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
-| Other analysis objects that later stages start from (Stage 3 non-malignant object, final annotated object) | Zenodo, **DOI_TBD** |
+| Post-QC object (`qc.dbl.fltrd.sts.sce.RDS`), final annotated object (`sts.simspec_css.sample.sct_final.RDS`) and KRAS calls per tuft cell (`tuft.snv.df.csv`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Spatial (Xenium) data, PDAC | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
 | Spatial (Xenium) data, TNBC (TLS comparison in Stage 3) | GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886) |
 | Spatial (Xenium) processed objects, 16 PDAC samples (`Xenium_480.tar`, `Xenium_314.tar`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected.csv`) | Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) |
+
+Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322), with the MD5 checksums Zenodo shows. Check a download with `md5sum <file>` (Linux) or `md5 <file>` (macOS).
+
+| File | Size | MD5 | Used by |
+|---|---|---|---|
+| `qc.dbl.fltrd.sts.sce.RDS` | 511.87 MB | `ed3332de67d0bab32d9cd2d9c4d773fb` | snRNA-seq Stage 2 |
+| `sts.simspec_css.sample.sct_final.RDS` | 8.77 GB | `5996b8bfd886974b46dc3d39cb6c5428` | snRNA-seq Stages 2–5, inferCNV |
+| `tuft.snv.df.csv` | 2.11 MB | `e0217adfd5bb07c3bc1b2ecb72ccf327` | snRNA-seq Stage 3 |
+| `Xenium_480.tar` | 9.37 GB | `a50f0c7960b6c8c6bdfecaeba23154df` | Spatial Stage 1 |
+| `Xenium_314.tar` | 5.16 GB | `25f86f3e61d23400894b8c54c5e3d10b` | Spatial Stage 1 |
 
 ## Build
 

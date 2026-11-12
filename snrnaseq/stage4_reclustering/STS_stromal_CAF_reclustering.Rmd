@@ -16,6 +16,8 @@ knitr::opts_chunk$set(fig.width=16, fig.height=8, dev=c('png', 'pdf'),
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
+source(cfg$label_checks)   # shared/label_checks.R: labels from the deposited object, agreement with the rerun
+unlink(file.path(params$step_dir, "label_agreement.tsv"))
 ```
 
 # Packages
@@ -36,7 +38,7 @@ library(SingleR)
 ```{r}
 # this object was generated based on re-running all the QC, sample-based analysis, non-malignant components were processed using non-integrative approach 
 # this approach define small and rare cell classes that would be otherwise clustered with CAFs, eg. FRCs, Schwann and FDCs
-sts.non.malignant <- readRDS(cfg$nonmalignant_object)
+sts.non.malignant <- read_nonmalignant(cfg$final_object)   # Stage 3 non-malignant cells and labels, from the deposited final object
 ```
 
 # STROMAL CLASSES
@@ -223,7 +225,9 @@ saveRDS(fib.only.simspec_css.sample.sct, file = file.path(params$step_dir, "fib.
 ```
 
 ## DE analysis 
-```{r}
+`Lv.2.Anno_subset` was assigned to the resolution-0.1 CAF clusters by number in the original analysis. Cluster numbers can change between environments, so it is read from the deposited object (`stage4_CAF_Lv.2.Anno_subset`), matched by cell ID. The original mapping is still applied to the rerun clusters, as `Lv.2.Anno_subset_by_cluster`, and compared with it. The UMAP plots of the CAFs (Fig. 1C, Extended Data Fig. 5A and 5B) use the stored coordinates (`stage4_CAF_UMAP_1`, `_2`); the rerun UMAP is kept as `umap_css_rerun`.
+
+```{r caf-annotation, fig.width=8, fig.height=6, results='asis'}
 ## Assign CAF clustering
 fib.only.simspec_css.sample.sct$seurat_clusters <- NULL
 fib.only.simspec_css.sample.sct$seurat_clusters <- fib.only.simspec_css.sample.sct$SCT_snn_res.0.1
@@ -235,10 +239,17 @@ metadata %>% mutate(Lv.2.Anno_subset = case_when(SCT_snn_res.0.1 %in% c("0","2")
                                           SCT_snn_res.0.1 == "3" ~ "CAFs_CXCL14+",
                                           SCT_snn_res.0.1 == "1" ~ "CAFs_NRT", 
                                           )) -> metadata
-metadata %>% group_by(SCT_snn_res.0.1) %>% dplyr::count(Lv.2.Anno_subset)
-Lv.2.Anno_subset <- metadata$Lv.2.Anno_subset 
-names(Lv.2.Anno_subset) <- metadata$S_CB
-fib.only.simspec_css.sample.sct <- AddMetaData(fib.only.simspec_css.sample.sct, metadata = Lv.2.Anno_subset, col.name = "Lv.2.Anno_subset")
+stopifnot(identical(metadata$S_CB, colnames(fib.only.simspec_css.sample.sct)))
+fib.only.simspec_css.sample.sct$Lv.2.Anno_subset_by_cluster <- metadata$Lv.2.Anno_subset
+
+# Lv.2.Anno_subset and the UMAP from the deposited object
+fib.only.simspec_css.sample.sct$Lv.2.Anno_subset <- deposited_labels(fib.only.simspec_css.sample.sct, "stage4_CAF_Lv.2.Anno_subset")
+fib.only.simspec_css.sample.sct@meta.data %>% group_by(SCT_snn_res.0.1) %>% dplyr::count(Lv.2.Anno_subset)
+print(knitr::kable(compare_clusters(fib.only.simspec_css.sample.sct$SCT_snn_res.0.1, fib.only.simspec_css.sample.sct$Lv.2.Anno_subset,
+                                    "CAFs: rerun clusters (res 0.1) vs Lv.2.Anno_subset", params$step_dir), row.names = FALSE))
+print(knitr::kable(compare_labels(fib.only.simspec_css.sample.sct$Lv.2.Anno_subset_by_cluster, fib.only.simspec_css.sample.sct$Lv.2.Anno_subset,
+                                  "CAFs: Lv.2.Anno_subset by cluster vs deposited", params$step_dir), row.names = FALSE))
+fib.only.simspec_css.sample.sct <- use_deposited_umap(fib.only.simspec_css.sample.sct, "stage4_CAF_UMAP")
 saveRDS(fib.only.simspec_css.sample.sct, file = file.path(params$step_dir, "fib.only.simspec.RDS"))
 
 #DE analysis on these CAF subsets 
@@ -403,7 +414,7 @@ FeaturePlot(fib.only.simspec_css.sample.sct, features = c("PDGFRA","CXCL14","COL
 caf <- fib.only.simspec_css.sample.sct %>% subset(Lv.2.Anno_subset == "Vascular smooth muscle", invert=T)
 caf.col <- c('#FFE5A7',"#B4584D",'#FFB0A7') 
 caf.color <- setNames(object = caf.col, nm=c("CAFs_MYO", "CAFs_NRT","CAFs_CXCL14+")) 
-DimPlot(caf, cols = caf.color)
+DimPlot(caf, reduction = "umap_css", group.by = "Lv.2.Anno_subset", cols = caf.color)   # stored original UMAP; the original code coloured by the cell identities (the res-0.1 clusters)
 ```
 
 ### IL6+ iCAF signature across fibroblast-like cells
@@ -757,7 +768,10 @@ clustree::clustree(endo)  #most stable at resolution = 0.2, 0.4, 0.7, 0.8
 ```
 
 # Assigning cluster name
-```{r fig.width=10, fig.height=4, message=FALSE}
+`cell_names` was assigned to the resolution-0.4 clusters by number in the original analysis. It is read from the deposited object (`stage4_endothelial_cell_names`), matched by cell ID; the original mapping is kept as `cell_names_by_cluster` and compared with it.
+
+```{r endothelial-annotation, fig.width=8, fig.height=6, message=FALSE, results='asis'}
+# Original mapping
 metadata <- endo@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
 metadata %>% mutate(cell_names = case_when(#integrated_snn_res.0.8 == "0" ~ "Endothelial",
@@ -766,10 +780,16 @@ metadata %>% mutate(cell_names = case_when(#integrated_snn_res.0.8 == "0" ~ "End
                                            integrated_snn_res.0.4 == "4" ~ "Endothelial:reactive EndMT",#checked and/or antigen-presenting endothelial
                                            integrated_snn_res.0.4 == "2" ~ "Endothelial:Stalk-like", #checked
                                            TRUE ~ "Endothelial:Tip-like")) -> metadata
-metadata %>% group_by(integrated_snn_res.0.4) %>% count(cell_names)
-cell_names <- metadata$cell_names
-names(cell_names) <- metadata$S_CB
-endo <- AddMetaData(object = endo, metadata = cell_names, col.name = "cell_names")
+stopifnot(identical(metadata$S_CB, colnames(endo)))
+endo$cell_names_by_cluster <- metadata$cell_names
+
+# cell_names from the deposited object
+endo$cell_names <- deposited_labels(endo, "stage4_endothelial_cell_names")
+endo@meta.data %>% group_by(integrated_snn_res.0.4) %>% count(cell_names)
+print(knitr::kable(compare_clusters(endo$integrated_snn_res.0.4, endo$cell_names,
+                                    "Endothelial: rerun clusters (res 0.4) vs cell_names", params$step_dir), row.names = FALSE))
+print(knitr::kable(compare_labels(endo$cell_names_by_cluster, endo$cell_names,
+                                  "Endothelial: cell_names by cluster vs deposited", params$step_dir), row.names = FALSE))
 saveRDS(endo, file = file.path(params$step_dir, "endo.RDS"))
 ```
 

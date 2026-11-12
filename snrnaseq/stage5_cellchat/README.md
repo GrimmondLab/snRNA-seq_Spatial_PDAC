@@ -25,7 +25,7 @@ Figures are shown in the HTML report and also saved as PNG and PDF files, named 
 
 | File | Source |
 |---|---|
-| `sts.simspec_css.sample.sct_final.RDS` | Final annotated object from Stage 4 (deposited, **DOI_TBD**) |
+| `sts.simspec_css.sample.sct_final.RDS` | Final annotated object from Stage 4 (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) |
 
 ## Environment
 

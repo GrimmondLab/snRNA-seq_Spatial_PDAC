@@ -16,6 +16,8 @@ options(repr.plot.width = 5, repr.plot.height = 4)
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage3.R so that params are passed
+source(cfg$label_checks)   # shared/label_checks.R: labels from the deposited object, agreement with the rerun
+unlink(file.path(params$step_dir, "label_agreement.tsv"))
 ```
 
 # Attach libraries
@@ -33,7 +35,7 @@ library(openxlsx)
 # this object is repeated analysis performed in August 2024. Final run to ensure everything is the same 
 # Using Fer's codes, removing samples without malignant cells and IPMN samples not belonged to APGI cohort
 # Object was annotated using simspec integration approach on sample-based 
-# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; the same object is now named sts.simspec_css.sample.sct.RDS
+# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; now the deposited sts.simspec_css.sample.sct_final.RDS (the same object, with labels added)
 sts.simspec.sct <- readRDS(cfg$integrated_object)
 ```
 
@@ -126,6 +128,24 @@ sts.malignant.simspec <- FindNeighbors(sts.malignant.simspec, reduction="css",
 sts.malignant.simspec <- FindClusters(sts.malignant.simspec, algorithm = 3, resolution = 0.1)
 ```
 
+## Malignant clusters from the deposited object
+The pseudobulk analysis below uses the 6 malignant clusters at resolution 0.1. Cluster numbers can change between environments, so the clusters are read from the deposited object (`stage3_malignant_SCT_snn_res.0.1`, the original clusters), matched by cell ID. The rerun clusters are compared with them here.
+
+```{r malignant-clusters, fig.width=8, fig.height=6, results='asis'}
+deposited_clusters <- deposited_labels(sts.malignant.simspec, "stage3_malignant_SCT_snn_res.0.1")
+rerun_clusters <- as.character(sts.malignant.simspec$SCT_snn_res.0.1)
+
+print(knitr::kable(compare_clusters(rerun_clusters, deposited_clusters,
+                                    "Malignant: rerun clusters (res 0.1) vs original clusters", params$step_dir),
+                   row.names = FALSE))
+print(knitr::kable(compare_labels(rerun_clusters, deposited_clusters,
+                                  "Malignant: rerun cluster numbers vs original cluster numbers", params$step_dir),
+                   row.names = FALSE))
+
+sts.malignant.simspec$rerun_SCT_snn_res.0.1 <- rerun_clusters
+sts.malignant.simspec$SCT_snn_res.0.1 <- factor(deposited_clusters, levels = sort(unique(as.numeric(deposited_clusters))))
+```
+
 ## DE analysis to define malignant programs (MPs) - Pseudobulk using edgeR
 ```{r}
 #Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
@@ -133,7 +153,7 @@ DefaultAssay(sts.malignant.simspec) <- "RNA"
 
 MP <- sts.malignant.simspec
 MP$seurat_clusters <- NULL
-MP$seurat_clusters <- MP$SCT_snn_res.0.1
+MP$seurat_clusters <- MP$SCT_snn_res.0.1   # the original clusters, from the deposited object (chunk malignant-clusters)
 MP$seurat_clusters <- as.factor(as.numeric(as.character(MP$seurat_clusters)) + 1)
 ClusterSub <- as.factor(MP@meta.data$seurat_clusters) #number of clusters
 PatClust <- paste(MP$Patient_ID, ClusterSub, sep = "_Clst") #labelling each cell with Sample#_Cls#

@@ -6,7 +6,7 @@ cfg_file <- if (length(args) >= 1) args[1] else "config.yml"
 
 cfg      <- yaml::read_yaml(cfg_file)
 out_root <- normalizePath(cfg$output_dir, mustWork = FALSE)
-# The two Rmds are independent: both start from the Stage 2 annotated object
+# The two Rmds are independent: both start from the deposited final annotated object
 steps    <- c("STS_Malignant.Rmd", "STS_nonMalignant_TuftADM.Rmd")
 
 for (s in steps) {

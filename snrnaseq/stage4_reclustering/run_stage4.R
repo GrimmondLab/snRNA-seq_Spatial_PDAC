@@ -6,7 +6,7 @@ cfg_file <- if (length(args) >= 1) args[1] else "config.yml"
 
 cfg      <- yaml::read_yaml(cfg_file)
 out_root <- normalizePath(cfg$output_dir, mustWork = FALSE)
-# The three reclustering Rmds start from the Stage 3 non-malignant object and do not depend on each other;
+# The three reclustering Rmds start from the non-malignant cells of the deposited final object and do not depend on each other;
 # Plotting.Rmd reads what they save, so it runs last
 steps    <- c("STS_Lymphoid_TNK.Rmd", "STS_Myeloid_Mast_DCs.Rmd",
               "STS_stromal_CAF_reclustering.Rmd", "Plotting.Rmd")

@@ -250,5 +250,5 @@ marker.sets <- list(Malignant_PDAC = c("KRT19","MUC1","KRT17","ACTN4","LMO7"),
                     Macrophages = c("CSF1R","SIGLEC1", "CD163", "MS4A6A"))
 
 DotPlot(sts.simspec_css.sample.sct, features = marker.sets, group.by = "simspec_cell_class")  + RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high = "darkred") # r
-saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.RDS"))  # annotated object: input to Stage 3
+saveRDS(sts.simspec_css.sample.sct, file = file.path(params$step_dir, "sts.simspec_css.sample.sct.RDS"))  # rerun of the annotated object; Stage 3 reads the deposited final object
 ```
