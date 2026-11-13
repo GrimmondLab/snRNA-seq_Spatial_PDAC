@@ -342,6 +342,10 @@ mac.col <- c('#c5b0d5', "#442883","#DD51AD",'#17becf')
 DimPlot(mac.simspec.sample.sct, reduction = "umap_css", group.by = 'Lv.2.Anno', cols = mac.col)   # stored original UMAP
 ```
 
+```{r fig-1c-tam-rerun-vs-deposited, fig.width=12, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+plot_rerun_vs_deposited(mac.simspec.sample.sct, "Lv.2.Anno", mac.col)
+```
+
 ## Pseudobulk analysis 
 ### by 4 TAMs subtypes
 ```{r}

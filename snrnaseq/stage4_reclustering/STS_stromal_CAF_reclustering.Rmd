@@ -417,6 +417,10 @@ caf.color <- setNames(object = caf.col, nm=c("CAFs_MYO", "CAFs_NRT","CAFs_CXCL14
 DimPlot(caf, reduction = "umap_css", group.by = "Lv.2.Anno_subset", cols = caf.color)   # stored original UMAP; the original code coloured by the cell identities (the res-0.1 clusters)
 ```
 
+```{r fig-1c-caf-rerun-vs-deposited, fig.width=10, fig.height=5, dpi=300, message=FALSE, warning=FALSE}
+plot_rerun_vs_deposited(caf, "Lv.2.Anno_subset", caf.color)
+```
+
 ### IL6+ iCAF signature across fibroblast-like cells
 ```{r ext-data-fig-8e-icaf-signature, fig.width=12, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
 # Tuvenson's CAF program

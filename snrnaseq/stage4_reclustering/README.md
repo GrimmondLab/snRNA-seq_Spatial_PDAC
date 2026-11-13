@@ -22,7 +22,7 @@ Figure names are taken from the chunk labels.
 | Output | File | Chunk |
 |---|---|---|
 | Fig. 1B | `Plotting.Rmd` | `fig1b-snrnaseq-umap`, `fig1b-snrnaseq-cellularcomposition` |
-| Fig. 1C | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd` | `fig-1c-lymphoid`, `fig-1c-tam`, `fig-1c-caf` |
+| Fig. 1C | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd` | `fig-1c-lymphoid`, `fig-1c-tam`, `fig-1c-caf` (on the stored UMAPs); `fig-1c-*-rerun-vs-deposited` show the rerun UMAP next to the stored one, coloured by the same labels |
 | Extended Data Fig. 1A | `Plotting.Rmd` | `ext-data-fig1a-snrnaseq-gex` |
 | Extended Data Fig. 2A | `Plotting.Rmd` | `ext-data-fig2a-snrnaseq-gex` |
 | Extended Data Fig. 5A | `STS_stromal_CAF_reclustering.Rmd` | `ext-data-fig-5a-Baron`, `ext-data-fig-5a-Elyada`, `ext-data-fig-5a-Hwang` |

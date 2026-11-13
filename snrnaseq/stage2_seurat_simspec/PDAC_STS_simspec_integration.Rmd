@@ -202,6 +202,25 @@ DimPlot(sts.simspec_css.sample.sct,
 ```
 
 
+## Rerun UMAP next to the deposited UMAP
+Both panels show the same cells coloured by `simspec_cell_class`. The left panel is the rerun UMAP; the right panel uses the coordinates stored in the deposited object, the layout of the published figures (Fig. 1B is drawn from them in Stage 4). The layouts can differ, rotated, flipped or shifted, because UMAP is sensitive to small numerical differences between environments; the same classes should still form the same groups.
+
+```{r umap-rerun-vs-deposited, fig.width=20, fig.height=9}
+if (all(c("deposited_UMAP_1", "deposited_UMAP_2") %in% colnames(reference_labels))) {
+  coords <- as.matrix(reference_labels[idx, c("deposited_UMAP_1", "deposited_UMAP_2")])
+  rownames(coords) <- colnames(sts.simspec_css.sample.sct)
+  colnames(coords) <- c("depUMAPCSS_1", "depUMAPCSS_2")
+  sts.simspec_css.sample.sct[["umap_css_deposited"]] <- CreateDimReducObject(
+    embeddings = coords, key = "depUMAPCSS_", assay = DefaultAssay(sts.simspec_css.sample.sct))
+  print(DimPlot(sts.simspec_css.sample.sct, reduction = "umap_css", group.by = "simspec_cell_class",
+                raster = F, label = T, repel = T) + ggtitle("Rerun UMAP") +
+          DimPlot(sts.simspec_css.sample.sct, reduction = "umap_css_deposited", group.by = "simspec_cell_class",
+                  raster = F, label = T, repel = T) + ggtitle("Deposited UMAP"))
+} else {
+  message("The reference object has no umap_css; the deposited UMAP is not shown")
+}
+```
+
 ## Rerun clusters compared with `simspec_cell_class`
 Each rerun cluster at resolution 1.1, with the share of its cells in each `simspec_cell_class`.
 

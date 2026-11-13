@@ -56,14 +56,14 @@ Mounts:
 
 ```bash
 # GEO input (default config.yml)
-docker run --rm --cpus 12 --memory 64g \
+docker run --rm --cpus 12 --memory 300g \
   -v /path/to/geo_files:/data/geo:ro \
   -v /path/to/meta:/data/meta:ro \
   -v /path/to/output:/output \
   pdac-snrnaseq:1.0 stage1
 
 # Original CellBender folders
-docker run --rm --cpus 12 --memory 64g \
+docker run --rm --cpus 12 --memory 300g \
   -v /path/to/cellBender/samples:/data/cellbender:ro \
   -v /path/to/meta:/data/meta:ro \
   -v /path/to/output:/output \
@@ -75,18 +75,34 @@ Results are written to `/output/Preprocessing_DoubleDetection/` and `/output/Pre
 ## Resources
 
 - `workers: 12` in `config.yml`. Give the job at least that many CPUs, or lower the value.
-- Around 140k cells × 36k genes: request plenty of memory (64 GB is a safe start).
+- Around 140k cells × 36k genes. Memory peaks at about 260 GB (measured on Spartan, below): jobs with 64 GB and 192 GB were stopped for running out of memory in `discard_lowq_cells` and `variance_modelling`. Request 300 GB or more.
 - `denoisePCA` alone took about 1.5 h on the original machine.
 - `dbl_workers: 4` is deliberate. With 12 workers scDblFinder failed, and with `RNGseed` + 4 workers the results were reproducible.
 
 ## Expected results (sanity checks)
 
-- 30 samples loaded (the run stops otherwise).
-From a run in the project image (Apptainer, November 2026):
+30 samples are loaded (the run stops otherwise).
 
-- scDblFinder: 129,134 singlets / 6,848 doublets.
-- Final object after QC: 26,774 genes × 115,301 cells, the same size as the August 2024 rerun.
+### Run in the project image
 
-An earlier rerun outside the image (October 2026) gave 129,115 singlets / 6,867 doublets and 26,757 genes × 115,293 cells.
+| | |
+|---|---|
+| Where | Spartan HPC (University of Melbourne), partition `sapphire`, Slurm job 34375352 |
+| Image | `ghcr.io/grimmondlab/snrna-seq_spatial_pdac:0.1.2-sif` (Apptainer), run with `--cleanenv --no-home --env TMPDIR=/output/tmp` |
+| Input | Local mode (`config_local.yml`): the original CellBender output, `*_cellbender_filtered.h5`. GEO mode has not been run in the image |
+| Resources | 12 CPUs, 400 GB requested; peak memory 258.32 GB; 1 h 37 min; about 1.9 cores used on average |
+| Result | Finished (exit code 0) |
 
-Small numerical differences are possible against the original runs: the packages come from conda (xgboost 1.7.6, conda-forge BLAS) on a Debian base rather than Ubuntu 20.04. The original analysis did not pass a seed to the parallel workers, so this stage reproduces it closely but not exactly. The deposited post-QC object used from Stage 2 onward is 26,788 genes × 115,221 cells.
+### Compared with the original run
+
+| | Original (deposited post-QC object) | Rerun outside the image (October 2026) | Rerun in the image (November 2026) |
+|---|---|---|---|
+| scDblFinder singlets / doublets | not recorded | 129,115 / 6,867 | 129,134 / 6,848 |
+| Final object, genes × cells | 26,788 × 115,221 | 26,757 × 115,293 | 26,774 × 115,301 |
+
+The rerun keeps about 80 more cells (0.07%) than the original. The differences come from two sources:
+
+- **No seeds for the parallel workers.** The original analysis did not pass a seed to the parallel workers, so the random steps (for example in scDblFinder) can call a slightly different set of doublets in each run. The two reruns also differ from each other for this reason.
+- **A different software environment.** The packages come from conda on a Debian base instead of the original Ubuntu 20.04 R library: xgboost 1.7.6 instead of 1.7.5.1 (used by scDblFinder), a different BLAS, and a few other version differences (see "Environment").
+
+So this stage reproduces the original closely but not exactly. For this reason, Stage 2 onward starts from the deposited post-QC object (26,788 genes × 115,221 cells), not from this stage's output.

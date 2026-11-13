@@ -11,6 +11,7 @@
 #                           and the cells that differ
 #   - read_nonmalignant():  Stage 4 input, the Stage 3 non-malignant cells of the final object with their Stage 3 labels
 #   - use_deposited_umap(): the stored subset UMAP, for Fig. 1C
+#   - plot_rerun_vs_deposited(): the rerun UMAP next to the stored one, coloured by the same labels
 # Each comparison is printed in the HTML report and appended to label_agreement.tsv in the stage's output folder.
 
 suppressPackageStartupMessages(library(pheatmap))
@@ -118,4 +119,11 @@ use_deposited_umap <- function(object, prefix, reduction = "umap_css") {
                                                                 assay = DefaultAssay(old))
   object[[reduction]] <- CreateDimReducObject(embeddings = coords, key = key, assay = DefaultAssay(old))
   object
+}
+
+# After use_deposited_umap(): the rerun UMAP next to the deposited one, both coloured by the same labels. The layouts can
+# differ (rotated, flipped or shifted); the same cell types should still form the same groups.
+plot_rerun_vs_deposited <- function(object, group.by, cols = NULL, reduction = "umap_css") {
+  DimPlot(object, reduction = paste0(reduction, "_rerun"), group.by = group.by, cols = cols) + ggplot2::ggtitle("Rerun UMAP") +
+    DimPlot(object, reduction = reduction, group.by = group.by, cols = cols) + ggplot2::ggtitle("Deposited UMAP (as published)")
 }

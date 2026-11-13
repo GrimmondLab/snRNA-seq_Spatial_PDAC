@@ -234,6 +234,12 @@ reference <- readRDS(cfg$reference_object)
 reference_cols <- intersect(c("Cell_Ids", "cell_class", "simspec_cell_class", "SCT_snn_res.1.1"), colnames(reference[[]]))
 stopifnot(all(c("Cell_Ids", "cell_class", "simspec_cell_class") %in% reference_cols))
 reference_labels <- reference[[]][, reference_cols]
+# The deposited UMAP, so PDAC_STS_simspec_integration.Rmd can plot the rerun next to it
+if ("umap_css" %in% Reductions(reference)) {
+  deposited_umap <- Embeddings(reference, "umap_css")[rownames(reference_labels), 1:2]
+  reference_labels$deposited_UMAP_1 <- deposited_umap[, 1]
+  reference_labels$deposited_UMAP_2 <- deposited_umap[, 2]
+}
 rm(reference)
 gc()
 

@@ -14,9 +14,10 @@ In the original analysis, `cell_class` and `simspec_cell_class` were assigned to
 - The original cluster-to-label mappings are kept in the R Markdown files as a record.
 - The integration step applies its original mapping to the deposited object's own resolution-1.1 clusters, and reports how many cells get the deposited `simspec_cell_class`. The deposited object has no resolution-0.5 clusters, so the `cell_class` mapping cannot be checked the same way.
 - Each file compares the rerun clusters with the labels: the adjusted Rand index (ARI), a heatmap of the share of each cluster's cells in each label, and a table of each cluster's majority label.
+- The integration report shows the rerun UMAP next to the deposited UMAP (the layout of the published figures), both coloured by `simspec_cell_class`, followed by marker genes per `simspec_cell_class`. The layouts can be rotated, flipped or shifted; the same classes should form the same groups and express the expected markers.
 - The render stops if any cell has no label in the deposited object.
 
-Stage 3 starts from the deposited annotated object, not from this rerun.
+Stage 3 starts from the deposited final object, not from this rerun. Fig. 1B is drawn in Stage 4 from the deposited object's UMAP.
 
 `original/` holds the two files as they were before this change.
 

@@ -36,9 +36,10 @@ The plan is Batch on EC2, with data in S3.
 ## 2. Rerun each stage and compare with the originals
 
 ### Stage 1 (env `snrnaseq`)
-- [ ] Run on the GEO input (`run.sh stage1`), and on the original CellBender folders (`run.sh stage1 config_local.yml`). One full run finished on Spartan (job 34375352): record which input it used and the image version, then see whether the other is still needed.
+- [x] Run on the original CellBender folders (`run.sh stage1 config_local.yml`): Spartan job 34375352, image `0.1.2-sif`, finished.
+- [ ] Optional: run on the GEO input (`run.sh stage1`). It reads the same `_cellbender_filtered.h5` files, renamed, so it should match the local-mode run; it checks that the GEO files and `geo_samples.csv` load correctly.
 - [x] **Find the real memory need.** On Spartan (`sapphire`, 12 CPUs), OOM killed at 64G and at 192G, in `discard_lowq_cells` and `variance_modelling`. With 400G it finished: peak 258.32 GB, 1h37, about 1.9 cores on average.
-- [ ] Correct "64 GB" in the Stage 1 README (lines 59, 66 and 78).
+- [x] Stage 1 README: memory corrected (300 GB in the examples), and the Spartan run and the comparison with the original added (2026-11-13). The run used image `0.1.2-sif` and the original CellBender `.h5` files (local mode).
 - [ ] A coworker's run in RStudio on a 64G instance finished, which doesn't fit the peak above. Only worth chasing if 400G jobs are hard to get, or for AWS sizing: check how it differed (run in pieces, `workers`, swap), whether Transparent Huge Pages is a factor, and whether forked workers inflate Slurm's figure.
 - [ ] Recheck the 128 GB figures for Stages 3–5, which have not been tested at full scale. Stage 2 fits (see below).
 - [x] 30 samples loaded; scDblFinder in the image (Apptainer): 129,134 singlets / 6,848 doublets (129,115 / 6,867 in the earlier rerun outside the image).
@@ -50,7 +51,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Read `cell_class` and `simspec_cell_class` from the deposited annotated object by cell ID (`reference_object` in `config.yml`); the original mappings are kept as a record; `original/` holds the files before this change.
 - [ ] Rerun Stage 2 with these changes, and check the reports: the original-mapping check in the integration step should be 100%, and the rerun-cluster comparisons (ARI, heatmaps, majority labels) should show the same populations.
 - [ ] Check both final objects have 115,221 cells.
-- [ ] Visually compare the key UMAP figures with the manuscript.
+- [ ] Visually compare the key UMAP figures with the manuscript. The integration report now shows the rerun UMAP next to the deposited one (chunk `umap-rerun-vs-deposited`), both coloured by `simspec_cell_class`; `Seurat_sample_based.Rmd` saves the deposited coordinates in `reference_labels.RDS` for it.
 - [ ] Fix the Stage 2 README: it says to give the job 28 CPUs, but `workers: 28` has no effect. `Seurat_sample_based.Rmd:27` creates `bpp` and neither Rmd uses it. The same line is the only use of `cfg$seed`, and neither Rmd calls `set.seed()`, so results rely on each function's default seed. Decide whether to note this.
 
 ### Supplementary inferCNV (env `infercnv`, `run.sh infercnv`)
@@ -138,7 +139,7 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
 - [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in each output folder: `Plotting/` should show 100% for the rebuilt final `Lv.1.Anno` and `Lv.2.Anno`. Record the agreement of the rerun clusters in the Stage 4 README.
-- [ ] Compare Fig. 1C and Extended Data Fig. 5A–B (now on the stored UMAPs) with the published panels.
+- [ ] Compare Fig. 1C and Extended Data Fig. 5A–B (now on the stored UMAPs) with the published panels. Each Fig. 1C subset also has a rerun-vs-deposited panel (`fig-1c-*-rerun-vs-deposited`).
 - [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)

@@ -179,6 +179,10 @@ saveRDS(lymphoid.simspec_css.sample.sct, file = file.path(params$step_dir, "lymp
 DimPlot(lymphoid.simspec_css.sample.sct, reduction = "umap_css", cols = lymphoid.color, group.by = 'Lv.2.Anno')   # stored original UMAP
 ```
 
+```{r fig-1c-lymphoid-rerun-vs-deposited, fig.width=14, fig.height=7, dpi=300, message=FALSE, warning=FALSE}
+plot_rerun_vs_deposited(lymphoid.simspec_css.sample.sct, "Lv.2.Anno", lymphoid.color)
+```
+
 # PSEUDOBULK
 ## DE comparing all lymphoid subsets
 ```{r echo=TRUE, include=FALSE}
