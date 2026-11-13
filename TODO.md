@@ -100,13 +100,15 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Deposit the 16 processed `.h5ad` files on 10.5281/zenodo.23933322: `Xenium_480.tar` uploaded, `Xenium_314.tar` uploading. File names listed (flat, no subfolder) and written into each Stage 1 notebook's `SAVED_OBJECT` line.
 - [x] Write `envs/spatial.yml` (conda-forge/bioconda only) and lock it (`envs/spatial-linux-64.lock`, 403 packages). squidpy 1.3.1 and spatialdata 0.2.5.post0 are not on conda: `envs/post_install_spatial.txt`, installed with `pip install --no-deps`. Nearest versions where the recorded one has no Python 3.9 conda build: pandas 2.2.3 (2.3.3), tqdm 4.67.1 (4.67.3), pooch 1.8.2 (1.9.0), xarray-spatial 0.4.0 (0.5.3). Built in `v0.3.0`.
 - [x] The four version differences are recorded in the main `README.md` ("Environments"), with the spatial run instructions.
-- [ ] Update the spatial run instructions in `README.md` once one stage has run in the image: they are untested.
+- [x] Spatial run instructions in `README.md` updated after the one-sample Stage 1 run with the `.sif`.
 - [x] Spatial notebooks are papermill-ready: each has one cell tagged `parameters` with only the path settings; derived paths are in the next cell. Stage 1 output placeholder unified as `/path/to/stage1_output`.
 - [x] papermill 2.5.0 and ipykernel 6.29.0 added to the spatial env.
 - [x] Kernel `xenium.squidpy` registered inside the env in the `Dockerfile`; the CI smoke test checks it.
 - [x] Spatial env added to the `Dockerfile` (lock, then `pip install --no-deps -r envs/post_install_spatial.txt`), `.dockerignore`, the CI smoke test and `run.sh` (`spatial1`, `spatial2`, `spatial3`). `spatial/run_notebooks.py` runs the notebooks listed in `spatial/stageN/config.yml` with papermill.
 - [x] Build the image with the `spatial` env: `v0.3.0`. The env installed from the lock, squidpy and spatialdata installed with `--no-deps`, every package imported (`envs/session_info.py`), and the kernel `xenium.squidpy` is registered.
-- [ ] Run `spatial1` on one sample in the image (copy `spatial/stage1/config.yml` and shorten `notebooks`), with Docker and with the read-only `.sif`.
+- [x] Run `spatial1` on one sample in the image with the read-only `.sif` (`v0.3.0`): MH065_314 reproduced the saved object exactly (labels 100%, gene-set scores and Nhood z-scores max difference 0). The recalculated PCA test gave different numbers from the earlier runs (kept 154,196 vs 154,105; same label 100% vs 99.12%; Nhood correlation 0.9996 vs 0.9991; ARI 0.6995), as expected for that environment-sensitive test. Recorded in `spatial/stage1/README.md`.
+- [ ] Run `spatial1` on all 16 samples and the robustness summary in the image. The summary tables (`stage1_robustness_table.tsv` and others) come from the earlier runs; decide whether to keep those or report the image run's recalculated PCA values.
+- [ ] Optional: run one sample with Docker as well (only the `.sif` has been tested).
 - [ ] Check whether any Stage 3 notebook needs a GPU (torch / scvi-tools are in the env). Stages 1 and 2 do not; Stage 2 runs in 64 GB.
 - [x] Stage 2: notebook added under `spatial/stage2/`. Niches match the original for 99.9994% of cells (about 18 of 2,930,241 differ); all 15 names match.
 - [ ] Stage 2: restart the kernel and run all cells, so the figures come from the same run as the check (the figure cells ran in a different session).

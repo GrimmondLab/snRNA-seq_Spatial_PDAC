@@ -130,7 +130,7 @@ docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnase
 
 ### Running the spatial stages
 
-The `spatial` env is in the image from `v0.3.0`: it builds, and scanpy, squidpy and the other packages import. No notebook has been run in the image yet, so the commands below are untested.
+The `spatial` env is in the image from `v0.3.0`. Stage 1 has run on one sample (MH065_314) with the `.sif` and Apptainer, through a config listing only that notebook, and reproduced the saved object exactly (see `spatial/stage1/README.md`, "Run in the project image"). The Docker commands and Stages 2 and 3 have not been run in the image yet.
 
 Put the inputs in one folder, laid out as below, and mount it at `/data/input`. The sample folder names are in `spatial/README.md` ("Folder layout").
 

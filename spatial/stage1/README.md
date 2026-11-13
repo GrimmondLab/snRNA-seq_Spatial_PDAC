@@ -127,6 +127,24 @@ For scoring-only samples, the values come from the direct rerun comparison. The 
 
 Each rerun was compared with the saved object for that sample.
 
+## Run in the project image
+
+One sample, MH065_314, was run in the project image (`.sif` of `v0.3.0`, Apptainer, November 2026) through `run.sh spatial1` with a config listing only that notebook.
+
+| Check | In the image | Recorded for MH065_314 (earlier runs) |
+|---|---|---|
+| Cells | 154,206 | 154,206 |
+| `cell_class_threshold`, same as the saved object | 100.0000% | 100.0000% |
+| Gene-set scores, max difference | 0 | 0 |
+| Nhood z-scores, correlation / max difference | 1.0000 / 0 | 1.0000 / 0 |
+| Recalculated PCA test: cells kept (original 154,206) | 154,196 | 154,105 |
+| Recalculated PCA test: same label, kept cells | 100.0000% | 99.1225% |
+| Recalculated PCA test: Nhood z-score correlation | 0.9996 | 0.9991 |
+| Recalculated PCA test: ARI of clusters, kept cells | 0.6995 | |
+| Recalculated PCA test: labels only in one result | none | none |
+
+The rerun from raw data reproduces the saved object exactly in the image, as in the earlier runs. The recalculated PCA test gives different numbers in the image: recalculating PCA is the step that is sensitive to the computing environment (here a different BLAS and CPU), which is what this test is designed to probe. Its result still supports the same conclusion: labels and Nhood results stay stable when PCA and clustering change. The two earlier runs, on the original machine, gave identical results for this test.
+
 ## Supplementary table
 
 `stage1_supplementary_table.tsv` has one row per sample. It combines two independent runs from raw data: the earlier full reruns (`previous`) and the final notebooks in this folder (`stage1_run`). Both runs gave the same values for every measure they share, in all 16 samples.
