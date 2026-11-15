@@ -2,6 +2,27 @@
 
 For the manuscript "Single-cell spatial profiling identifies recurrent spatial niches in pancreatic cancer microenvironment" (link to be added on publication).
 
+## Reproducibility at a glance
+
+| Analysis | Manuscript outputs | Reproduced? |
+|---|---|---|
+| **snRNA-seq** | | |
+| [Stage 0](snrnaseq/stage0_cellranger_cellbender/README.md): Cell Ranger, CellBender | Count matrices (GEO) | Record only; the outputs are deposited and later stages start from them |
+| [Stage 1](snrnaseq/stage1_doublet_qc/README.md): doublets, QC | Post-QC object | **Closely.** Run in the image: 115,301 cells against the original 115,221 (0.07% more), because the original parallel steps had no seed. Later stages start from the deposited original post-QC object |
+| [Stage 2](snrnaseq/stage2_seurat_simspec/README.md): integration | Cell classes | Labels read from the deposited object by cell ID, so identical; rerun clusters compared with them. Run with this check: pending |
+| [Stage 3](snrnaseq/stage3_malignant_nonmalignant/README.md): malignant, non-malignant, tuft, ADM | Ext. Data Fig. 1C–E, 4A, 4C, 4G–H; Supp. Table 3 | Labels identical by design; run in the image: pending |
+| [Stage 4](snrnaseq/stage4_reclustering/README.md): reclustering, final annotation | Fig. 1B–C; Ext. Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C, 8E–G; Supp. Tables 4–7 | Labels identical by design; Fig. 1C drawn on the stored UMAPs; run in the image: pending |
+| [Stage 5](snrnaseq/stage5_cellchat/README.md): CellChat | Fig. 3E–F, 4G, 5F, 6G | Run in the image: pending |
+| [inferCNV](snrnaseq/supplementary_infercnv/README.md) (supplementary) | Ext. Data Fig. 1B, 4F | **Not exactly** by design: random steps without a seed. A check, not part of the main pipeline |
+| **Spatial transcriptomics (Xenium)** | | |
+| [Stage 1](spatial/stage1/README.md): QC, annotation, neighbourhood enrichment | The 16 annotated objects | **Exact.** Labels, gene-set scores and Nhood z-scores identical in all 16 samples; one sample also run in the image, identical |
+| [Stage 2](spatial/stage2/README.md): niches, profiling | Fig. 1D, 2A–D, 4B–F, 5B–E; Ext. Data Fig. 2D, 3, 5C–D, 6D–E, 8H–I | **Near-exact.** 99.9994% of cells in the same niche (18 of 2,930,241 differ) |
+| [Stage 3](spatial/stage3/README.md): TILs, Tuft, TLS, PanIN | Fig. 3B–D, 3G, 4H, 5H–I, 6B, 6F–G; Ext. Data Fig. 4B–D, 7C, 7F–G, 9D–F, 9I | **Exact.** Identical cells, labels, DE and Nhood z-scores |
+| **Spatial proteomics (MIBI)** | | |
+| [MIBI](spatial_proteomics/README.md) | Fig. 2E–G, 5G; Ext. Data Fig. 6F | Record of the collaborators' code and reports; not rerun here |
+
+The spatial results come from the original Python environment; Stages 2 and 3 and the other 15 Stage 1 samples have not yet been run in the image. Each linked README has the full comparison.
+
 This repository holds:
 
 - **Code for every analysis in the manuscript:** snRNA-seq, inferCNV, spatial transcriptomics (Xenium) and spatial proteomics (MIBI).
@@ -16,7 +37,7 @@ This repository holds:
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
 | `spatial_proteomics/` | R | Record of the MIBI QC report and figure code; no Docker container (see `spatial_proteomics/README.md`) |
 
-The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image from `v0.3.0`, but no notebook has been run in the image yet: the Xenium results so far come from the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
+The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image from `v0.3.0`, and Stage 1 has run in it on one sample so far: the other Xenium results come from the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
 ## Environments
 
@@ -130,7 +151,7 @@ docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnase
 
 ### Running the spatial stages
 
-The `spatial` env is in the image from `v0.3.0`. Stage 1 has run on one sample (MH065_314) with the `.sif` and Apptainer, through a config listing only that notebook, and reproduced the saved object exactly (see `spatial/stage1/README.md`, "Run in the project image"). The Docker commands and Stages 2 and 3 have not been run in the image yet.
+The `spatial` env is in the image from `v0.3.0`. Stage 1 has run on one sample (MH065_314) with the `.sif` and Apptainer, through a config listing only that notebook, and reproduced the saved object exactly (see `spatial/stage1/README.md`, "Run in the project image (MH065_314)" under "Details"). The Docker commands and Stages 2 and 3 have not been run in the image yet.
 
 Put the inputs in one folder, laid out as below, and mount it at `/data/input`. The sample folder names are in `spatial/README.md` ("Folder layout").
 

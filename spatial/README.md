@@ -1,8 +1,25 @@
 # Spatial analysis (Python)
 
-Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. This part is being set up: the notebooks are in `stage1/`, `stage2/` and `stage3/`, each with its own README. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
+Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in the PURPLE registry, a different cohort from the snRNA-seq samples. Each stage has its own folder and README, with the manuscript outputs, how to run it and the check against the original analysis. The data are on GEO: [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154).
 
-Each stage follows the same pattern as the snRNA-seq stages in `../snrnaseq/`: its own folder, with a README listing inputs, figures and the check against the original. All spatial stages share one conda env (`../envs/spatial.yml`, in the same Docker image). Each stage has a `config.yml` with container paths and the notebooks in run order; `run_notebooks.py` runs them with papermill, through `run.sh spatial1`, `spatial2` or `spatial3`. The env is in the image from `v0.3.0`; no notebook has been run in the image yet.
+## Summary
+
+| Stage | Analysis | Result |
+|---|---|---|
+| [1](stage1/README.md) | From raw Xenium data to the 16 annotated objects: QC, cell annotation by gene-set scoring, neighbourhood enrichment (Nhood) | **Exact.** Cell labels, gene-set scores and Nhood z-scores identical in all 16 samples (2,931,027 cells) |
+| [2](stage2/README.md) | Niches across all 16 samples, neighbourhood profiling, and figures from single samples | **Near-exact.** Neighbour fractions identical; 99.9994% of cells in the same niche (18 of 2,930,241 differ); Fig. 4E statistics as in the original |
+| [3](stage3/README.md) | Malignant cells near and away from TILs, TIL regions, Tuft cells, TLS in PDAC and TNBC, and PanIN in MH097_480 | **Exact.** Identical cells, labels, DE and Nhood z-scores; pathway scores within 5 × 10⁻⁷ |
+
+PCA, UMAP and Leiden clustering do not reproduce exactly in a different environment, so Stage 1 reads them, and the cells kept, from the deposited processed objects; everything else is recomputed from raw data. Cell labels come from gene-set scoring, not from clusters, and stay stable when PCA and clustering are recalculated (96.58–100% of cells keep their label; see the Stage 1 README).
+
+These results come from the original `xenium.squidpy` environment. In the project image, Stage 1 has been run on one sample (MH065_314) and reproduced it exactly; the other samples and Stages 2 and 3 have not been run in the image yet.
+
+## Running
+
+The stages run in the project image with `run.sh spatial1`, `spatial2` and `spatial3`, in that order and with the same output folder (see "Running the spatial stages" in the top-level `README.md`). Each stage has a `config.yml` with container paths and the notebooks in run order; `run_notebooks.py` runs them with papermill. All stages share one conda env (`../envs/spatial.yml`).
+
+<details>
+<summary>Running a notebook with papermill directly</summary>
 
 **Running with papermill.** In every notebook, the folders and input files are in one cell tagged `parameters`, holding only plain path settings. The paths built from them (per-sample folders, `FIGURE_DIR` and so on) are in the next cell, so values papermill injects carry through. For example:
 
@@ -12,6 +29,8 @@ papermill stage3_malignant_TIL.ipynb out.ipynb -k xenium.squidpy \
 ```
 
 `stage3_tuft.ipynb` reads `TUFT_INPUT_DIR = "tuft_inputs"`, relative to `stage3/`: run it with `--cwd` set to `stage3/`, or pass an absolute path.
+
+</details>
 
 ## Input data
 
@@ -79,17 +98,12 @@ Stages 2 and 3 otherwise start from the Stage 1 outputs, which reproduce exactly
 
 **Original objects used for the checks are not deposited.** Each notebook ends with a check against the original objects (the Stage 1 label tables, the original combined niche object, and the original Stage 3 subset and region objects). These checks were run, and their results are recorded in the stage READMEs and the saved notebook outputs: all matched. Without the original objects, the checks are skipped and the notebooks still run.
 
-## Stages
-
-| Stage | Analysis | Starts from | Status |
-|---|---|---|---|
-| 1 | Sample processing, cell annotation by gene scoring, neighbourhood enrichment | GEO files, with PCA results or retained cells read from the 16 processed `.h5ad` files | Notebooks in `stage1/` |
-| 2 | Niche analysis across all 16 samples together: K-means (K = 15) of cells by the composition of their neighbours within 50 µm, using the Stage 1 labels (`cell_class_threshold`). See `stage2/README.md` | The 16 final Stage 1 objects | Notebook in `stage2/` |
-| 3 | Malignant cells next to and away from TIL-rich areas, the TIL regions themselves, Tuft cells, TLS in PDAC and TNBC, and malignant cells in a PanIN-like and a PDAC region of MH097_480. See `stage3/README.md` | The final Stage 1 objects; the TIL, Tuft and TLS regions are cropped from the raw Xenium output | Notebooks in `stage3/` |
-
-The workflow was rerun with the archived PCA results or retained cells because the environment has changed since the original objects were made. Most analyses do not use PCA or clustering; some filter cells by cluster.
-
 ## Environment
+
+The image env pins the packages to the versions loaded in the original `xenium.squidpy` environment (`environment/requirements_as_used.txt`, with the corrections below).
+
+<details>
+<summary>Records of the original environment, and how the versions were checked</summary>
 
 `environment/` holds the records of the conda environment the analysis ran in (`xenium.squidpy`, Python 3.9.18, Ubuntu 22.04).
 
@@ -136,6 +150,4 @@ numpy (1.24.4) and tifffile (2023.8.12) were listed correctly. typing_extensions
 
 **Channel problem:** the conda records come from an env built partly from Anaconda's `defaults` channel (84 of the packages in `conda_explicit.txt`). Many of those exact pins (e.g. `glib=2.69.1`, `mkl`, `mysql=5.7.24`, `ld_impl_linux-64=2.38`) exist only there, so they do not solve on conda-forge/bioconda. The new env should pin the analysis packages from `requirements_as_used.txt`, take low-level libraries from conda-forge, and be locked with conda-lock like the R envs.
 
-## Still needed
-
-- The DOIs of the deposits above
+</details>

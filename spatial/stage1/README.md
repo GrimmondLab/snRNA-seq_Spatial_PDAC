@@ -1,67 +1,42 @@
 # Stage 1: from raw Xenium data to annotated objects
 
-This stage takes the raw Xenium output for 16 samples (8 patients from the PURPLE registry, each with a 314-gene and a 480-gene panel) to the final annotated objects used by Stage 2. This is a different cohort from the snRNA-seq samples.
+Takes the raw Xenium output of 16 samples (8 patients from the PURPLE registry, each with a 314-gene and a 480-gene panel) to the 16 annotated objects used by Stages 2 and 3: QC, cell annotation by gene-set scoring (`cell_class_threshold`) and neighbourhood enrichment (Nhood).
 
-## Summary
+**Result: exact.** Rerun from raw data, all 16 objects (2,931,027 cells) have identical cell labels, gene-set scores and Nhood z-scores (max difference 0), in two independent runs. In the project image, the one sample run so far (MH065_314) is also identical.
 
-All 16 annotated objects were regenerated from the raw Xenium output in two independent runs, reading the saved PCA, UMAP, clusters and kept cells from the original objects. Cell labels, gene-set scores and Nhood z-scores matched the original objects exactly. When PCA and clustering were recalculated, cell labels and Nhood results stayed stable.
+## Why some saved values are read
 
-## Cell annotation by gene-set scoring
+Cell labels come from scoring curated gene sets, which the custom PDAC panels were designed for. PCA, Leiden clustering and UMAP were used mainly to find outliers, such as cells from neighbouring samples and artefacts outside the tissue. They do not reproduce exactly in a different environment (PCA differs slightly; UMAP does not reproduce), so the notebooks read the saved PCA, UMAP, clusters and kept cells from the deposited objects, and recompute everything else from raw data: QC, normalisation, gene-set scores, labels and Nhood enrichment.
 
-- **Custom PDAC-specific gene panel design.** Xenium samples were profiled using fully custom-designed gene panels tailored to the cellular complexity of pancreatic ductal adenocarcinoma (PDAC). The panels were designed to capture: (i) marker genes of cell types and subtypes identified in our snRNA-seq analysis (Fig. 1c; refs. 8, 10); (ii) cell types typically under-represented in snRNA-seq, including lymphoid stromal cells, neutrophils, neurons and adipocytes; (iii) chemokines expressed in pancreatic cancer tissues; and (iv) genes associated with cancer immunoregulation (ref. 21).
-- **Primary cell annotation by gene-set scoring**. Given the targeted, lineage-informed design of our custom panels, we appied gene-set scoring for cell-type annotation. Curated cell-type-specific gene sets were scored using normalised expression data, and each cell was assigned the highest-scoring label above a predefined threshold. This approach directly leverages the biological information incorporated into the panel design. PCA and UMAP are not inputs to the scoring.
-- **PCA, clustering and UMAP were used mainly to find outliers,** such as cells from neighbouring samples and artefacts in non-tissue areas. Outlier clusters were removed in six samples. In four, the cluster-based annotation was also used to change some labels (see [Label changes after scoring](#label-changes-after-scoring)). Seven samples used scoring alone.
-- **PCA and UMAP do not reproduce exactly.** Recalculating PCA gave small numerical differences, and UMAP did not reproduce. As dimensionality reduction was not used directly for gene-set scoring, these variations do not affect the scoring procedure itself.
-- **So the notebooks read the saved PCA, UMAP, clusters and kept cells,** and recompute everything else from the raw data: QC, normalisation, gene-set scores, labels and Nhood enrichment. This keeps the same cells and labels, which the Nhood enrichment here and the niche analysis in Stage 2 depend on.
+As a separate check, PCA and clustering were recalculated in the nine samples where clusters were used. Clusters changed, but labels and Nhood results stayed stable (see [Comparison with the original](#comparison-with-the-original)).
 
-## Labels with recalculated PCA
+## Run
 
-As a separate check, PCA and clustering were recalculated in the nine samples with cluster-based steps, and the same steps were repeated. Clusters changed, but labels and Nhood results changed little:
+In the project image: `run.sh spatial1` (see "Running the spatial stages" in the top-level `README.md`). `config.yml` lists the 16 notebooks; to run some samples only, copy it and shorten the list.
 
-| Measure | Result, 9 samples |
+To run a notebook directly, set the four folders at the top of its parameters cell, then run all cells with the `xenium.squidpy` kernel:
+
+Set the four folders at the top of the parameters cell, then run all cells with the `xenium.squidpy` kernel:
+
+| Setting | Folder |
 |---|---|
-| Kept cells, overlap with the original (6 samples with cluster removal) | Jaccard 0.93–1.00 |
-| Cells with the same `cell_class_threshold` label | 96.58–100.00% |
-| Labels present | Same labels in both results |
-| Nhood z-score correlation | 0.9990–0.9999 |
+| `RAW_DATA_DIR` | Raw Xenium output, one subfolder per sample (`<sample>/cell_feature_matrix.h5` and `<sample>/cells.csv`) |
+| `SAVED_OBJECT_DIR` | The saved objects: the archived inputs and the objects to check against. Only read. Extract `Xenium_480.tar` and `Xenium_314.tar` from Zenodo ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) into this folder; each notebook names its file as it is in the archive (e.g. `MH065_0010614_region1_setseed_Oct25.h5ad` for MH065_314, `MH065_setseed_v2.h5ad` for MH065_480) |
+| `LABEL_TABLE_DIR` | Per-cell label tables (`<sample>.csv`), not deposited. Optional: if a sample's table is missing, that comparison is skipped |
+| `OUTPUT_ROOT` | Where results go, one subfolder per sample |
 
-Recomputed Leiden clustering showed moderate-to-high agreement with the original cluster assignments (ARI = 0.60–0.83), reflecting sensitivity to small numerical differences in PCA. However, cell-type annotation was primarily based on gene-set scoring using curated markers from our custom-designed PDAC-specific panels. 
+The paths in the notebooks were replaced with these placeholders after they were run.
 
-Where cells were removed, the test removes a recalculated cluster if at least half its cells were originally removed, so it tests stability rather than being an independent reanalysis. Results for each sample are under [Robustness](#robustness).
+Each notebook writes these files to `OUTPUT_DIR`:
 
-**Rare cells: Tuft cells.** Tuft cells are rare, so they show whether a small population is still found when PCA is recalculated. In the samples with Tuft cells and a recalculated PCA test:
+- `<sample>.h5ad`: the final object
+- `<sample>.csv`: per-cell metadata and log-normalised expression
+- `stage1_check.tsv`: the comparison with the saved object
+- `robustness_summary.tsv`: the recalculated PCA test, for the nine samples that have one
+- `recalculated_labels.csv.gz`: per-cell labels and coordinates from that test, for the same nine samples
+- `software_versions.tsv`: the package versions used
 
-| Sample | Tuft cells, original | Tuft cells, test | Original Tuft cells still in the test | Same label | Jaccard |
-|---|---|---|---|---|---|
-| MH065_314 | 61 | 61 | 61 | 100.0% | 1.000 |
-| MH074_314 | 1,446 | 1,446 | 1,446 | 100.0% | 1.000 |
-| MH097_314 | 20 | 20 | 20 | 100.0% | 1.000 |
-| MH099_480 | 92 | 97 | 83 | 98.8% | 0.854 |
-| MH106_480 | 101 | 101 | 101 | 100.0% | 1.000 |
-
-In MH099_480, 9 original Tuft cells were in clusters removed by the test, and 1 of the remaining 83 became Malignant cells.
-
-## What was done
-
-1. **Audit:** we went through the original notebook for each sample and recorded its settings: crop region, genes removed, QC filters, Leiden resolution, gene sets, score quantile and seeds.
-2. **First rerun:** each sample was rerun from the raw Xenium output in the current `xenium.squidpy` environment (scanpy 1.9.5, squidpy 1.3.1; see `../environment/`), then compared step by step with the saved object. The original objects were made in this environment before anndata was updated from 0.10.3 to 0.10.8 in January 2026. Raw counts, normalised data, `cell_class_threshold` labels, gene-set scores and Nhood z-scores were identical in all 16 samples.
-3. **Recalculated PCA:** the separate check above, for the nine samples with cluster-based steps.
-4. **Final notebooks:** we wrote one clean notebook per sample, from raw data to the final object, with all settings in one parameter cell. A second run with these notebooks matched the saved objects and the first rerun in all 16 samples, as well as the labels in the per-cell label tables.
-5. **Outputs:** the 16 final objects (2,931,027 cells) are the only input to Stage 2. Stage 1 and Stage 2 are run separately. The [summary of checks](#summary-of-checks), `stage1_executive_summary.tsv`, `stage1_supplementary_table.tsv` and `stage1_robustness_table.tsv` record the checks.
-
-## Workflow
-
-1. **Input:** raw Xenium output for each sample.
-2. **Quality control:** crop the tissue region where needed, remove specified genes and filter low-quality cells.
-3. **Normalisation:** normalise and log-transform the counts.
-4. **Outlier review:** use PCA, Leiden clustering and UMAP to find outlier populations, such as cells from neighbouring samples and artefacts in non-tissue areas.
-5. **Annotation:** score curated gene sets on the normalised data and give each cell its highest-scoring label if it passes a sample-specific threshold. This gives `cell_class_threshold`.
-6. **Spatial analysis:** calculate neighbourhood enrichment (Nhood) from these labels, using a 50 µm radius.
-7. **Output:** the final objects, which are the input for Stage 2.
-
-## Summary of checks
-
-This summarises how far the final objects can be reproduced from raw data across all 16 samples. Each sample's own checks are in its `stage1_check.tsv` and `robustness_summary.tsv`.
+## Comparison with the original
 
 **Rerun from raw data**
 
@@ -98,7 +73,44 @@ This summarises how far the final objects can be reproduced from raw data across
 | Nhood z-scores | SIMILAR | 9/9 samples; correlation=0.9990–0.9999 |
 | Same results in both runs | MATCH | 9/9 samples; identical in the first rerun and the final notebooks |
 
-## Robustness
+Where clusters were removed, the test removes a recalculated cluster if at least half its cells were originally removed, so it tests stability rather than being an independent reanalysis. Per-sample results are under Details.
+
+## Details
+
+<details>
+<summary>Cell annotation by gene-set scoring</summary>
+
+- **Custom PDAC-specific gene panel design.** Xenium samples were profiled using fully custom-designed gene panels tailored to the cellular complexity of pancreatic ductal adenocarcinoma (PDAC). The panels were designed to capture: (i) marker genes of cell types and subtypes identified in our snRNA-seq analysis (Fig. 1c; refs. 8, 10); (ii) cell types typically under-represented in snRNA-seq, including lymphoid stromal cells, neutrophils, neurons and adipocytes; (iii) chemokines expressed in pancreatic cancer tissues; and (iv) genes associated with cancer immunoregulation (ref. 21).
+- **Primary cell annotation by gene-set scoring**. Given the targeted, lineage-informed design of our custom panels, we applied gene-set scoring for cell-type annotation. Curated cell-type-specific gene sets were scored using normalised expression data, and each cell was assigned the highest-scoring label above a predefined threshold. This approach directly leverages the biological information incorporated into the panel design. PCA and UMAP are not inputs to the scoring.
+- **PCA, clustering and UMAP were used mainly to find outliers,** such as cells from neighbouring samples and artefacts in non-tissue areas. Outlier clusters were removed in six samples. In four, the cluster-based annotation was also used to change some labels (see "Label changes after scoring" below). Seven samples used scoring alone.
+- **PCA and UMAP do not reproduce exactly.** Recalculating PCA gave small numerical differences, and UMAP did not reproduce. As dimensionality reduction was not used directly for gene-set scoring, these variations do not affect the scoring procedure itself.
+- **So the notebooks read the saved PCA, UMAP, clusters and kept cells,** and recompute everything else from the raw data: QC, normalisation, gene-set scores, labels and Nhood enrichment. This keeps the same cells and labels, which the Nhood enrichment here and the niche analysis in Stage 2 depend on.
+
+</details>
+
+<details>
+<summary>What was done, and the workflow of each notebook</summary>
+
+1. **Audit:** we went through the original notebook for each sample and recorded its settings: crop region, genes removed, QC filters, Leiden resolution, gene sets, score quantile and seeds.
+2. **First rerun:** each sample was rerun from the raw Xenium output in the current `xenium.squidpy` environment (scanpy 1.9.5, squidpy 1.3.1; see `../environment/`), then compared step by step with the saved object. The original objects were made in this environment before anndata was updated from 0.10.3 to 0.10.8 in January 2026. Raw counts, normalised data, `cell_class_threshold` labels, gene-set scores and Nhood z-scores were identical in all 16 samples.
+3. **Recalculated PCA:** the separate check above, for the nine samples with cluster-based steps.
+4. **Final notebooks:** we wrote one clean notebook per sample, from raw data to the final object, with all settings in one parameter cell. A second run with these notebooks matched the saved objects and the first rerun in all 16 samples, as well as the labels in the per-cell label tables.
+5. **Outputs:** the 16 final objects (2,931,027 cells) are the only input to Stage 2. Stage 1 and Stage 2 are run separately. The comparison tables above, `stage1_executive_summary.tsv`, `stage1_supplementary_table.tsv` and `stage1_robustness_table.tsv` record the checks.
+
+**Workflow**
+
+1. **Input:** raw Xenium output for each sample.
+2. **Quality control:** crop the tissue region where needed, remove specified genes and filter low-quality cells.
+3. **Normalisation:** normalise and log-transform the counts.
+4. **Outlier review:** use PCA, Leiden clustering and UMAP to find outlier populations, such as cells from neighbouring samples and artefacts in non-tissue areas.
+5. **Annotation:** score curated gene sets on the normalised data and give each cell its highest-scoring label if it passes a sample-specific threshold. This gives `cell_class_threshold`.
+6. **Spatial analysis:** calculate neighbourhood enrichment (Nhood) from these labels, using a 50 µm radius.
+7. **Output:** the final objects, which are the input for Stage 2.
+
+</details>
+
+<details>
+<summary>Recalculated PCA test: results per sample and for Tuft cells</summary>
 
 All 16 samples were rerun from raw data and compared with the saved analysis objects. `cell_class_threshold`, gene-set scores and Nhood z-scores were reproduced exactly in all 16.
 
@@ -127,7 +139,22 @@ For scoring-only samples, the values come from the direct rerun comparison. The 
 
 Each rerun was compared with the saved object for that sample.
 
-## Run in the project image
+**Rare cells: Tuft cells.** Tuft cells are rare, so they show whether a small population is still found when PCA is recalculated. In the samples with Tuft cells and a recalculated PCA test:
+
+| Sample | Tuft cells, original | Tuft cells, test | Original Tuft cells still in the test | Same label | Jaccard |
+|---|---|---|---|---|---|
+| MH065_314 | 61 | 61 | 61 | 100.0% | 1.000 |
+| MH074_314 | 1,446 | 1,446 | 1,446 | 100.0% | 1.000 |
+| MH097_314 | 20 | 20 | 20 | 100.0% | 1.000 |
+| MH099_480 | 92 | 97 | 83 | 98.8% | 0.854 |
+| MH106_480 | 101 | 101 | 101 | 100.0% | 1.000 |
+
+In MH099_480, 9 original Tuft cells were in clusters removed by the test, and 1 of the remaining 83 became Malignant cells.
+
+</details>
+
+<details>
+<summary>Run in the project image (MH065_314)</summary>
 
 One sample, MH065_314, was run in the project image (`.sif` of `v0.3.0`, Apptainer, November 2026) through `run.sh spatial1` with a config listing only that notebook.
 
@@ -145,25 +172,10 @@ One sample, MH065_314, was run in the project image (`.sif` of `v0.3.0`, Apptain
 
 The rerun from raw data reproduces the saved object exactly in the image, as in the earlier runs. The recalculated PCA test gives different numbers in the image: recalculating PCA is the step that is sensitive to the computing environment (here a different BLAS and CPU), which is what this test is designed to probe. Its result still supports the same conclusion: labels and Nhood results stay stable when PCA and clustering change. The two earlier runs, on the original machine, gave identical results for this test.
 
-## Supplementary table
+</details>
 
-`stage1_supplementary_table.tsv` has one row per sample. It combines two independent runs from raw data: the earlier full reruns (`previous`) and the final notebooks in this folder (`stage1_run`). Both runs gave the same values for every measure they share, in all 16 samples.
-
-| Columns | Meaning |
-|---|---|
-| `how_tested` | The test used for the sample |
-| `cells` | Cells in the final object |
-| `*_same_label`, `*_gene_score_max_difference`, `*_nhood_z_max_difference`, `stage1_run_nhood_z_correlation` | Each run compared with the saved object: identical `cell_class_threshold` labels, gene-set scores and Nhood z-scores |
-| `stage1_run_same_label_as_label_table` | Labels compared with the per-cell label table |
-| `gene_sets_compared`, `nhood_labels_compared` | Gene sets and labels included in the comparison |
-| `recalculated_*_same_label`, `recalculated_*_nhood_z_correlation` | The recalculated PCA test in each run; where cells were removed, same label is among cells kept in both results |
-| `recalculated_labels_only_in_one_result` | Labels found in only one of the two results |
-| `recalculated_cells_kept_original`, `recalculated_cells_kept`, `recalculated_kept_cells_now_removed`, `recalculated_removed_cells_now_kept`, `recalculated_kept_cells_jaccard` | Kept cells in the original analysis and in the test, and the overlap between them, from the previous reruns |
-| `previous_and_stage1_run_agree` | Whether the two runs agree on every shared measure |
-
-`NA` means the measure doesn't apply: scoring-only samples have no recalculated PCA test, and cell counts apply only to samples where clusters were removed.
-
-## Sample settings
+<details>
+<summary>Sample settings</summary>
 
 | Sample | Crop | Genes removed | Minimum counts | Leiden resolution | Score quantile | Cluster-based steps |
 |---|---|---|---|---|---|---|
@@ -186,7 +198,10 @@ The rerun from raw data reproduces the saved object exactly in the image, as in 
 
 All samples use `MIN_CELLS = 5`, 15 neighbours and a 50 µm Nhood radius. The seeds are in each notebook's parameters cell.
 
-## Label changes after scoring
+</details>
+
+<details>
+<summary>Label changes after scoring</summary>
 
 In five samples, labels were changed after scoring in the original analysis. The notebooks repeat these changes in `apply_label_changes`. Where they use the cluster-based annotation (`anno`), it is read from the saved object.
 
@@ -200,34 +215,39 @@ In five samples, labels were changed after scoring in the original analysis. The
 
 In four samples, label names were also changed to match the original objects (`LABEL_RENAMES`): `Ductal ` to `Ductal` in MH065_480, and `Acinar_REG` to `Acinar_REG+` in MH096_314, MH097_314 and MH099_314.
 
-## Files
+</details>
+
+<details>
+<summary>Supplementary table columns</summary>
+
+`stage1_supplementary_table.tsv` has one row per sample. It combines two independent runs from raw data: the earlier full reruns (`previous`) and the final notebooks in this folder (`stage1_run`). Both runs gave the same values for every measure they share, in all 16 samples.
+
+| Columns | Meaning |
+|---|---|
+| `how_tested` | The test used for the sample |
+| `cells` | Cells in the final object |
+| `*_same_label`, `*_gene_score_max_difference`, `*_nhood_z_max_difference`, `stage1_run_nhood_z_correlation` | Each run compared with the saved object: identical `cell_class_threshold` labels, gene-set scores and Nhood z-scores |
+| `stage1_run_same_label_as_label_table` | Labels compared with the per-cell label table |
+| `gene_sets_compared`, `nhood_labels_compared` | Gene sets and labels included in the comparison |
+| `recalculated_*_same_label`, `recalculated_*_nhood_z_correlation` | The recalculated PCA test in each run; where cells were removed, same label is among cells kept in both results |
+| `recalculated_labels_only_in_one_result` | Labels found in only one of the two results |
+| `recalculated_cells_kept_original`, `recalculated_cells_kept`, `recalculated_kept_cells_now_removed`, `recalculated_removed_cells_now_kept`, `recalculated_kept_cells_jaccard` | Kept cells in the original analysis and in the test, and the overlap between them, from the previous reruns |
+| `previous_and_stage1_run_agree` | Whether the two runs agree on every shared measure |
+
+`NA` means the measure doesn't apply: scoring-only samples have no recalculated PCA test, and cell counts apply only to samples where clusters were removed.
+
+</details>
+
+<details>
+<summary>Files in this folder</summary>
 
 | File | Purpose |
 |---|---|
 | `<sample>_stage1.ipynb` | One notebook per sample, from raw data to the final object |
-| `stage1_robustness_summary.ipynb` | Collects each sample's results into the table above |
-| `stage1_robustness_table.tsv` | The table above, with full precision |
-| `stage1_executive_summary.tsv` | The summary of checks above |
+| `stage1_robustness_summary.ipynb` | Collects each sample's results into the per-sample robustness table |
+| `stage1_robustness_table.tsv` | The per-sample robustness table, with full precision |
+| `stage1_executive_summary.tsv` | The comparison with the original, as a table |
 | `stage1_supplementary_table.tsv` | Supplementary details for all 16 samples, from both runs |
+| `stage1_spartan.slurm` | Slurm script used to run this stage in the image on an HPC cluster |
 
-## Running a notebook
-
-Set the four folders at the top of the parameters cell, then run all cells with the `xenium.squidpy` kernel:
-
-| Setting | Folder |
-|---|---|
-| `RAW_DATA_DIR` | Raw Xenium output, one subfolder per sample (`<sample>/cell_feature_matrix.h5` and `<sample>/cells.csv`) |
-| `SAVED_OBJECT_DIR` | The saved objects: the archived inputs and the objects to check against. Only read. Extract `Xenium_480.tar` and `Xenium_314.tar` from Zenodo ([10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)) into this folder; each notebook names its file as it is in the archive (e.g. `MH065_0010614_region1_setseed_Oct25.h5ad` for MH065_314, `MH065_setseed_v2.h5ad` for MH065_480) |
-| `LABEL_TABLE_DIR` | Per-cell label tables (`<sample>.csv`), not deposited. Optional: if a sample's table is missing, that comparison is skipped |
-| `OUTPUT_ROOT` | Where results go, one subfolder per sample |
-
-The paths in the notebooks were replaced with these placeholders after they were run.
-
-Each notebook writes these files to `OUTPUT_DIR`:
-
-- `<sample>.h5ad`: the final object
-- `<sample>.csv`: per-cell metadata and log-normalised expression
-- `stage1_check.tsv`: the comparison with the saved object
-- `robustness_summary.tsv`: the recalculated PCA test, for the nine samples that have one
-- `recalculated_labels.csv.gz`: per-cell labels and coordinates from that test, for the same nine samples
-- `software_versions.tsv`: the package versions used
+</details>

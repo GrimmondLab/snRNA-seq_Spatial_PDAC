@@ -3,7 +3,7 @@
 # Edit the three paths and SAMPLES below, then: sbatch stage1_spartan.slurm
 # Log: <submit dir>/pdac_spatial1_<job id>.log. Peak memory afterwards: seff <job id>
 #
-# Untested: no spatial notebook has been run in the image yet. Start with one sample (SAMPLES below).
+# Run so far on one sample (MH065_314, .sif v0.3.0; see README.md). Start with one sample (SAMPLES below).
 # --mem, --cpus-per-task and --time are guesses, not measured (Stage 2 needs about 64 GB in the
 # original env). The samples run one after another, so memory is set by the largest sample.
 # Size these from seff after the first run and record the peak in TODO.md.
