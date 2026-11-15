@@ -125,12 +125,11 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Stage 2 `stage2_figures.ipynb`: figures first made from earlier objects compared with the published panels (by the analyst).
 
 ## 3b. Spatial proteomics (MIBI): record only, waiting on the collaborating team
-- [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. `Fig2_efg_CellNeighbourhood.R` does not run as written: it joins on a `cell.id` column that is not there, and it is unclear whether clustering used all cells or excluded "Other". `ExtFig6f_boxplots_cell_distance.R` does not load dplyr or ggplot2 and does not define `output_folder`.
+- [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. It is unclear whether the Fig. 2E–G clustering used all cells or excluded "Other".
 - [x] Added the QC report (`QC_9.12.2025.html`), the cell–cell interaction report and script (Fig. 5G) and the interaction `sessionInfo()` to `spatial_proteomics/`, and described the QC, FOV filtering and interaction test in its README (2026-11-16).
 - [ ] Get `sessionInfo()` for the cell neighbourhood (Fig. 2E–G) and distance (Extended Data Fig. 6F) scripts. The QC and interaction versions are in the README.
 - [ ] Ask the team how `spe.rds` was built from the QC output: does it hold only the 29 FOVs kept by QC (54,463 cells) and the patient E Vimentin correction? Same question for `celltype_classifier_corrected.csv`.
 - [x] Removed names from the received MIBI files (2026-11-16): author lines and notes in both HTML reports, the data file names in the QC code, a comment in `Fig2_efg_CellNeighbourhood.R`, and the internal HPC path in both `sessionInfo()` outputs (now `/path/to/R/`). Names inside the plot images were not checked.
-- [ ] `Fig5g_heatmap_cell_cell_comm.R` needs `library(scales)` for `muted()`, and its `SnowParam` has no `RNGseed`.
 - [x] Deposit `spe.rds` and `celltype_classifier_corrected.csv` on Zenodo: 10.5281/zenodo.23996821.
 - [ ] Add the team's Docker container for upstream image processing and QC, or a link to it.
 - [ ] Agree how to credit the team, and get permission to publish the code.

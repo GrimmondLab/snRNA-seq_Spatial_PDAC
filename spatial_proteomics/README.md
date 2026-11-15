@@ -83,14 +83,6 @@ From `Cell_interaction_10Dec2025.html` and `Fig5g_heatmap_cell_cell_comm.R`.
 - **Test** (`imcRtools::testInteractions`, permutation test per FOV): the default ("classic") normalisation, by the number of cells, and the histoCAT normalisation, by the number of interactions. The report compares the 50 µm and 20-neighbour graphs under both.
 - **Fig. 5G** uses the 50 µm expansion graph with the classic normalisation. The significance values (`sigval`: +1 interaction, −1 avoidance, 0 neither) are summed across FOVs, with "Other" left out.
 
-## Notes for rerunning
-
-These scripts have not been rerun here (see `TODO.md`). Known issues in the scripts as received:
-
-- `Fig2_efg_CellNeighbourhood.R` joins on a `cell.id` column that is not in the object.
-- `ExtFig6f_boxplots_cell_distance.R` does not load dplyr or ggplot2 and does not define `output_folder`.
-- `Fig5g_heatmap_cell_cell_comm.R` calls `muted()` without loading scales; run `library(scales)` first. Its `SnowParam` has no `RNGseed`, so the permutation p-values, and so a few `sigval`s near the cut-off, can differ between runs. The report's 30 µm run used `SerialParam(RNGseed = 42)`.
-
 ## Input
 
 The input files are on Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) ("MIBI data of pancreatic cancer"):
