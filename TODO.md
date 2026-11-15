@@ -62,7 +62,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Write a Spartan Slurm script, based on `snrnaseq/stage2_seurat_simspec/stage2_spartan.slurm`.
 - [ ] Run from the deposited Stage 2 annotated object and `tuft.snv.df.csv`. This doesn't depend on the Stage 2 rerun, so it can start alongside those checks.
 - [ ] `STS_Malignant.Rmd` should find 6 clusters at resolution 0.1 (it stops otherwise).
-- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in both output folders and record the agreement (ARI, % same label) in the Stage 3 README. Labels no longer depend on cluster numbers; the table shows how closely the rerun clusters reproduce them.
+- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in both output folders and record the agreement (ARI, % same label) in the "Rerun" column of the Stage 3 and Stage 4 READMEs ("Comparison with the original"), and fill in the Stage 3 "Result" line. Labels no longer depend on cluster numbers; the table shows how closely the rerun clusters reproduce them.
 - [ ] Compare Extended Data Fig. 1C–E and 4A/C/G/H, and Supplementary Table 3, with the manuscript.
 
 ## 3. Spatial (Python): Stage 1 added, Stages 2 and 3 waiting on inputs

@@ -1,28 +1,36 @@
 # Stage 4: reclustering and final annotation
 
-R 4.3 · Bioconductor 3.17 · Seurat 4.3.0 · ggplot2 3.5.2 · conda env `downstream` · master script `run_stage4.R`
+Reproduces Fig. 1B and 1C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7, from the deposited final object, and rebuilds the final annotated object used by Stage 5.
 
-`run_stage4.R` renders four R Markdown files. The first three start from the non-malignant cells of the deposited final object, with their Stage 3 labels, and do not depend on each other. `Plotting.Rmd` reads what they save, so it runs last.
+**Result:** not yet run in the project image. The agreement with the original analysis will be added here after the run (see [Comparison with the original](#comparison-with-the-original)).
 
-1. `STS_Lymphoid_TNK.Rmd`: lymphoid cells. SCTransform per sample, simspec (CSS) integration, clustering at resolution 1.2, annotation (`Lv.2.Anno`, from `stage4_lymphoid_Lv.2.Anno`), pseudobulk differential expression between subsets with edgeR.
+R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage4.R`
+
+## What it does
+
+`run_stage4.R` renders four R Markdown files. The first three start from the non-malignant cells of the deposited final object and do not depend on each other. `Plotting.Rmd` reads what they save, so it runs last.
+
+1. `STS_Lymphoid_TNK.Rmd`: lymphoid cells. Integration, clustering, annotation and pseudobulk differential expression between subsets (edgeR).
 2. `STS_Myeloid_Mast_DCs.Rmd`
-   - **Myeloid and mast cells:** SCTransform without integration, clustering, annotation of DCs, mast and cycling cells (`Lv.2.Anno`, from `stage4_myeloid_Lv.2.Anno`).
-   - **Macrophages (TAMs):** SCTransform per sample, simspec integration, clustering at resolution 0.2, annotation of four subtypes (from `stage4_TAM_Lv.2.Anno`), pseudobulk differential expression with edgeR, GO and Hallmark over-representation analysis, UCell scores for published TAM signatures.
+   - **Myeloid and mast cells:** clustering and annotation of DCs, mast and cycling cells.
+   - **Macrophages (TAMs):** integration, clustering, annotation of four subtypes, pseudobulk differential expression, GO and Hallmark over-representation analysis, and UCell scores for published TAM signatures.
 3. `STS_stromal_CAF_reclustering.Rmd`
    - **Stromal classes:** pseudobulk differential expression between CAFs, FDCs, FRCs, pericytes and Schwann cells.
-   - **CAFs:** SCTransform per sample, simspec integration, clustering at resolution 0.1, annotation (`Lv.2.Anno_subset`, from `stage4_CAF_Lv.2.Anno_subset`), pseudobulk differential expression, UCell scores for published CAF programs.
+   - **CAFs:** integration, clustering, annotation, pseudobulk differential expression and UCell scores for published CAF programs.
    - **FRCs vs CAFs:** differential expression and Reactome GSEA.
-   - **Endothelial cells:** SCTransform per sample, RPCA integration, clustering at resolution 0.4, annotation of subsets including lymphatic endothelial cells (`cell_names`, from `stage4_endothelial_cell_names`).
-4. `Plotting.Rmd`: moves the subset labels onto the integrated object (`Lv.2.Anno`, `Lv.1.Anno`), checks them against the deposited ones (expected to match exactly), adds ICGC donor IDs, draws the overview figures and saves the final annotated object.
+   - **Endothelial cells:** integration, clustering and annotation of subsets, including lymphatic endothelial cells.
+4. `Plotting.Rmd`: moves the subset labels onto the whole object (`Lv.2.Anno`, `Lv.1.Anno`), checks them against the deposited ones, adds ICGC donor IDs, draws the overview figures and saves the final annotated object.
+
+Cell labels are read from the deposited object by cell ID, not from cluster numbers, so a rerun in another environment keeps the original labels. The rerun clusters are still computed and compared with them (see [`shared/README.md`](../../shared/README.md#labels-read-from-the-deposited-object)). The Fig. 1C UMAPs, and those of Extended Data Fig. 5A and 5B, are drawn from the original coordinates stored in the deposited object, so they match the published figures.
+
+A few fixes were needed for the original code to render from start to end; no analysis step was changed (see [Details](#details)).
 
 ## Manuscript outputs
-
-Figure names are taken from the chunk labels.
 
 | Output | File | Chunk |
 |---|---|---|
 | Fig. 1B | `Plotting.Rmd` | `fig1b-snrnaseq-umap`, `fig1b-snrnaseq-cellularcomposition` |
-| Fig. 1C | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd` | `fig-1c-lymphoid`, `fig-1c-tam`, `fig-1c-caf` (on the stored UMAPs); `fig-1c-*-rerun-vs-deposited` show the rerun UMAP next to the stored one, coloured by the same labels |
+| Fig. 1C | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd` | `fig-1c-lymphoid`, `fig-1c-tam`, `fig-1c-caf` (stored UMAPs); `fig-1c-*-rerun-vs-deposited` (rerun UMAP next to the stored one) |
 | Extended Data Fig. 1A | `Plotting.Rmd` | `ext-data-fig1a-snrnaseq-gex` |
 | Extended Data Fig. 2A | `Plotting.Rmd` | `ext-data-fig2a-snrnaseq-gex` |
 | Extended Data Fig. 5A | `STS_stromal_CAF_reclustering.Rmd` | `ext-data-fig-5a-Baron`, `ext-data-fig-5a-Elyada`, `ext-data-fig-5a-Hwang` |
@@ -42,31 +50,8 @@ Figures are shown in each HTML report and also saved as PNG and PDF files, named
 
 | File | Source |
 |---|---|
-| `sts.simspec_css.sample.sct_final.RDS` | Final annotated object (deposited, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)): the integrated Stage 2 object with the labels added. The three reclustering files take its Stage 3 non-malignant cells (those with a `stage3_Lv.1.Anno`), with their Stage 3 `Lv.1.Anno` and `Lv.2.Anno`, the subset labels and the Fig. 1C UMAPs. The original code read the non-malignant cells from the Stage 3 output `sts.nonmalignant.RDS`; only its RNA assay was used, which is the same in the final object. `Plotting.Rmd` reads the whole object, which the original code read as `sts.simspec_css.sample.sct_fullworkflow.RDS` |
-| `sample_map.csv` | `shared/sample_map.csv`, included in the image at `/pipeline/shared/`. Adds ICGC donor IDs to the figures |
-| `label_checks.R` | `shared/label_checks.R`, included in the image at `/pipeline/shared/`. Reads labels and UMAPs from the deposited object and compares them with the rerun (see the Stage 3 README, "Labels read from the deposited object") |
-
-## Environment
-
-Conda env `downstream` in the project image (`../../envs/downstream.yml`, locked in `../../envs/downstream-linux-64.lock`), shared with Stage 3. Every package version recorded in `sessionInfo/` for this stage matches the Stage 3 recording. This stage adds schex 1.14.0, UCell 2.4.0, SingleR 2.2.0, EnhancedVolcano 1.18.0, ReactomePA 1.44.0, reactome.db 1.84.0, SingleCellExperiment 1.22.0 and here 1.0.1, each at its original version.
-
-The differences from the original runs are those in the Stage 3 README ("Environment"), with these additions:
-
-| Package | Original | Here | Why |
-|---|---|---|---|
-| devtools, usethis, pkgbuild, pkgload, profvis, urlchecker, sessioninfo, loupeR, monocle3, hdf5r, lme4, minqa, nloptr, boot, terra, prettyunits | | not installed | loaded in the original sessions but not used by the code |
-
-`sessionInfo/` holds the session information of the original runs. `STS_stromal_CAF_reclustering.Rmd` has two: the `_v2` file was recorded in the session that ran the Reactome GSEA, so it has packages the first does not. `sessionInfo_Plotting.txt` was recorded after dplyr was updated to 1.2.1 for CellChat; `Plotting.Rmd` originally ran with the same packages as the other files here, including dplyr 1.1.2, which this env uses.
-
-## Files
-
-| File | Purpose |
-|---|---|
-| `run_stage4.R` | Master script; `Rscript run_stage4.R [config.yml]` |
-| `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd`, `Plotting.Rmd` | The analysis |
-| `config.yml` | Input paths and output folder (container paths) |
-| `add_labels_to_final_object.R` | Not part of the run. Run once on the original objects before depositing the final object: copies the Stage 3 and 4 labels that are not in it (malignant clusters, Stage 3 `Lv.1.Anno` and `Lv.2.Anno`, subset labels, endothelial subtypes) and the Fig. 1C subset UMAPs into new `stage3_*` and `stage4_*` columns, matched by cell ID. It also restores the label `TAMs_MHC_II`, which had been renamed `TAMs_HLA+` by hand in the final object after `Plotting.Rmd`; the manuscript and the code use `TAMs_MHC_II`. No other existing column is changed |
-| `sessionInfo/` | Session information of the original runs |
+| `sts.simspec_css.sample.sct_final.RDS` | Final annotated object, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| `sample_map.csv`, `label_checks.R` | In the image at `/pipeline/shared/` (see [`shared/README.md`](../../shared/README.md)) |
 
 ## Run
 
@@ -98,21 +83,58 @@ apptainer run \
 
 | Folder | File | Contents |
 |---|---|---|
-| `STS_Lymphoid_TNK/` | `lymphoid.simspec.RDS` | Lymphoid object with `Lv.2.Anno` and `Lv.2.Anno_by_cluster`; `umap_css` is the stored original UMAP, `umap_css_rerun` the rerun |
-| `STS_Myeloid_Mast_DCs/` | `myeloid.nonintegrated.RDS`, `mac.only.simspec.RDS` | Myeloid and TAM objects with `Lv.2.Anno` and `Lv.2.Anno_by_cluster`; in the TAM object, `umap_css` is the stored original UMAP |
-| `STS_stromal_CAF_reclustering/` | `fib.only.simspec.RDS`, `stromal.subsets.RDS`, `endo.RDS` | CAF object with `Lv.2.Anno_subset` and `Lv.2.Anno_subset_by_cluster` (`umap_css` is the stored original UMAP); stromal object with `Lv.3.Anno`; endothelial object with `cell_names` and `cell_names_by_cluster` |
+| `STS_Lymphoid_TNK/` | `lymphoid.simspec.RDS` | Lymphoid object |
+| `STS_Myeloid_Mast_DCs/` | `myeloid.nonintegrated.RDS`, `mac.only.simspec.RDS` | Myeloid and TAM objects |
+| `STS_stromal_CAF_reclustering/` | `fib.only.simspec.RDS`, `stromal.subsets.RDS`, `endo.RDS` | CAF, stromal and endothelial objects |
 | `Plotting/` | `sts.simspec_css.sample.sct_final.RDS` | Final annotated object, with `Lv.1.Anno`, `Lv.2.Anno` and `ICGC_ID`. Input to Stage 5 |
 
 Each folder also holds the HTML report, figures and `label_agreement.tsv` (agreement of the rerun with the deposited labels), and the first three hold the Supplementary Tables listed above.
 
-## Notes
+## Comparison with the original
 
-- **Labels and Fig. 1C UMAPs come from the deposited object.** The original code assigned the lymphoid, TAM, CAF and endothelial subsets, and some DC subsets, to clusters by number. The labels are now read from the deposited object and the original mappings are compared with them, as described in the Stage 3 README ("Labels read from the deposited object"). Fig. 1C, Extended Data Fig. 5A and 5B are drawn on the stored original UMAPs. Other UMAPs in these reports (for example the myeloid and endothelial ones) are rerun and may look different from the originals.
-- **Fig. 1C (CAFs) is coloured by `Lv.2.Anno_subset`.** The original chunk coloured the cells by their identities, which at that point were the resolution-0.1 cluster numbers, while its colours are named by subtype. It now sets `group.by = "Lv.2.Anno_subset"`.
-- **`non.malig` in `Plotting.Rmd`** is the list of 84 cells of sample 2215 from `STS_Malignant.Rmd`. They are labelled `unassigned` in `Lv.1.Anno`.
-- **`fib.only.simspec.RDS` is saved three times** under the same name, as in the original code. The last save has the UCell scores.
+| What | Expected | Rerun |
+|---|---|---|
+| Subset labels (lymphoid, myeloid, TAM, CAF, endothelial) | Identical: read from the deposited object | to be added |
+| Rerun clusters vs original labels | Close (ARI and % same label in `label_agreement.tsv`) | to be added |
+| Rebuilt `Lv.1.Anno` and `Lv.2.Anno` (`Plotting.Rmd`) vs deposited | 100% the same | to be added |
+| Fig. 1C, Extended Data Fig. 5A–B | Identical: drawn on the stored UMAPs | to be added |
+| Other UMAPs (for example myeloid, endothelial) | Same cells and labels; layout may differ, as the UMAP is recomputed | to be added |
+| Pseudobulk differential expression, enrichment and UCell scores | Same cells and groups as the original | to be added |
 
-## Changes needed to render the original code
+## Details
+
+<details>
+<summary>Cell selection and clustering</summary>
+
+The three reclustering files take the Stage 3 non-malignant cells of the deposited object (those with a `stage3_Lv.1.Anno`), with their Stage 3 `Lv.1.Anno` and `Lv.2.Anno`. The original code read them from the Stage 3 output `sts.nonmalignant.RDS`; only its RNA assay was used, which is the same in the final object. `Plotting.Rmd` reads the whole object, which the original code read as `sts.simspec_css.sample.sct_fullworkflow.RDS`.
+
+| Subset | Method | Resolution | Label column (deposited) |
+|---|---|---|---|
+| Lymphoid | SCTransform per sample, simspec (CSS) integration | 1.2 | `stage4_lymphoid_Lv.2.Anno` |
+| Myeloid and mast | SCTransform without integration | | `stage4_myeloid_Lv.2.Anno` |
+| TAMs | SCTransform per sample, simspec integration | 0.2 | `stage4_TAM_Lv.2.Anno` |
+| CAFs | SCTransform per sample, simspec integration | 0.1 | `stage4_CAF_Lv.2.Anno_subset` |
+| Endothelial | SCTransform per sample, RPCA integration | 0.4 | `stage4_endothelial_cell_names` |
+
+</details>
+
+<details>
+<summary>Original cluster-to-label mappings and stored UMAPs</summary>
+
+The original code assigned the lymphoid, TAM, CAF and endothelial subsets, and some DC subsets, to clusters by number. These mappings are applied to the rerun clusters (columns ending in `_by_cluster`) and compared with the deposited labels.
+
+In the saved lymphoid, TAM and CAF objects, `umap_css` is the stored original UMAP and `umap_css_rerun` the rerun.
+
+Fig. 1C (CAFs) is coloured by `Lv.2.Anno_subset`. The original chunk coloured the cells by their identities, which at that point were the resolution-0.1 cluster numbers, while its colours are named by subtype; it now sets `group.by = "Lv.2.Anno_subset"`.
+
+`non.malig` in `Plotting.Rmd` is the list of 84 cells of sample 2215 from `STS_Malignant.Rmd`. They are labelled `unassigned` in `Lv.1.Anno`.
+
+`fib.only.simspec.RDS` is saved three times under the same name, as in the original code. The last save has the UCell scores.
+
+</details>
+
+<details>
+<summary>Changes needed to render the original code</summary>
 
 These stopped the files from rendering from start to end. No analysis step was changed.
 
@@ -123,3 +145,33 @@ These stopped the files from rendering from start to end. No analysis step was c
 | `STS_Myeloid_Mast_DCs.Rmd` | `library(t)` is now `library(tibble)`; added a missing comma in a chunk header |
 | `STS_stromal_CAF_reclustering.Rmd` | The colours of two MDS check plots were defined outside the file, so they now use a `Set1` palette. Commented out one `clustree` call, which needs at least two resolutions |
 | `Plotting.Rmd` | `non.malig` was defined outside the file, so the list is now copied in |
+
+</details>
+
+<details>
+<summary>Environment and package versions</summary>
+
+Conda env `downstream` in the project image (`../../envs/downstream.yml`, locked in `../../envs/downstream-linux-64.lock`), shared with Stage 3. Every package version recorded in `sessionInfo/` for this stage matches the Stage 3 recording. This stage adds schex 1.14.0, UCell 2.4.0, SingleR 2.2.0, EnhancedVolcano 1.18.0, ReactomePA 1.44.0, reactome.db 1.84.0, SingleCellExperiment 1.22.0 and here 1.0.1, each at its original version.
+
+The differences from the original runs are those in the Stage 3 README ("Environment and package versions", under "Details"), with these additions:
+
+| Package | Original | Here | Why |
+|---|---|---|---|
+| devtools, usethis, pkgbuild, pkgload, profvis, urlchecker, sessioninfo, loupeR, monocle3, hdf5r, lme4, minqa, nloptr, boot, terra, prettyunits | | not installed | loaded in the original sessions but not used by the code |
+
+`sessionInfo/` holds the session information of the original runs. `STS_stromal_CAF_reclustering.Rmd` has two: the `_v2` file was recorded in the session that ran the Reactome GSEA, so it has packages the first does not. `sessionInfo_Plotting.txt` was recorded after dplyr was updated to 1.2.1 for CellChat; `Plotting.Rmd` originally ran with the same packages as the other files here, including dplyr 1.1.2, which this env uses.
+
+</details>
+
+<details>
+<summary>Files in this folder</summary>
+
+| File | Purpose |
+|---|---|
+| `run_stage4.R` | Master script; `Rscript run_stage4.R [config.yml]` |
+| `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd`, `Plotting.Rmd` | The analysis |
+| `config.yml` | Input paths and output folder (container paths) |
+| `add_labels_to_final_object.R` | Not part of the run. Run once on the original objects before depositing the final object: copies the Stage 3 and 4 labels that are not in it (malignant clusters, Stage 3 `Lv.1.Anno` and `Lv.2.Anno`, subset labels, endothelial subtypes) and the Fig. 1C subset UMAPs into new `stage3_*` and `stage4_*` columns, matched by cell ID. It also restores the label `TAMs_MHC_II`, which had been renamed `TAMs_HLA+` by hand in the final object after `Plotting.Rmd`; the manuscript and the code use `TAMs_MHC_II`. No other existing column is changed |
+| `sessionInfo/` | Session information of the original runs |
+
+</details>
