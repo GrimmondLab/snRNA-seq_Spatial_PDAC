@@ -8,13 +8,13 @@ This repository holds:
 - **A container to rerun the snRNA-seq and Xenium analyses:** one Docker image (also as an Apptainer `.sif`) with pinned conda environments.
 - **Checks against the original analysis:** each stage README compares the rerun with the original objects and explains any difference.
 - **A map from figures to code:** the stage READMEs list which notebook or Rmd makes each manuscript panel.
-- **Records of steps that are not rerun here:** Cell Ranger and CellBender (snRNA-seq Stage 0), the MIBI figure code, and saved values used where a step doesn't reproduce exactly (for example the Xenium PCA and UMAP).
+- **Records of steps that are not rerun here:** Cell Ranger and CellBender (snRNA-seq Stage 0), the MIBI QC and figure code, and saved values used where a step doesn't reproduce exactly (for example the Xenium PCA and UMAP).
 
 | Folder | Language | Contents |
 |---|---|---|
 | `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5, and the supplementary inferCNV analysis |
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
-| `spatial_proteomics/` | R | Record of the code for the MIBI figures; no Docker container (see `spatial_proteomics/README.md`) |
+| `spatial_proteomics/` | R | Record of the MIBI QC report and figure code; no Docker container (see `spatial_proteomics/README.md`) |
 
 The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image from `v0.3.0`, but no notebook has been run in the image yet: the Xenium results so far come from the original `xenium.squidpy` env (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 

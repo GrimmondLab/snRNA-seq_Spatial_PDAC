@@ -9,7 +9,7 @@ library(tidyr)
 library(SpatialExperiment)
 library(imcRtools)
 
-## Source the function from Kenta
+## Source the neighbourhood clustering functions
 source("create_spatial_clusters.R")
 
 spe <- readRDS("rdata/spe.rds")
