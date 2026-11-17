@@ -12,7 +12,7 @@ Python analysis of the spatial (Xenium) data, from 16 samples of 8 patients in t
 
 PCA, UMAP and Leiden clustering do not reproduce exactly in a different environment, so Stage 1 reads them, and the cells kept, from the deposited processed objects; everything else is recomputed from raw data. Cell labels come from gene-set scoring, not from clusters, and stay stable when PCA and clustering are recalculated (96.58–100% of cells keep their label; see the Stage 1 README).
 
-These results come from the original `xenium.squidpy` environment. In the project image, Stage 1 has been run on one sample (MH065_314) and reproduced it exactly; the other samples and Stages 2 and 3 have not been run in the image yet.
+These results come from the original `xenium.squidpy` environment. In the project image (v1.0.0), Stage 1 has been run on all 16 samples and reproduced them exactly, Stage 2 gives the same niche for every cell as the run outside the image, and Stage 3 writes every listed figure, all matching the published panels.
 
 ## Running
 

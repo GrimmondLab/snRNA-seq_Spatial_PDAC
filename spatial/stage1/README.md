@@ -2,7 +2,7 @@
 
 Takes the raw Xenium output of 16 samples (8 patients from the PURPLE registry, each with a 314-gene and a 480-gene panel) to the 16 annotated objects used by Stages 2 and 3: QC, cell annotation by gene-set scoring (`cell_class_threshold`) and neighbourhood enrichment (Nhood).
 
-**Result: exact.** Rerun from raw data, all 16 objects (2,931,027 cells) have identical cell labels, gene-set scores and Nhood z-scores (max difference 0), in two independent runs. In the project image, the one sample run so far (MH065_314) is also identical.
+**Result: exact.** Rerun from raw data, all 16 objects (2,931,027 cells) have identical cell labels, gene-set scores and Nhood z-scores (max difference 0), in two independent runs. The run in the project image (v1.0.0, all 16 samples) is also identical.
 
 ## Why some saved values are read
 
@@ -154,9 +154,29 @@ In MH099_480, 9 original Tuft cells were in clusters removed by the test, and 1 
 </details>
 
 <details>
-<summary>Run in the project image (MH065_314)</summary>
+<summary>Run in the project image</summary>
 
 One sample, MH065_314, was run in the project image (`.sif` of `v0.3.0`, Apptainer, November 2026) through `run.sh spatial1` with a config listing only that notebook.
+
+The first full run in the image (`v1.0.0`, 17 November 2026) stopped at MH074_314: ten notebooks recomputed the Leiden clusters from the saved PCA, and in the image this gave one cluster more than the annotation map (`cluster_anno`). On the original machine it had reproduced the saved clusters exactly. Those ten notebooks now read the clusters from the saved object, as the other six already did; the check against `cluster_anno` is kept.
+
+With that fix, the full run in the image (all 16 samples and the robustness summary) completed on Spartan in 46 min, with a peak of 8.4 GB. All 16 samples (2,931,027 cells) reproduce the saved objects exactly: the same `cell_class_threshold` label for every cell, and gene-set scores and Nhood z-scores with a max difference of 0 (`stage1_check.tsv` of each sample). The recalculated PCA test, compared with the earlier runs on the original machine:
+
+| Sample | Panel | Same label, image | Same label, earlier runs | Nhood z-score correlation, image | Nhood z-score correlation, earlier runs |
+|---|---|---|---|---|---|
+| MH065 | 314 | 100.00% | 99.12% | 0.9996 | 0.9991 |
+| MH074 | 314 | 98.32% | 98.55% | 0.9997 | 0.9999 |
+| MH097 | 314 | 99.87% | 97.77% | 0.9995 | 0.9993 |
+| MH099 | 314 | 99.94% | 99.93% | 0.9997 | 0.9997 |
+| MH104 | 314 | 99.86% | 99.86% | 0.9998 | 0.9998 |
+| MH106 | 314 | 100.00% | 100.00% | 0.9995 | 0.9996 |
+| MH107 | 314 | 98.70% | 98.32% | 1.0000 | 0.9999 |
+| MH099 | 480 | 98.98% | 96.58% | 0.9997 | 0.9990 |
+| MH106 | 480 | 99.91% | 99.99% | 0.9998 | 0.9998 |
+
+The seven scoring-only samples (MH096_314 and the 480-gene panels of MH065, MH074, MH096, MH097, MH104 and MH107) don't use PCA and are 100% (correlation 1.0000) in both. In the image, between 98.32% and 100% of cells keep their label when PCA is recalculated, and the Nhood z-score correlation is at least 0.9995 (earlier runs: 96.58% to 100%, at least 0.9990). The tables above the image run, and `stage1_robustness_table.tsv` in this folder, are from the earlier runs.
+
+The rest of this section is the first run in the image, on MH065_314 only.
 
 | Check | In the image | Recorded for MH065_314 (earlier runs) |
 |---|---|---|
@@ -248,6 +268,6 @@ In four samples, label names were also changed to match the original objects (`L
 | `stage1_robustness_table.tsv` | The per-sample robustness table, with full precision |
 | `stage1_executive_summary.tsv` | The comparison with the original, as a table |
 | `stage1_supplementary_table.tsv` | Supplementary details for all 16 samples, from both runs |
-| `stage1_spartan.slurm` | Slurm script used to run this stage in the image on an HPC cluster |
+| `stage1_spartan.slurm` | Slurm script to run this stage in the image on an HPC cluster: all 16 samples and the robustness summary, or the samples listed in `SAMPLES` |
 
 </details>

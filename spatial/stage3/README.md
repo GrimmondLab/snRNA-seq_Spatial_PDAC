@@ -12,7 +12,7 @@ Six notebooks, each following the original analysis, from the final Stage 1 obje
 
 Reproduces Fig. 3B–D, 3G, 4H, 5H–I, 6B, 6F–G and Extended Data Fig. 4B–D, 7C, 7F–G, 9D–F and 9I.
 
-**Result: exact.** Every notebook reproduces the original cells and labels (100%), DE results and Nhood z-scores exactly; pathway scores are within 5 × 10⁻⁷. No result depends on a recomputed PCA, UMAP or clustering: where clusters or a UMAP are needed, the saved ones are read (the Stage 1 cluster-based annotation `anno`, and the MH096_480 clusters and MH099_480 UMAP in `tuft_inputs/`).
+**Result: exact.** Every notebook reproduces the original cells and labels (100%), DE results and Nhood z-scores exactly; pathway scores are within 5 × 10⁻⁷. No result depends on a recomputed PCA, UMAP or clustering: where clusters or a UMAP are needed, the saved ones are read (the Stage 1 cluster-based annotation `anno`, and the MH096_480 clusters and MH099_480 UMAP in `tuft_inputs/`). The run in the project image (v1.0.0) wrote every figure listed below, and all match the published panels.
 
 ## Manuscript outputs
 
@@ -36,7 +36,7 @@ Reproduces Fig. 3B–D, 3G, 4H, 5H–I, 6B, 6F–G and Extended Data Fig. 4B–D
 | Extended Data Fig. 7F | `stage3_malignant_TIL.ipynb` | `heatmap_MH065_topDE.pdf` | Top DE genes in MH065_480, `wTIL` vs `noTIL` |
 | Extended Data Fig. 7G | `stage3_malignant_TIL.ipynb` | `MH065_signalling_scatter.pdf` | IL6, IFNG, OXPHOS and hypoxia scores of MH065_480 in space (z-scores) |
 | Extended Data Fig. 9D | `stage3_TLS_figures.ipynb` | `B_neighbours_TNBC.pdf` | Neighbour composition around B cells in the TNBC TLS |
-| Extended Data Fig. 9E | `stage3_TLS_figures.ipynb` | `TNBC4_TLS_PLA2G2A_IGF1.pdf`, `TNBC_stromal.pdf` | TNBC_4 labels in space with PLA2G2A and IGF1, and B cells, FDCs, FRCs and TRCs only. Saving was added after the run, so these are written on the next run |
+| Extended Data Fig. 9E | `stage3_TLS_figures.ipynb` | `TNBC4_TLS_PLA2G2A_IGF1.pdf`, `TNBC_stromal.pdf` | TNBC_4 labels in space with PLA2G2A and IGF1, and B cells, FDCs, FRCs and TRCs only. Saving was added after the original run; first written in the image run |
 | Extended Data Fig. 9F | `stage3_TLS_figures.ipynb` | `Schwann_counts.pdf` | Schwann cells per PDAC TLS |
 | Extended Data Fig. 9I | `stage3_TLS_figures.ipynb` | `Nhood_enrichment_TNBC.pdf` | Top neighbours across the TNBC TLS |
 
@@ -60,7 +60,7 @@ Saved figures with no panel noted in the notebook: `TLS_composition_PDAC.pdf`, `
 
 ## Run
 
-In the project image: `run.sh spatial3`, after Stages 1 and 2 and with the same output folder (see "Running the spatial stages" in the top-level `README.md`). `stage3_tuft.ipynb` also needs `tuft_inputs/` from this folder, which is in the image.
+In the project image: `run.sh spatial3`, after Stages 1 and 2 and with the same output folder (see "Running the spatial stages" in the top-level `README.md`). `stage3_tuft.ipynb` also needs `tuft_inputs/` from this folder, which is in the image. On Spartan: `stage3_spartan.slurm`, after `../stage2/stage2_spartan.slurm` with the same output folder. It checks that every input is present before it starts: the 16 Stage 1 objects, the raw Xenium output of the 16 samples and the four TNBC sections, the Stage 2 combined object and `tuft_inputs/`. In the image (v1.0.0) all six notebooks took 4 min, with a peak of 5.1 GB; the script asks for 2 CPUs, 16 GB and 1 h.
 
 <details>
 <summary>Running the notebooks directly</summary>

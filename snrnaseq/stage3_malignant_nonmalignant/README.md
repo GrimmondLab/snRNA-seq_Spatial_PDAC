@@ -2,7 +2,7 @@
 
 Reproduces Extended Data Fig. 1C–E, Extended Data Fig. 4A, 4C, 4G and 4H, and Supplementary Table 3, from the deposited final object.
 
-**Result:** run in the project image (v1.0.0, on Spartan, 2026-11-17), with fixes needed to render made after the image was built. Labels are identical by design; the original cluster-to-label mappings, applied to the rerun clusters, give the deposited non-malignant labels for every cell. The malignant clusters differ in the rerun; the analysis uses the original ones. The figure comparison will be added here (see [Comparison with the original](#comparison-with-the-original)).
+**Result: reproduced.** Run in the project image (v1.0.0, on Spartan, 2026-11-17), with fixes needed to render made after the image was built. Extended Data Fig. 1C–E, 4A, 4C, 4G and 4H, and Supplementary Table 3 match the manuscript exactly. Labels are identical by design; the original cluster-to-label mappings, applied to the rerun clusters, give the deposited non-malignant labels for every cell. The malignant clusters differ in the rerun; the analysis uses the original ones. See [Comparison with the original](#comparison-with-the-original).
 
 R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage3.R`
 
@@ -88,8 +88,8 @@ On Spartan: edit the three paths at the top of `stage3_spartan.slurm`, then `sba
 |---|---|---|
 | Cell labels (`Lv.1.Anno`, `Lv.2.Anno`, `Tuft.persistent`, malignant clusters) | Identical: read from the deposited object | Identical (read by cell ID; v1.0.0 run, 2026-11-17) |
 | Rerun clusters vs original labels | Recorded in the report and `label_agreement.tsv`, not a reproducibility measure (see [`shared/README.md`](../../shared/README.md#labels-read-from-the-deposited-object)) | **Non-malignant:** the original mapping applied to the rerun resolution-0.7 clusters gives the deposited `Lv.1.Anno` and `Lv.2.Anno` for all 35,493 cells. **Malignant and tuft:** the rerun clusters differ from the original ones; the analyses use the original clusters and labels, so they are unaffected |
-| Pseudobulk differential expression and Hallmark analysis | Same cells and groups as the original | to be added |
-| Extended Data Fig. 4G (tuft UMAP) | Same cells and KRAS calls; layout may differ, as the UMAP is recomputed | to be added |
+| Pseudobulk differential expression and Hallmark analysis (Extended Data Fig. 1C–E, Supplementary Table 3) | Same cells and groups as the original | Match the manuscript exactly |
+| Extended Data Fig. 4A, 4C, 4G, 4H | Same cells and KRAS calls; the 4G layout could differ, as the UMAP is recomputed | Match the manuscript exactly |
 
 The malignant edgeR contrasts are written for the 6 original clusters; the run stops if there are not 6.
 

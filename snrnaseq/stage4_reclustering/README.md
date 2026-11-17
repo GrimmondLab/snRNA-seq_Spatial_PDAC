@@ -2,7 +2,7 @@
 
 Reproduces Fig. 1B and 1C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7, from the deposited final object, and rebuilds the final annotated object used by Stage 5.
 
-**Result:** run in the project image (v1.0.0, on Spartan, 2026-11-17), with three fixes needed to render made after the image was built (see [Details](#details)). The agreement with the original analysis and the figure comparison will be added here (see [Comparison with the original](#comparison-with-the-original)).
+**Result: reproduced.** Run in the project image (v1.0.0, on Spartan, 2026-11-17), with fixes needed to render made after the image was built (see [Details](#details)). Fig. 1B–C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7 match the manuscript exactly, and the rebuilt final `Lv.1.Anno` and `Lv.2.Anno` are 100% the same as the deposited object (see [Comparison with the original](#comparison-with-the-original)).
 
 R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage4.R`
 
@@ -99,9 +99,9 @@ Each folder also holds the HTML report, figures and `label_agreement.tsv` (agree
 | Subset labels (lymphoid, myeloid, TAM, CAF, endothelial) | Identical: read from the deposited object | Identical (read by cell ID; v1.0.0 run, 2026-11-17) |
 | Rerun clusters vs original labels | Recorded in the reports and `label_agreement.tsv`, not a reproducibility measure (see [`shared/README.md`](../../shared/README.md#labels-read-from-the-deposited-object)) | **Myeloid** (6,290 cells) and **TAM** (5,797 cells): the original mapping applied to the rerun clusters gives the deposited `Lv.2.Anno` for every cell. Likewise for **CAF** subsets (7,924 cells). **Endothelial** (1,134 cells): 98.94% (12 cells differ). **Lymphoid:** the rerun clusters differ from the original ones. The labels, Fig. 1C and the pseudobulk use the deposited labels, so they are unaffected |
 | Rebuilt `Lv.1.Anno` and `Lv.2.Anno` (`Plotting.Rmd`) vs deposited | 100% the same | Both 100%. The first run gave 99.93% for `Lv.2.Anno`: the 84 cells of sample 2215 were `PDAC` in the rebuild and `unassigned` in the deposited object. Fixed (see Details) |
-| Fig. 1C, Extended Data Fig. 5A–B | Identical: drawn on the stored UMAPs | to be added |
-| Other UMAPs (for example myeloid, endothelial) | Same cells and labels; layout may differ, as the UMAP is recomputed | to be added |
-| Pseudobulk differential expression, enrichment and UCell scores | Same cells and groups as the original | to be added |
+| Fig. 1C, Extended Data Fig. 5A–B | Identical: drawn on the stored UMAPs | Identical to the manuscript |
+| Other manuscript figures (Fig. 1B, Extended Data Fig. 1A, 2A, 6A–C, 8A, 8C, 8E–G) | Same cells and labels | Match the manuscript exactly |
+| Pseudobulk differential expression, enrichment and UCell scores (Supplementary Tables 4–7) | Same cells and groups as the original | Supplementary Tables 4–7 match the manuscript exactly |
 
 ## Details
 

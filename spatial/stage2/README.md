@@ -4,7 +4,7 @@ Groups the cells of all 16 samples into 15 niches by the cell types around them 
 
 Reproduces Fig. 1D, 2A–D, 4B–F, 5B–E and Extended Data Fig. 2D, 3, 5C–D, 6D–E and 8H–I.
 
-**Result: near-exact.** Neighbour fractions and scaled values are identical, and 99.9994% of cells (all but 18 of 2,930,241) are in the same niche; all 15 clusters match their original niche names. The profiling and single-sample figures are computed from the Stage 1 objects, which reproduce exactly, and have no random steps; the Fig. 4E statistics are as in the original (F = 25.0082, p < 0.0001).
+**Result: near-exact.** Cell labels and K-means input are identical; niche assignment matches for 99.9994% of cells, with 18 borderline cells (of 2,930,241) assigned to a neighbouring niche. All 15 clusters match their original niche names. The run in the project image (v1.0.0) gives the same niche for every cell as the run outside it. The profiling and single-sample figures are computed from the Stage 1 objects, which reproduce exactly, and have no random steps; the Fig. 4E statistics are as in the original (F = 25.0082, p < 0.0001).
 
 ## Manuscript outputs
 
@@ -29,7 +29,9 @@ Reproduces Fig. 1D, 2A–D, 4B–F, 5B–E and Extended Data Fig. 2D, 3, 5C–D,
 
 ## Run
 
-In the project image: `run.sh spatial2`, after Stage 1 and with the same output folder (see "Running the spatial stages" in the top-level `README.md`). The niche analysis needs about 64 GB of memory and no GPU.
+In the project image: `run.sh spatial2`, after Stage 1 and with the same output folder (see "Running the spatial stages" in the top-level `README.md`). No GPU. In the image (v1.0.0) all three notebooks took 8 min, with a peak of 9.0 GB. On Spartan: `stage2_spartan.slurm` (2 CPUs, 32 GB, 2 h).
+
+**Starting without Stage 1.** Stage 2 can also start from the 16 processed objects deposited on Zenodo (`Xenium_480.tar`, `Xenium_314.tar`) instead of the Stage 1 output: in `stage2_spartan.slurm`, set `STAGE1_SOURCE=deposited` and `DEPOSITED_DIR` to the folder with the extracted `.h5ad` files. The script links each file under the name Stage 2 reads, checks that every object holds the labels, coordinates and Nhood z-scores Stage 2 needs, and then runs the notebooks. In the image, Stage 1 reproduces these objects exactly, so both starts should give the same result; the deposited start has not been run yet.
 
 <details>
 <summary>Running the notebooks directly</summary>
@@ -73,6 +75,17 @@ The paths in the notebooks were replaced with these placeholders after they were
 | Niche names | All 15 clusters match their original names |
 
 The 18 cells with a different niche all moved between stromal, immune and vascular niches; every cell kept its `cell_class_threshold` label (see Details).
+
+**Run in the project image** (v1.0.0, Spartan, `stage2_spartan.slurm`, `stage2_image_check.tsv`):
+
+| Check | Against the original | Against the run outside the image |
+|---|---|---|
+| Cells | 2,930,241, all shared | 2,930,241, all shared |
+| Same `cell_class_threshold` | 100% | 100% |
+| Same K-means cluster | 99.9994% (18 cells differ) | 100% |
+| Same niche | 99.9994% (18 cells differ) | 100% |
+
+The image gives exactly the niches of the run outside it, so the same 18 cells differ from the original.
 
 ## Details
 
@@ -165,5 +178,6 @@ The 18 cells with a different niche come from 11 samples, with at most 4 in one 
 | `stage2_niches.ipynb` | The niche analysis, from the final Stage 1 objects to the niches and figures |
 | `stage2_figures.ipynb` | Manuscript figures plotted from single Stage 1 objects |
 | `stage2_neighbourhood_profiling.ipynb` | Distances, Nhood enrichment and neighbour composition around selected cell types |
+| `stage2_spartan.slurm` | Slurm script to run this stage in the image on an HPC cluster, after `../stage1/stage1_spartan.slurm` with the same output folder. If `REFERENCE_DIR` holds `stage2_niche_labels_original.csv.gz` (not in the image or this repository), it then compares each cell's niche with it and writes `stage2_image_check.tsv`; `COMPARE_ONLY=yes` runs only that comparison. `STAGE1_SOURCE=deposited` starts from the deposited processed objects instead of the Stage 1 output |
 
 </details>
