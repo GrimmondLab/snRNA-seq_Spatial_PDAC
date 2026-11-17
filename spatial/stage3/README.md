@@ -54,7 +54,7 @@ The TLS notebooks were run before the label `Stromal_CCL19` was renamed `TRCs`, 
 | Not used | `stage3_TLS_figures.ipynb` | `TLS_composition_all.pdf` | Composition of all 13 regions |
 | Not labelled | `stage3_MH097_PanIN.ipynb` | `MH097_PanIN_signalling.pdf`, `MH097_PanIN_signalling_2.pdf` | IL6, IFNG and hypoxia scores (z-scores) in space |
 
-Saved figures with no panel noted in the notebook: `TLS_composition_PDAC.pdf`, `B_neighbours_PDAC_boxplot.pdf`, `Moran_#2.pdf` to `Moran_#5.pdf`, `matrixplot_SLS_subset.pdf`, the PDAC and lymph node CCL19–CCR7 and CXCL12–CXCR4 violins (`stacked_violin_Vln_96n2_*`, `_96n1_*`, `_97n2_*`, `stacked_violin_vlnplot_SLS_*`) and `dotplot_97_n2_dotplot.pdf` (cell identity in TLS_097_480_n2). The TCF7, LEF1 and CCR7 plot is saved as `Moran_#5.pdf`; in the original it was also saved as `Moran_#4.pdf`, overwriting the CXCL12, MS4A1 and VWF plot.
+Saved figures with no panel noted in the notebook: `TLS_composition_PDAC.pdf`, `B_neighbours_PDAC_boxplot.pdf`, `Moran_#2.pdf` to `Moran_#5.pdf`, `matrixplot_SLS_subset.pdf` (and `matrixplot_TLS_097_480_n3.pdf`, `matrixplot_TLS_096_480_n1.pdf` and `matrixplot_TLS_cytokines_TNBC_4.pdf`, saved from the next run: the original drew these three without saving them), the PDAC and lymph node CCL19–CCR7 and CXCL12–CXCR4 violins (`stacked_violin_Vln_96n2_*`, `_96n1_*`, `_97n2_*`, `stacked_violin_vlnplot_SLS_*`) and `dotplot_97_n2_dotplot.pdf` (cell identity in TLS_097_480_n2). The TCF7, LEF1 and CCR7 plot is saved as `Moran_#5.pdf`; in the original it was also saved as `Moran_#4.pdf`, overwriting the CXCL12, MS4A1 and VWF plot.
 
 </details>
 

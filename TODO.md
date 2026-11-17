@@ -91,6 +91,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Stage 3 PanIN: give the panels, if any, for `MH097_PanIN_signalling.pdf` and `MH097_PanIN_signalling_2.pdf`, and add the one or two remaining plots. The notebook computes a UMAP but saves no UMAP figure.
 - [x] Stage 3: TLS notebooks won't be rerun. Text outputs changed to `TRCs`; a note at the top of each says the saved plot images still show `Stromal_CCL19`.
 - [ ] Stage 3: give the manuscript panels, if any, for the TLS figures listed as unlabelled in `spatial/stage3/README.md`. Extended Data Fig. 9E is now saved, and the second `Moran_#4.pdf` is now `Moran_#5.pdf`.
+- [ ] Stage 3 `stage3_TLS_figures.ipynb`: the TLS cytokine matrix plots for TLS_097_480_n3, TLS_096_480_n1 and TNBC_4 were drawn but not saved in the original; `save=` added (2026-11-17), so `matrixplot_TLS_097_480_n3.pdf`, `matrixplot_TLS_096_480_n1.pdf` and `matrixplot_TLS_cytokines_TNBC_4.pdf` are written from the next image build.
 - [x] Stage 3: the *assumed* `color_map` and subsets in `stage3_TLS_figures.ipynb` are accepted: the extra regions show the same pattern as the published ones.
 - [x] Stage 3: `Stromal_CCL19` renamed `TRCs` in `stage3_TIL_regions.ipynb` too; the check maps the original name. Its saved outputs come from before the rename (the restart-and-run-all item above covers it).
 - [x] TNBC raw Xenium output: GEO GSE281886. Check it has `cell_feature_matrix.h5` and `cells.csv` for all four sections once public.
