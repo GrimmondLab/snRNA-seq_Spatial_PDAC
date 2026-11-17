@@ -2,7 +2,7 @@
 
 Reproduces Fig. 1B and 1C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7, from the deposited final object, and rebuilds the final annotated object used by Stage 5.
 
-**Result:** not yet run in the project image. The agreement with the original analysis will be added here after the run (see [Comparison with the original](#comparison-with-the-original)).
+**Result:** run in the project image (v1.0.0, on Spartan, 2026-11-17), with three fixes needed to render made after the image was built (see [Details](#details)). The agreement with the original analysis and the figure comparison will be added here (see [Comparison with the original](#comparison-with-the-original)).
 
 R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage4.R`
 
@@ -64,7 +64,7 @@ Use the project image (see the top-level `README.md` to build or pull it).
 
 ```bash
 docker run --rm \
-  --cpus 8 --memory 128g \
+  --cpus 2 --memory 64g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
   pdac-snrnaseq:1.0 stage4
@@ -78,6 +78,8 @@ apptainer run \
   --bind /path/to/output:/output \
   pdac-snrnaseq.sif stage4
 ```
+
+On Spartan: edit the three paths at the top of `stage4_spartan.slurm`, then `sbatch stage4_spartan.slurm`. It asks for 2 CPUs (no file runs in parallel), 64 GB and 4 hours. The v1.0.0 runs took 36–48 min with a peak of 42.8 GB.
 
 ## Outputs
 
@@ -94,9 +96,9 @@ Each folder also holds the HTML report, figures and `label_agreement.tsv` (agree
 
 | What | Expected | Rerun |
 |---|---|---|
-| Subset labels (lymphoid, myeloid, TAM, CAF, endothelial) | Identical: read from the deposited object | to be added |
-| Rerun clusters vs original labels | Close (ARI and % same label in `label_agreement.tsv`) | to be added |
-| Rebuilt `Lv.1.Anno` and `Lv.2.Anno` (`Plotting.Rmd`) vs deposited | 100% the same | to be added |
+| Subset labels (lymphoid, myeloid, TAM, CAF, endothelial) | Identical: read from the deposited object | Identical (read by cell ID; v1.0.0 run, 2026-11-17) |
+| Rerun clusters vs original labels | Recorded in the reports and `label_agreement.tsv`, not a reproducibility measure (see [`shared/README.md`](../../shared/README.md#labels-read-from-the-deposited-object)) | **Myeloid** (6,290 cells) and **TAM** (5,797 cells): the original mapping applied to the rerun clusters gives the deposited `Lv.2.Anno` for every cell. Likewise for **CAF** subsets (7,924 cells). **Endothelial** (1,134 cells): 98.94% (12 cells differ). **Lymphoid:** the rerun clusters differ from the original ones. The labels, Fig. 1C and the pseudobulk use the deposited labels, so they are unaffected |
+| Rebuilt `Lv.1.Anno` and `Lv.2.Anno` (`Plotting.Rmd`) vs deposited | 100% the same | Both 100%. The first run gave 99.93% for `Lv.2.Anno`: the 84 cells of sample 2215 were `PDAC` in the rebuild and `unassigned` in the deposited object. Fixed (see Details) |
 | Fig. 1C, Extended Data Fig. 5A–B | Identical: drawn on the stored UMAPs | to be added |
 | Other UMAPs (for example myeloid, endothelial) | Same cells and labels; layout may differ, as the UMAP is recomputed | to be added |
 | Pseudobulk differential expression, enrichment and UCell scores | Same cells and groups as the original | to be added |
@@ -145,6 +147,8 @@ These stopped the files from rendering from start to end. No analysis step was c
 | `STS_Myeloid_Mast_DCs.Rmd` | `library(t)` is now `library(tibble)`; added a missing comma in a chunk header |
 | `STS_stromal_CAF_reclustering.Rmd` | The colours of two MDS check plots were defined outside the file, so they now use a `Set1` palette. Commented out one `clustree` call, which needs at least two resolutions |
 | `Plotting.Rmd` | `non.malig` was defined outside the file, so the list is now copied in |
+| `Plotting.Rmd` | The `Lv.2.Anno` step now sets the 84 cells of sample 2215 (`non.malig`) to `unassigned`, as the `Lv.1.Anno` step does. Without it they became `PDAC`; the deposited `Lv.2.Anno` has them as `unassigned`, which Stage 5 relies on to leave them out |
+| `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd` | Metadata columns are removed with `x@meta.data[["col"]] <- NULL` instead of `x[["col"]] <- NULL`. The original input, Stage 3's `sts.nonmalignant.RDS`, had Stage 3's cluster columns (such as `SCT_snn_res.0.7`); the cells read from the final object don't, and SeuratObject stops when asked to remove a column that isn't there. The new form removes the same columns when they exist |
 
 </details>
 
@@ -171,6 +175,7 @@ The differences from the original runs are those in the Stage 3 README ("Environ
 | `run_stage4.R` | Master script; `Rscript run_stage4.R [config.yml]` |
 | `STS_Lymphoid_TNK.Rmd`, `STS_Myeloid_Mast_DCs.Rmd`, `STS_stromal_CAF_reclustering.Rmd`, `Plotting.Rmd` | The analysis |
 | `config.yml` | Input paths and output folder (container paths) |
+| `stage4_spartan.slurm` | Slurm script to run this stage from the `.sif` on Spartan |
 | `add_labels_to_final_object.R` | Not part of the run. Run once on the original objects before depositing the final object: copies the Stage 3 and 4 labels that are not in it (malignant clusters, Stage 3 `Lv.1.Anno` and `Lv.2.Anno`, subset labels, endothelial subtypes) and the Fig. 1C subset UMAPs into new `stage3_*` and `stage4_*` columns, matched by cell ID. It also restores the label `TAMs_MHC_II`, which had been renamed `TAMs_HLA+` by hand in the final object after `Plotting.Rmd`; the manuscript and the code use `TAMs_MHC_II`. No other existing column is changed |
 | `sessionInfo/` | Session information of the original runs |
 

@@ -9,7 +9,7 @@ params:
   out_root: NULL
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center")
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T, fig.align="center")
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage2.R so that params are passed
@@ -72,7 +72,7 @@ for (i in names(sts.seurat)){
   sts.seurat[[i]] <- SCTransform(sts.seurat[[i]],
     vst.flavor = "v2",
     method = "glmGamPoi",
-    verbose = TRUE
+    verbose = FALSE
     )
 }
 ```
@@ -90,7 +90,7 @@ sts.simspec_css.sample.sct <- merge(x = sts.seurat[[1]], y = sts.seurat[2:length
 VariableFeatures(sts.simspec_css.sample.sct) <- features.ls
 
 # PCA 
-sts.simspec_css.sample.sct <- RunPCA(sts.simspec_css.sample.sct, verbose = TRUE, assay = "SCT") #default npcs = 50
+sts.simspec_css.sample.sct <- RunPCA(sts.simspec_css.sample.sct, verbose = FALSE, assay = "SCT") #default npcs = 50
 
 # Run CSS ----
 # simspec is installed in the conda env at the commit used for the manuscript (envs/post_install.R)
@@ -228,12 +228,11 @@ Each rerun cluster at resolution 1.1, with the share of its cells in each `simsp
 compare_with_labels <- function(clusters, labels, title) {
   clusters <- as.character(clusters)
   labels <- as.character(labels)
-  ari <- bluster::pairwiseRand(labels, clusters, mode = "index")
   counts <- table(cluster = clusters, label = labels)
   shares <- prop.table(counts, margin = 1)
   pheatmap(unclass(shares), cluster_rows = FALSE, cluster_cols = FALSE,
            color = colorRampPalette(c("white", "darkred"))(50),
-           main = sprintf("%s (ARI %.3f)", title, ari))
+           main = title)
   data.frame(cluster = rownames(shares),
              cells = as.vector(rowSums(counts)),
              majority_label = colnames(shares)[apply(shares, 1, which.max)],

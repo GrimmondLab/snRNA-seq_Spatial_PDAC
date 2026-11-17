@@ -2,7 +2,7 @@
 
 Reproduces Extended Data Fig. 1C–E, Extended Data Fig. 4A, 4C, 4G and 4H, and Supplementary Table 3, from the deposited final object.
 
-**Result:** not yet run in the project image. The agreement with the original analysis will be added here after the run (see [Comparison with the original](#comparison-with-the-original)).
+**Result:** run in the project image (v1.0.0, on Spartan, 2026-11-17), with fixes needed to render made after the image was built. Labels are identical by design; the original cluster-to-label mappings, applied to the rerun clusters, give the deposited non-malignant labels for every cell. The malignant clusters differ in the rerun; the analysis uses the original ones. The figure comparison will be added here (see [Comparison with the original](#comparison-with-the-original)).
 
 R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage3.R`
 
@@ -54,7 +54,7 @@ Use the project image (see the top-level `README.md` to build or pull it).
 
 ```bash
 docker run --rm \
-  --cpus 8 --memory 128g \
+  --cpus 2 --memory 128g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
   pdac-snrnaseq:1.0 stage3
@@ -69,23 +69,25 @@ apptainer run \
   pdac-snrnaseq.sif stage3
 ```
 
+On Spartan: edit the three paths at the top of `stage3_spartan.slurm`, then `sbatch stage3_spartan.slurm`. It asks for 2 CPUs (neither file runs in parallel), 128 GB and 4 hours. The v1.0.0 run took 42 min with a peak of 84.8 GB.
+
 ## Outputs
 
 | Folder | File | Contents |
 |---|---|---|
 | `STS_Malignant/` | `STS_Malignant.html`, figures | Report and Extended Data Fig. 1C–E |
-| | `label_agreement.tsv` | Agreement of the rerun malignant clusters with the original ones |
+| | `label_agreement.tsv` | % of cells whose rerun cluster number matches the original cluster |
 | `STS_nonMalignant_TuftADM/` | `STS_nonMalignant_TuftADM.html`, figures | Report and Extended Data Fig. 4A, 4C, 4G, 4H |
 | | `sts.nonmalignant.RDS` | Non-malignant object with the deposited labels. Stage 4 doesn't read it |
-| | `label_agreement.tsv` | Agreement of the rerun with `Lv.1.Anno`, `Lv.2.Anno` and `Tuft.persistent` |
+| | `label_agreement.tsv` | % of cells for which the original mapping, applied to the rerun clusters, gives the deposited `Lv.1.Anno` and `Lv.2.Anno` |
 | | `SupplementaryTable3_adm_pseudobulk.csv` | Supplementary Table 3 |
 
 ## Comparison with the original
 
 | What | Expected | Rerun |
 |---|---|---|
-| Cell labels (`Lv.1.Anno`, `Lv.2.Anno`, `Tuft.persistent`, malignant clusters) | Identical: read from the deposited object | to be added |
-| Rerun clusters vs original labels | Close (ARI and % same label in `label_agreement.tsv`) | to be added |
+| Cell labels (`Lv.1.Anno`, `Lv.2.Anno`, `Tuft.persistent`, malignant clusters) | Identical: read from the deposited object | Identical (read by cell ID; v1.0.0 run, 2026-11-17) |
+| Rerun clusters vs original labels | Recorded in the report and `label_agreement.tsv`, not a reproducibility measure (see [`shared/README.md`](../../shared/README.md#labels-read-from-the-deposited-object)) | **Non-malignant:** the original mapping applied to the rerun resolution-0.7 clusters gives the deposited `Lv.1.Anno` and `Lv.2.Anno` for all 35,493 cells. **Malignant and tuft:** the rerun clusters differ from the original ones; the analyses use the original clusters and labels, so they are unaffected |
 | Pseudobulk differential expression and Hallmark analysis | Same cells and groups as the original | to be added |
 | Extended Data Fig. 4G (tuft UMAP) | Same cells and KRAS calls; layout may differ, as the UMAP is recomputed | to be added |
 
@@ -109,6 +111,14 @@ The malignant edgeR contrasts are written for the 6 original clusters; the run s
 The original code assigned `Lv.1.Anno` to resolution-0.7 clusters by number, `Tuft.persistent` to tuft clusters 2 and 3 at resolution 0.9, `Ductal_MUC5B+` to clusters 5 and 18 at resolution 0.7, and ran the malignant pseudobulk on the resolution-0.1 clusters. These mappings are applied to the rerun clusters (columns ending in `_by_cluster`) and compared with the deposited labels.
 
 The original code saved `sts.nonmalignant.RDS` twice under the same name, first with `Lv.1.Anno` only; here it is saved once, after `Lv.2.Anno` is added. Supplementary Table 3 was originally saved as `Final_adm.cellnames.pseudobulk.removed.tuft.malig_revisedFDR.csv`.
+
+Metadata columns are removed with `x@meta.data[["col"]] <- NULL` instead of `x[["col"]] <- NULL`: the same columns are removed when they exist, and a column missing from the deposited object is skipped instead of stopping the run.
+
+The KRAS calls are joined onto the tuft cells after dropping any `chr12_25245351_G` and `chr5_175478615_A` columns already in the metadata: the deposited object carries them from the original run, and the join would otherwise rename them (`.x`, `.y`). The calls still come from `tuft.snv.df.csv`.
+
+Two `clustree` plots are commented out (rare malignancies, and non-malignant cells): only one resolution is run before each, and `clustree` needs at least two.
+
+A check in the rare-malignancy section, that the RNA assay's `data` slot equals its counts, is commented out: in the deposited object that slot is log-normalised, so the check stopped the run. Nothing after it reads the slot (SCTransform uses the counts).
 
 </details>
 
@@ -147,6 +157,7 @@ The image build saves the env's own `sessionInfo()` to `/pipeline/sessionInfo/do
 | `run_stage3.R` | Master script; `Rscript run_stage3.R [config.yml]` |
 | `STS_Malignant.Rmd`, `STS_nonMalignant_TuftADM.Rmd` | The analysis |
 | `config.yml` | Input paths and output folder (container paths) |
+| `stage3_spartan.slurm` | Slurm script to run this stage from the `.sif` on Spartan |
 | `sessionInfo/` | Session information of the original runs |
 
 </details>

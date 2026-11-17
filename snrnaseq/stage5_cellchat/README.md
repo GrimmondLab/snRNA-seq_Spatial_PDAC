@@ -7,6 +7,8 @@ R 4.3 · Bioconductor 3.17 · Seurat 4.3.0 · CellChat 2.1.2 · dplyr 1.2.1 · c
 1. **`Lv.1.Anno` cell types:** PVR signalling across all cell types.
 2. **`Lv.2.Anno` cell types:** TAMs to PDAC, CAFs_NRT with TAMs and lymphoid cells (CD80, CD86), and the tertiary lymphoid structure cell types (CCL, CXCL).
 
+**Result:** reproduced. Run in the project image (v1.0.0, on Spartan): every figure in `Cellchat.html` is the same as the published panels.
+
 ## Manuscript outputs
 
 Figure names are taken from the chunk labels.
@@ -57,6 +59,7 @@ The image build saves the env's own `sessionInfo()` to `/pipeline/sessionInfo/ce
 | `run_stage5.R` | Master script; `Rscript run_stage5.R [config.yml]` |
 | `Cellchat.Rmd` | The analysis |
 | `config.yml` | Input path and output folder (container paths) |
+| `stage5_spartan.slurm` | Slurm script to run this stage from the `.sif` on Spartan |
 | `sessionInfo/` | Session information of the original run |
 
 ## Run
@@ -70,7 +73,7 @@ Use the project image (see the top-level `README.md` to build or pull it). The c
 
 ```bash
 docker run --rm \
-  --cpus 20 --memory 128g \
+  --cpus 20 --memory 96g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
   pdac-snrnaseq:1.0 stage5
@@ -84,6 +87,8 @@ apptainer run \
   --bind /path/to/output:/output \
   pdac-snrnaseq.sif stage5
 ```
+
+On Spartan: edit the three paths at the top of `stage5_spartan.slurm`, then `sbatch stage5_spartan.slurm`. It asks for 20 CPUs, 96 GB and 12 hours. The v1.0.0 run took 5 h 46 min with a peak of 65.7 GB; it used the 20 CPUs only briefly (2.3% CPU efficiency).
 
 ## Outputs
 

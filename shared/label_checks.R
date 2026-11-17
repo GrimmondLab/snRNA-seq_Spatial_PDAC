@@ -6,29 +6,17 @@
 # the deposited object, matched by cell ID. The original mapping of cluster numbers to labels is kept and applied to the
 # rerun clusters, and both are compared with the deposited labels:
 #   - deposited_labels():   the labels, with a stop if any cell has none
-#   - compare_clusters():   rerun clusters vs deposited labels: ARI, heatmap, majority label per cluster
-#   - compare_labels():     labels from the original mapping applied to the rerun vs deposited labels: % same, ARI,
-#                           and the cells that differ
+#   - compare_clusters():   rerun clusters vs deposited labels: heatmap and majority label per cluster
+#   - compare_labels():     labels from the original mapping applied to the rerun vs deposited labels: % same, and the
+#                           cells that differ
 #   - read_nonmalignant():  Stage 4 input, the Stage 3 non-malignant cells of the final object with their Stage 3 labels
 #   - use_deposited_umap(): the stored subset UMAP, for Fig. 1C
 #   - plot_rerun_vs_deposited(): the rerun UMAP next to the stored one, coloured by the same labels
-# Each comparison is printed in the HTML report and appended to label_agreement.tsv in the stage's output folder.
+# Each comparison is printed in the HTML report; compare_labels() also appends its result to label_agreement.tsv in
+# the stage's output folder. No summary score (such as the adjusted Rand index) is given for rerun clusters: a rerun can
+# split, merge or renumber clusters while the same cells still group together, so the heatmap shows it better.
 
 suppressPackageStartupMessages(library(pheatmap))
-
-# Adjusted Rand index (Hubert and Arabie, 1985) of two labellings of the same cells
-adjusted_rand_index <- function(a, b) {
-  stopifnot(length(a) == length(b))
-  tab <- table(as.character(a), as.character(b))
-  pairs <- function(n) n * (n - 1) / 2
-  index <- sum(pairs(tab))
-  rows <- sum(pairs(rowSums(tab)))
-  cols <- sum(pairs(colSums(tab)))
-  expected <- rows * cols / pairs(sum(tab))
-  maximum <- (rows + cols) / 2
-  if (maximum == expected) return(1)
-  (index - expected) / (maximum - expected)
-}
 
 # Labels of the cells of `object` from metadata column `column`, which was copied into the deposited final object
 # (see snrnaseq/stage4_reclustering/add_labels_to_final_object.R). Stops if the column is missing or any cell has no label.
@@ -52,15 +40,12 @@ record_agreement <- function(step_dir, row) {
 compare_clusters <- function(clusters, labels, title, step_dir) {
   clusters <- as.character(clusters)
   labels <- as.character(labels)
-  ari <- adjusted_rand_index(clusters, labels)
   counts <- table(cluster = clusters, label = labels)
   counts <- counts[order(suppressWarnings(as.numeric(rownames(counts)))), , drop = FALSE]
   shares <- prop.table(counts, margin = 1)
   pheatmap(unclass(shares), cluster_rows = FALSE, cluster_cols = FALSE,
            color = colorRampPalette(c("white", "darkred"))(50),
-           main = sprintf("%s (ARI %.3f)", title, ari))
-  record_agreement(step_dir, data.frame(comparison = title, type = "rerun clusters vs deposited labels",
-                                        cells = length(labels), ari = round(ari, 4), same_label_pct = NA))
+           main = title)
   data.frame(cluster = rownames(shares),
              cells = as.vector(rowSums(counts)),
              majority_label = colnames(shares)[apply(shares, 1, which.max)],
@@ -73,11 +58,11 @@ compare_labels <- function(by_cluster, labels, title, step_dir) {
   by_cluster <- as.character(by_cluster)
   labels <- as.character(labels)
   same <- !is.na(by_cluster) & by_cluster == labels
-  ari <- adjusted_rand_index(ifelse(is.na(by_cluster), "<none>", by_cluster), labels)
-  message(sprintf("%s: same label for %.2f%% of %d cells (ARI %.3f)", title, 100 * mean(same), length(same), ari))
-  record_agreement(step_dir, data.frame(comparison = title, type = "original mapping on rerun vs deposited labels",
-                                        cells = length(labels), ari = round(ari, 4),
+  message(sprintf("%s: same label for %.2f%% of %d cells", title, 100 * mean(same), length(same)))
+  record_agreement(step_dir, data.frame(comparison = title, cells = length(labels),
                                         same_label_pct = round(100 * mean(same), 2)))
+  # Cells whose labels differ, most common pairs first. Empty (no rows) when every cell agrees
+  if (all(same)) return(data.frame(by_cluster = character(), deposited = character(), Freq = integer()))
   differ <- as.data.frame(table(by_cluster = ifelse(is.na(by_cluster), "<none>", by_cluster)[!same],
                                 deposited = labels[!same]), stringsAsFactors = FALSE)
   differ <- differ[differ$Freq > 0, , drop = FALSE]

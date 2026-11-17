@@ -54,13 +54,13 @@ lymphoid <- DietSeurat(lymphoid,
                      counts = TRUE) #to keep the count matrices for the assay specified
 
 colnames(lymphoid[[]])
-lymphoid[["nCount_SCT"]] <- NULL
-lymphoid[["nFeature_SCT"]] <- NULL
+lymphoid@meta.data[["nCount_SCT"]] <- NULL
+lymphoid@meta.data[["nFeature_SCT"]] <- NULL
 #lymphoid[["SCT_snn_res.0.6"]] <- NULL
-lymphoid[["SCT_snn_res.0.7"]] <- NULL
+lymphoid@meta.data[["SCT_snn_res.0.7"]] <- NULL
 #lymphoid[["SCT_snn_res.0.8"]] <- NULL
 #lymphoid[["SCT_snn_res.0.5"]] <- NULL
-lymphoid[["seurat_clusters"]] <- NULL
+lymphoid@meta.data[["seurat_clusters"]] <- NULL
 
 #Removing outlier samples
 lymphoid <- subset(lymphoid, subset = Sample %in% c("1959","2185"), invert = T)
@@ -185,7 +185,7 @@ plot_rerun_vs_deposited(lymphoid.simspec_css.sample.sct, "Lv.2.Anno", lymphoid.c
 
 # PSEUDOBULK
 ## DE comparing all lymphoid subsets
-```{r echo=TRUE, include=FALSE}
+```{r lymphoid-pseudobulk}
 #Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
 lymphoid.de <- lymphoid.simspec_css.sample.sct
 DefaultAssay(lymphoid.de) <- "RNA"
@@ -222,7 +222,7 @@ ClstSub <- ClstSub[keep, , keep=F]
 ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
 ClstSub$samples$group
 
-plotMDS(ClstSub, pch = 17, col = lymphoid.color[ClstSub$samples$group], main="")
+#plotMDS(ClstSub, pch = 17, col = lymphoid.color[ClstSub$samples$group], main="")
 
 #Design matrix
 Cls <- as.factor(ClstSub$samples$Cluster)
@@ -258,8 +258,8 @@ ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating 
 
 # Remove batch effect on log-CPM
 logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
-boxplot(as.data.frame(ClstSub.cpm),main="Original")
-boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+#boxplot(as.data.frame(ClstSub.cpm),main="Original")
+#boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
 
 ### Extracting data table ###
 library(tibble)

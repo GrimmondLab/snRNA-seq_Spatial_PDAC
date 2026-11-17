@@ -91,6 +91,8 @@ vSMC <- fib.only@meta.data %>% dplyr::filter(Lv.2.Anno_subset == "Vascular smoot
 # the labels added; Lv.1.Anno and Lv.2.Anno are rebuilt below and checked against the deposited ones.
 sts.simspec_css.sample.sct <- readRDS(cfg$final_object)
 deposited_final <- sts.simspec_css.sample.sct@meta.data[, c("Lv.1.Anno", "Lv.2.Anno")]
+# The 84 cells of sample 2215 listed in STS_Malignant.Rmd (Stage 3)
+non.malig <- c("8_ACTTGTTTCGAACGGA-1", "8_TTCGGTCAGAAGGTTT-1", "8_GATCGCGCAGACAGGT-1", "8_GTCGTAAAGCCACGCT-1", "8_GAATAAGCAACTGCTA-1", "8_CTGAAACGTAGCGTCC-1","8_AGGCCACCAGACAGGT-1", "8_CAGCCGAAGGTTCCTA-1", "8_ATCTGCCAGAGTAATC-1", "8_TTATGCTAGACATAAC-1", "8_GACCTGGTCTTGTCAT-1", "8_ATTTCTGTCGATAGAA-1","8_ATCCGAAAGGTGACCA-1", "8_ACCGTAAGTCCTAGCG-1", "8_CGAGAAGTCGTCGTTC-1", "8_TGACTTTCATCAGTAC-1", "8_GATCGATTCCCAAGTA-1", "8_TATCTCAGTAAGTTCC-1", "8_TAGAGCTGTCACTGGC-1", "8_AGACGTTAGGCCCGTT-1", "8_GGATGTTAGATCGATA-1","8_TTGACTTCATAGAAAC-1", "8_TATTACCAGGGTCTCC-1", "8_AGGGTGAAGCGAGAAA-1", "8_ACATACGGTACGAAAT-1", "8_GACACGCTCTCTGTCG-1", "8_TTTGGTTTCGTTACAG-1", "8_ACGGCCACACTTGGAT-1", "8_ATAGACCTCTTAGAGC-1", "8_GGGAATGAGGCTAGAC-1","8_ACACCGGGTCCGCTGA-1", "8_TAGACCAGTGATGATA-1","8_AATCGGTCAGCAGTTT-1", "8_GCTGCGAGTGACGCCT-1", "8_TACAGTGTCATAGCAC-1", "8_CCTTACGGTAGATTAG-1","8_CCTCAGTCAAACTGCT-1", "8_TCAGCAAGTAAACACA-1", "8_GTTAAGCGTCTAGGTT-1", "8_TTGGAACTCGGATGTT-1", "8_ATCGAGTGTTCAACCA-1", "8_ACGAGCCAGAATCTCC-1","8_TGACTAGGTCAGAGGT-1", "8_CATGCCTTCGAGAGCA-1", "8_GTGTTAGCACCCAGTG-1", "8_AGCATACTCAAACCGT-1", "8_GGAAAGCTCCCTCTTT-1", "8_CTCGTACTCAAACAAG-1","8_GGTGTTAGTGGCGAAT-1", "8_GGATGTTGTCGAGTTT-1", "8_GAACATCCAGTAACGG-1", "8_GTTTCTAAGAGGACGG-1", "8_TCAGGATGTACAGTTC-1", "8_CGTCCATCATTCCTCG-1","8_ACGGGTCAGAAAGTGG-1", "8_GGGCACTCACTTCGAA-1", "8_TCAATCTGTGCTCTTC-1", "8_AACCGCGCACTTCGAA-1", "8_AAATGCCTCCCTAATT-1", "8_CCACCTAGTTTGACAC-1", "8_GATTCAGTCATTCACT-1", "8_TCAGCAAAGCGATCCC-1", "8_AGTTGGTAGAGTACAT-1", "8_GTGCAGCTCTTCGAGA-1", "8_CGTGAGCAGGACGAAA-1", "8_GCTGCGAAGTACTTGC-1","8_TAAGAGAAGCGTCTAT-1", "8_TTTCCTCAGTACGATA-1", "8_CCGGTAGGTTAGAACA-1", "8_GCAGCCAGTGTCAATC-1", "8_CAGCCGAGTTACAGAA-1", "8_TCACAAGGTTACTGAC-1","8_CCGTACTAGCCCTAAT-1", "8_CGTCACTGTTTCGCTC-1", "8_CGGAGCTCATGGGACA-1", "8_AAAGTAGTCGAACTGT-1", "8_GTAACTGCACATCCGG-1", "8_ATCATCTTCCTACAGA-1","8_GAATAAGTCTTGTATC-1", "8_CGGAGTCCAAGTTGTC-1", "8_GTCGGGTGTCCCGACA-1", "8_GACAGAGAGACAAGCC-1", "8_CGACCTTAGTGCGATG-1", "8_GGCTGGTGTAGAGGAA-1")
 metadata <- sts.simspec_css.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata$S_CB <- rownames(metadata)#Assigning S_CB as a new column (CB=cell barcode)
 metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% MYO ~ "CAFs_MYO", 
@@ -136,6 +138,7 @@ metadata %>% mutate(Lv.2.Anno = case_when(Cell_Ids %in% MYO ~ "CAFs_MYO",
                                           Cell_Ids %in% spp1 ~ "TAMs_SPP1+",
                                           #Cell_Ids %in% TAMs ~ "TAMs", # remove this, patient-specific TAMs
                                           #Cell_Ids %in% tymp ~ "TAMs_TYMP",
+                                          Cell_Ids %in% non.malig ~ "unassigned", # separating non-cancer cells identified from inferCNV, as in Lv.1.Anno below (the deposited Lv.2.Anno has them unassigned)
                                           simspec_cell_class == "PDAC" ~ "PDAC",
                                           simspec_cell_class == "Malignant acinar" ~ "Malignant acinar",
                                           simspec_cell_class == "PDA_OLGC" ~ "PDA_OLGC",
@@ -151,8 +154,6 @@ print(knitr::kable(compare_labels(sts.simspec_css.sample.sct$Lv.2.Anno, deposite
 
 ## Lv.1.Anno
 ```{r}
-# The 84 cells of sample 2215 listed in STS_Malignant.Rmd (Stage 3)
-non.malig <- c("8_ACTTGTTTCGAACGGA-1", "8_TTCGGTCAGAAGGTTT-1", "8_GATCGCGCAGACAGGT-1", "8_GTCGTAAAGCCACGCT-1", "8_GAATAAGCAACTGCTA-1", "8_CTGAAACGTAGCGTCC-1","8_AGGCCACCAGACAGGT-1", "8_CAGCCGAAGGTTCCTA-1", "8_ATCTGCCAGAGTAATC-1", "8_TTATGCTAGACATAAC-1", "8_GACCTGGTCTTGTCAT-1", "8_ATTTCTGTCGATAGAA-1","8_ATCCGAAAGGTGACCA-1", "8_ACCGTAAGTCCTAGCG-1", "8_CGAGAAGTCGTCGTTC-1", "8_TGACTTTCATCAGTAC-1", "8_GATCGATTCCCAAGTA-1", "8_TATCTCAGTAAGTTCC-1", "8_TAGAGCTGTCACTGGC-1", "8_AGACGTTAGGCCCGTT-1", "8_GGATGTTAGATCGATA-1","8_TTGACTTCATAGAAAC-1", "8_TATTACCAGGGTCTCC-1", "8_AGGGTGAAGCGAGAAA-1", "8_ACATACGGTACGAAAT-1", "8_GACACGCTCTCTGTCG-1", "8_TTTGGTTTCGTTACAG-1", "8_ACGGCCACACTTGGAT-1", "8_ATAGACCTCTTAGAGC-1", "8_GGGAATGAGGCTAGAC-1","8_ACACCGGGTCCGCTGA-1", "8_TAGACCAGTGATGATA-1","8_AATCGGTCAGCAGTTT-1", "8_GCTGCGAGTGACGCCT-1", "8_TACAGTGTCATAGCAC-1", "8_CCTTACGGTAGATTAG-1","8_CCTCAGTCAAACTGCT-1", "8_TCAGCAAGTAAACACA-1", "8_GTTAAGCGTCTAGGTT-1", "8_TTGGAACTCGGATGTT-1", "8_ATCGAGTGTTCAACCA-1", "8_ACGAGCCAGAATCTCC-1","8_TGACTAGGTCAGAGGT-1", "8_CATGCCTTCGAGAGCA-1", "8_GTGTTAGCACCCAGTG-1", "8_AGCATACTCAAACCGT-1", "8_GGAAAGCTCCCTCTTT-1", "8_CTCGTACTCAAACAAG-1","8_GGTGTTAGTGGCGAAT-1", "8_GGATGTTGTCGAGTTT-1", "8_GAACATCCAGTAACGG-1", "8_GTTTCTAAGAGGACGG-1", "8_TCAGGATGTACAGTTC-1", "8_CGTCCATCATTCCTCG-1","8_ACGGGTCAGAAAGTGG-1", "8_GGGCACTCACTTCGAA-1", "8_TCAATCTGTGCTCTTC-1", "8_AACCGCGCACTTCGAA-1", "8_AAATGCCTCCCTAATT-1", "8_CCACCTAGTTTGACAC-1", "8_GATTCAGTCATTCACT-1", "8_TCAGCAAAGCGATCCC-1", "8_AGTTGGTAGAGTACAT-1", "8_GTGCAGCTCTTCGAGA-1", "8_CGTGAGCAGGACGAAA-1", "8_GCTGCGAAGTACTTGC-1","8_TAAGAGAAGCGTCTAT-1", "8_TTTCCTCAGTACGATA-1", "8_CCGGTAGGTTAGAACA-1", "8_GCAGCCAGTGTCAATC-1", "8_CAGCCGAGTTACAGAA-1", "8_TCACAAGGTTACTGAC-1","8_CCGTACTAGCCCTAAT-1", "8_CGTCACTGTTTCGCTC-1", "8_CGGAGCTCATGGGACA-1", "8_AAAGTAGTCGAACTGT-1", "8_GTAACTGCACATCCGG-1", "8_ATCATCTTCCTACAGA-1","8_GAATAAGTCTTGTATC-1", "8_CGGAGTCCAAGTTGTC-1", "8_GTCGGGTGTCCCGACA-1", "8_GACAGAGAGACAAGCC-1", "8_CGACCTTAGTGCGATG-1", "8_GGCTGGTGTAGAGGAA-1")
 metadata <- sts.simspec_css.sample.sct@meta.data %>% as.data.frame() #Creating a data frame called metadata
 metadata %>% mutate(Lv.1.Anno = case_when(Lv.2.Anno %in% c("TAMs_SPP1+","TAMs_OLR1+","TAMs_MHC_II","TAMs_C1QC+") ~ "Macrophages", 
                                           Lv.2.Anno %in% c("Tuft","Tuft.persistent") ~ "Tuft",
@@ -239,7 +240,7 @@ sts.simspec_css.sample.sct@meta.data %>%
   scale_fill_manual(values = color) + RotatedAxis()
 ```
 
-```{r ext-data-fig1a-snrnaseq-gex, fig.width=12, fig.height=3.5, message=FALSE}
+```{r ext-data-fig1a-snrnaseq-gex, fig.width=22, fig.height=5, message=FALSE}
 marker.sets <- list(Acinar_Cells = c("CPB1","CELA3A","CTRC","PNLIP","PDIA2"),
                     Epithelium_Duct_Cells = c("CFTR","SLC4A4","PKHD1","ONECUT2","C6","CRP","MUC5B"),
                     Tuft_Cells = c("TRPM5","POU2F3","AVIL","BMX","SH2D7"),
@@ -260,7 +261,7 @@ marker.sets <- list(Acinar_Cells = c("CPB1","CELA3A","CTRC","PNLIP","PDIA2"),
 DotPlot(sts.simspec_css.sample.sct, features = marker.sets, group.by = "simspec_cell_class")+ RotatedAxis() + scale_color_gradient2(low="darkblue", mid="white", high = "darkred")
 ```
 
-```{r ext-data-fig2a-snrnaseq-gex, fig.width=15, fig.height=4, message=FALSE}
+```{r ext-data-fig2a-snrnaseq-gex, fig.width=5, fig.height=10, message=FALSE}
 marker.sets <- list(Malignant_PDAC = c("KRT19","KRT7","MUC1","TFF1","TFF2"),
                     Ductal_like_2 = c("MUC5B","MUC6","ONECUT2","CFTR","SLC4A4"),
                     Acinar_Cells = c("REG3G","REG3A","AMY2A","CPB1","CTRC","CELA3A"),

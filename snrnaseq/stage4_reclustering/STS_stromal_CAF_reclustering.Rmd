@@ -12,7 +12,7 @@ params:
 # Prepare environment
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(fig.width=16, fig.height=8, dev=c('png', 'pdf'),
-                       echo=FALSE, warning=FALSE, message=FALSE)
+                       echo=TRUE, results="hide", warning=FALSE, message=FALSE)
 
 cfg <- params$cfg
 stopifnot(!is.null(cfg))   # render through run_stage4.R so that params are passed
@@ -48,7 +48,7 @@ stromal <- sts.non.malignant %>% subset(Lv.2.Anno %in% c("CAFs","Pericytes", "FR
 
 ## DE analysis by pseudobulk, comparing different class of stromal fibroblasts
 ## Stromal subsets
-```{r echo=TRUE, include=FALSE}
+```{r stromal-pseudobulk}
 #Ref: https://github.com/yunshun/HumanBreast10X/blob/main/RCode/NormTotal.R
 DefaultAssay(stromal) <- "RNA"
 
@@ -158,12 +158,12 @@ fib.only <- DietSeurat(fib.only, assays = "RNA", data = TRUE, counts = TRUE)
 
 # to remove columns & because we need to split individual samples and redo the SCT
 colnames(fib.only[[]]) #check which columns to remove
-fib.only[["nCount_SCT"]] <- NULL
-fib.only[["nFeature_SCT"]] <- NULL
-fib.only[["seurat_clusters"]] <- NULL
+fib.only@meta.data[["nCount_SCT"]] <- NULL
+fib.only@meta.data[["nFeature_SCT"]] <- NULL
+fib.only@meta.data[["seurat_clusters"]] <- NULL
 #fib.only[["SCT_snn_res.0.5"]] <- NULL
 #fib.only[["SCT_snn_res.0.6"]] <- NULL
-fib.only[["SCT_snn_res.0.7"]] <- NULL
+fib.only@meta.data[["SCT_snn_res.0.7"]] <- NULL
 #fib.only[["SCT_snn_res.0.8"]] <- NULL
 
 #Removing outliers (rare cancer types)
@@ -244,14 +244,16 @@ fib.only.simspec_css.sample.sct$Lv.2.Anno_subset_by_cluster <- metadata$Lv.2.Ann
 
 # Lv.2.Anno_subset and the UMAP from the deposited object
 fib.only.simspec_css.sample.sct$Lv.2.Anno_subset <- deposited_labels(fib.only.simspec_css.sample.sct, "stage4_CAF_Lv.2.Anno_subset")
-fib.only.simspec_css.sample.sct@meta.data %>% group_by(SCT_snn_res.0.1) %>% dplyr::count(Lv.2.Anno_subset)
 print(knitr::kable(compare_clusters(fib.only.simspec_css.sample.sct$SCT_snn_res.0.1, fib.only.simspec_css.sample.sct$Lv.2.Anno_subset,
                                     "CAFs: rerun clusters (res 0.1) vs Lv.2.Anno_subset", params$step_dir), row.names = FALSE))
-print(knitr::kable(compare_labels(fib.only.simspec_css.sample.sct$Lv.2.Anno_subset_by_cluster, fib.only.simspec_css.sample.sct$Lv.2.Anno_subset,
-                                  "CAFs: Lv.2.Anno_subset by cluster vs deposited", params$step_dir), row.names = FALSE))
+caf_differ <- compare_labels(fib.only.simspec_css.sample.sct$Lv.2.Anno_subset_by_cluster, fib.only.simspec_css.sample.sct$Lv.2.Anno_subset,
+                             "CAFs: Lv.2.Anno_subset by cluster vs deposited", params$step_dir)
+if (nrow(caf_differ) > 0) print(knitr::kable(caf_differ, row.names = FALSE))   # cells whose labels differ; none when all agree
 fib.only.simspec_css.sample.sct <- use_deposited_umap(fib.only.simspec_css.sample.sct, "stage4_CAF_UMAP")
 saveRDS(fib.only.simspec_css.sample.sct, file = file.path(params$step_dir, "fib.only.simspec.RDS"))
+```
 
+```{r caf-pseudobulk, fig.width=8, fig.height=6}
 #DE analysis on these CAF subsets 
 fib <- fib.only.simspec_css.sample.sct
 DefaultAssay(fib) <- "RNA"
@@ -422,7 +424,7 @@ plot_rerun_vs_deposited(caf, "Lv.2.Anno_subset", caf.color)
 ```
 
 ### IL6+ iCAF signature across fibroblast-like cells
-```{r ext-data-fig-8e-icaf-signature, fig.width=12, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+```{r ext-data-fig-8e-icaf-signature, fig.width=14, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
 # Tuvenson's CAF program
 iCAFs.deg <- c("C3", "DUSP1", "FBLN1", "LMNA", "CLU","CCDC80","MYC", "EFEMP1","HAS1","NR4A1","CFD","ANXA1","CXCL12","FGF7","KLF4", "EMP1","GPRC5A",
            "SRPX", "MT2A","MEDAG","IGF1","MGST1","MCL1","CEBPD","S100A10","UAP1","TNXB","CEBPB","PNRC1","SOCS3","PTGDS","FOSB","NFKBIA","CXCL2","THBS1","CCL2", "OGN","GSN","DPT","PLA2G2A","NAMPT","ITM2A","RGCC","JUND","NNMT","ZFP36","PIM1","CPE","GFPT2","SOD2","KDM6B","FSTL1","FBLN2","NR4A3","MFAP5","ABL2","SGK1","CILP","UGDH","FBLN5","ADAMTS1","ADH1B","WISP2","GPX3","S100A4","IL6","HAS2","PLAC9","IGFBP6","FBN1","BDKRB1","TPPP3","RASD1","MT1A","CXCL14","PI16","APOE","IL8","ARC","PTX3","TNFAIP6","MT1E","MT1X","CXCL1") # these are all the upDEGs
@@ -482,7 +484,7 @@ phet <- pheatmap(t(mat),
 ```
 
 ## UCELL Score on all stromal subsets against known CAF programs 
-```{r ext-data-fig-8g-caf-programs, fig.width=12, fig.height=4, dpi=300, message=FALSE, warning=FALSE}
+```{r ext-data-fig-8g-caf-programs, fig.width=12, fig.height=9, dpi=300, message=FALSE, warning=FALSE}
 stromal <- list()
 stromal$quiescent.stellates <- c("PDGFRB","SPARC","GJA4","CSPG4","EDNRB","RGS5","COL4A1")
 stromal$activated.stellates <- c("COL1A1","FN1","THY1","LUM","TIMP1","MMP2")
@@ -716,12 +718,12 @@ endo <- DietSeurat(endo, assays = "RNA", data = TRUE, counts = TRUE)
 
 # to remove additional columns & because we need to split individual samples and redo the SCT, so we need to remove the "^_SCT"
 colnames(endo[[]]) #check which columns to remove
-endo[["nCount_SCT"]] <- NULL
-endo[["nFeature_SCT"]] <- NULL
-endo[["seurat_clusters"]] <- NULL
+endo@meta.data[["nCount_SCT"]] <- NULL
+endo@meta.data[["nFeature_SCT"]] <- NULL
+endo@meta.data[["seurat_clusters"]] <- NULL
 #endo[["SCT_snn_res.0.5"]] <- NULL
 #endo[["SCT_snn_res.0.6"]] <- NULL
-endo[["SCT_snn_res.0.7"]] <- NULL
+endo@meta.data[["SCT_snn_res.0.7"]] <- NULL
 #endo[["SCT_snn_res.0.8"]] <- NULL
 #endo[["SCT_snn_res.0.9"]] <- NULL
 #endo[["SCT_snn_res.1"]] <- NULL

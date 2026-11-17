@@ -2,6 +2,8 @@
 
 R 4.3 · Bioconductor 3.17 · conda env `snrnaseq` · master script `run_stage2.R`
 
+**Result:** run in the project image (v1.0.0, on Spartan, 2026-11-17). The cell labels are read from the deposited object as intended, and the rerun clusters are compared with them (see [Cell labels](#cell-labels)). The rerun UMAP has a different layout but the same populations: each `simspec_cell_class` forms its own group, as in the deposited UMAP. The deposited UMAP, used for the published figures, is identical to the manuscript.
+
 `run_stage2.R` renders two R Markdown files in order:
 
 1. `Seurat_sample_based.Rmd`: converts the post-QC object to Seurat, runs SCTransform (v2), PCA, UMAP and clustering, adds `cell_class`, compares the clusters with it, and writes `sts.seurat.RDS`.
@@ -13,7 +15,7 @@ In the original analysis, `cell_class` and `simspec_cell_class` were assigned to
 
 - The original cluster-to-label mappings are kept in the R Markdown files as a record.
 - The integration step applies its original mapping to the deposited object's own resolution-1.1 clusters, and reports how many cells get the deposited `simspec_cell_class`. The deposited object has no resolution-0.5 clusters, so the `cell_class` mapping cannot be checked the same way.
-- Each file compares the rerun clusters with the labels: the adjusted Rand index (ARI), a heatmap of the share of each cluster's cells in each label, and a table of each cluster's majority label.
+- Each file compares the rerun clusters with the labels: a heatmap of the share of each cluster's cells in each label, and a table of each cluster's majority label. No summary score (such as the adjusted Rand index) is given: a rerun can split, merge or renumber clusters while the same cells still group together.
 - The integration report shows the rerun UMAP next to the deposited UMAP (the layout of the published figures), both coloured by `simspec_cell_class`, followed by marker genes per `simspec_cell_class`. The layouts can be rotated, flipped or shifted; the same classes should form the same groups and express the expected markers.
 - The render stops if any cell has no label in the deposited object.
 
@@ -64,7 +66,7 @@ These shift PCA, UMAP and clustering slightly; see **Cell labels** above.
 | `/output` | where results go | read-write |
 
 ```bash
-docker run --rm --cpus 28 --memory 128g \
+docker run --rm --cpus 4 --memory 160g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
   pdac-snrnaseq:1.0 stage2
@@ -74,8 +76,8 @@ Results are written to `/output/Seurat_sample_based/` and `/output/PDAC_STS_sims
 
 ## Resources
 
-- `workers: 28` in `config.yml`. Give the job that many CPUs, or lower the value.
-- SCTransform on about 115k cells, and again per sample before integration, needs a lot of memory. 128 GB is a safe start.
+- Measured on Spartan (v1.0.0): 2 h wall-clock, peak memory 108 GB, about 1.4 CPUs used on average. `stage2_spartan.slurm` asks for 4 CPUs, 160 GB and 8 hours.
+- `workers: 28` in `config.yml` has no effect: `Seurat_sample_based.Rmd` creates a worker pool and neither file uses it, so extra CPUs don't speed the run up.
 
 ## Outputs
 

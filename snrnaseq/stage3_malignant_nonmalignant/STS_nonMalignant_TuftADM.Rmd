@@ -32,7 +32,6 @@ library(openxlsx)
 
 # Adding metadata
 ```{r}
-# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; now the deposited sts.simspec_css.sample.sct_final.RDS (the same object, with labels added)
 sts.simspec.sct <- readRDS(cfg$integrated_object)
 ```
 
@@ -51,13 +50,13 @@ DefaultAssay(sts.non.malignant) <- "RNA"
 sts.non.malignant <- DietSeurat(sts.non.malignant, assays = "RNA", data = TRUE, counts = TRUE)
 colnames(sts.non.malignant[[]]) #check which columns to remove
 
-sts.non.malignant[["nCount_SCT"]] <- NULL
-sts.non.malignant[["nFeature_SCT"]] <- NULL
-sts.non.malignant[["SCT_snn_res.0.8"]] <- NULL
-sts.non.malignant[["SCT_snn_res.0.9"]] <- NULL
-sts.non.malignant[["SCT_snn_res.1"]] <- NULL
-sts.non.malignant[["SCT_snn_res.1.1"]] <- NULL
-sts.non.malignant[["SCT_snn_res.1.2"]] <- NULL
+sts.non.malignant@meta.data[["nCount_SCT"]] <- NULL
+sts.non.malignant@meta.data[["nFeature_SCT"]] <- NULL
+sts.non.malignant@meta.data[["SCT_snn_res.0.8"]] <- NULL
+sts.non.malignant@meta.data[["SCT_snn_res.0.9"]] <- NULL
+sts.non.malignant@meta.data[["SCT_snn_res.1"]] <- NULL
+sts.non.malignant@meta.data[["SCT_snn_res.1.1"]] <- NULL
+sts.non.malignant@meta.data[["SCT_snn_res.1.2"]] <- NULL
 ```
 
 ## Normalised by SCTransform v2 as a whole -> PCA 
@@ -84,8 +83,9 @@ sts.non.malignant <- FindNeighbors(sts.non.malignant, reduction = "pca", dims = 
 sts.non.malignant <- FindClusters(sts.non.malignant, algorithm = 3,  resolution = 0.7) # 
 
 
-library(clustree)
-clustree::clustree(sts.non.malignant) 
+# clustree needs at least two resolutions; only one is run here (the wider sweep above is commented out)
+#library(clustree)
+#clustree::clustree(sts.non.malignant) 
 
 # Decided on the resolution
 Idents(sts.non.malignant) <- "SCT_snn_res.0.7" # define FRCs as previously
@@ -141,7 +141,6 @@ sts.non.malignant$Lv.1.Anno_by_cluster <- metadata$Lv.1.Anno
 
 # Lv.1.Anno from the deposited object
 sts.non.malignant$Lv.1.Anno <- deposited_labels(sts.non.malignant, "stage3_Lv.1.Anno")
-sts.non.malignant@meta.data %>% group_by(Lv.1.Anno) %>% dplyr::count() %>% print(n=51)
 
 print(knitr::kable(compare_clusters(sts.non.malignant$SCT_snn_res.0.7, sts.non.malignant$Lv.1.Anno,
                                     "Non-malignant: rerun clusters (res 0.7) vs Lv.1.Anno", params$step_dir),
@@ -175,12 +174,12 @@ tuft <- AddMetaData(object = tuft, metadata = Patient_c, col.name = "Patient_c")
 
 # DietSeurat
 colnames(tuft[[]]) #check which columns to remove
-tuft[["nCount_SCT"]] <- NULL
-tuft[["nFeature_SCT"]] <- NULL
-tuft[["seurat_clusters"]] <- NULL
-tuft[["SCT_snn_res.0.6"]] <- NULL
-tuft[["SCT_snn_res.0.7"]] <- NULL
-tuft[["SCT_snn_res.0.8"]] <- NULL
+tuft@meta.data[["nCount_SCT"]] <- NULL
+tuft@meta.data[["nFeature_SCT"]] <- NULL
+tuft@meta.data[["seurat_clusters"]] <- NULL
+tuft@meta.data[["SCT_snn_res.0.6"]] <- NULL
+tuft@meta.data[["SCT_snn_res.0.7"]] <- NULL
+tuft@meta.data[["SCT_snn_res.0.8"]] <- NULL
 
 # Due to small number of cells < 30 -> can't do integration
 tuft <- SplitObject(tuft, split.by = "Patient_c") 
@@ -198,8 +197,8 @@ VariableFeatures(tuft.merged) <- features.split
 tuft.merged <- RunPCA(tuft.merged, npcs = 30, verbose = FALSE, assay = "SCT")
 ElbowPlot(tuft.merged)
 
-DimPlot(tuft.merged, label = TRUE,
-        reduction = "pca", group.by = "Patient_c") + NoLegend()
+#DimPlot(tuft.merged, label = TRUE,
+#        reduction = "pca", group.by = "Patient_c") + NoLegend()
 
 tuft.merged <- RunUMAP(tuft.merged, reduction = "pca", dims = 1:30)
 
@@ -233,6 +232,9 @@ names(tuft.cnv)[1] <- "Barcode"
 kras.mut <- tuft.cnv %>% dplyr::select("Barcode","chr12_25245351_G","chr5_175478615_A")
 
 metadata <- tuft.merged@meta.data %>% as.data.frame() #Creating a data frame called metadata
+# The deposited object already holds these columns from the original run; drop them so that the join adds the calls
+# from tuft.snv.df.csv under their own names (otherwise they become chr12_25245351_G.x and .y)
+metadata <- dplyr::select(metadata, -dplyr::any_of(setdiff(names(kras.mut), "Barcode")))
 metadata <- left_join(metadata, kras.mut, "Barcode" )
 
 metadata %>% group_by(Patient_ID) %>% count(chr12_25245351_G)
@@ -282,7 +284,6 @@ sts.non.malignant$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
 
 # Lv.2.Anno from the deposited object
 sts.non.malignant$Lv.2.Anno <- deposited_labels(sts.non.malignant, "stage3_Lv.2.Anno")
-sts.non.malignant@meta.data %>% group_by(Lv.1.Anno) %>% count(Lv.2.Anno) %>% print(n=51)
 
 tuft.persistent <- deposited_labels(tuft.merged, "stage3_Lv.2.Anno") == "Tuft.persistent"
 print(knitr::kable(compare_clusters(tuft.merged$SCT_snn_res.0.9, ifelse(tuft.persistent, "Tuft.persistent", "Tuft"),
@@ -343,7 +344,7 @@ ClstSub <- ClstSub[keep, , keep=F]
 ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
 ClstSub$samples$group
 
-plotMDS(ClstSub, pch = 16, col = ADM.col[ClstSub$samples$group], main="")
+#plotMDS(ClstSub, pch = 16, col = ADM.col[ClstSub$samples$group], main="")
  
 #Design matrix
 Cls <- as.factor(ClstSub$samples$Cluster)
@@ -371,7 +372,7 @@ ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating 
 
 # Remove batch effect on log-CPM
 logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
-plotMDS(logCPM_no_batch, pch = 16, col = ADM.col[ClstSub$samples$group], main="Pseudo-bulk samples")
+#plotMDS(logCPM_no_batch, pch = 16, col = ADM.col[ClstSub$samples$group], main="Pseudo-bulk samples")
 
 library(tibble)
 names(ctest) <- colnames(contr)   # Cls1 ... Cls5

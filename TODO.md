@@ -49,20 +49,21 @@ The plan is Batch on EC2, with data in S3.
 Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Run from the deposited post-QC object (`run.sh stage2`): PCA, UMAP and clusters shift slightly, and the cluster numbers no longer match the original label mappings. Finished on Spartan (job 34425917, `stage2_spartan.slurm`, 12 CPUs, 400G): peak 108.23 GB, 1h48, about 1.4 cores on average. Record the image version. About 150G is enough next time.
 - [x] Read `cell_class` and `simspec_cell_class` from the deposited annotated object by cell ID (`reference_object` in `config.yml`); the original mappings are kept as a record; `original/` holds the files before this change.
-- [ ] Rerun Stage 2 with these changes, and check the reports: the original-mapping check in the integration step should be 100%, and the rerun-cluster comparisons (ARI, heatmaps, majority labels) should show the same populations.
-- [ ] Check both final objects have 115,221 cells.
-- [ ] Visually compare the key UMAP figures with the manuscript. The integration report now shows the rerun UMAP next to the deposited one (chunk `umap-rerun-vs-deposited`), both coloured by `simspec_cell_class`; `Seurat_sample_based.Rmd` saves the deposited coordinates in `reference_labels.RDS` for it.
-- [ ] Fix the Stage 2 README: it says to give the job 28 CPUs, but `workers: 28` has no effect. `Seurat_sample_based.Rmd:27` creates `bpp` and neither Rmd uses it. The same line is the only use of `cfg$seed`, and neither Rmd calls `set.seed()`, so results rely on each function's default seed. Decide whether to note this.
+- [x] Rerun Stage 2 with these changes, and check the reports: the original-mapping check in the integration step should be 100%, and the rerun-cluster comparisons (ARI, heatmaps, majority labels) should show the same populations. Run in v1.0.0 on Spartan (job 35178950, 2026-11-17): label mapping works as intended. 2 h, peak 108.27 GB, 11.4% of 12 CPUs; `stage2_spartan.slurm` now asks for 4 CPUs, 160G, 8 h.
+- [x] Check both final objects have 115,221 cells (2026-11-17: `sts.seurat.RDS` and `sts.simspec_css.sample.sct.RDS` both 115,221).
+- [x] (2026-11-17: rerun layout differs, same populations each form their own group; deposited UMAP identical to the manuscript.) Visually compare the key UMAP figures with the manuscript. The integration report now shows the rerun UMAP next to the deposited one (chunk `umap-rerun-vs-deposited`), both coloured by `simspec_cell_class`; `Seurat_sample_based.Rmd` saves the deposited coordinates in `reference_labels.RDS` for it.
+- [x] Fix the Stage 2 README: it says to give the job 28 CPUs, but `workers: 28` has no effect (fixed 2026-11-17). `Seurat_sample_based.Rmd:27` creates `bpp` and neither Rmd uses it. The same line is the only use of `cfg$seed`, and neither Rmd calls `set.seed()`, so results rely on each function's default seed. Decide whether to note this.
 
 ### Supplementary inferCNV (env `infercnv`, `run.sh infercnv`)
 - [ ] Run one sample first to check time and memory (set `samples:` in a custom config), then all samples, one per HPC job.
 - [ ] Same chromosome-arm gains/losses in malignant cells, and none in the reference cells. Subcluster boundaries and HMM calls will differ: no seed is set, as in the original run.
 
 ### Stage 3: malignant / non-malignant (env `downstream`, `run.sh stage3`)
-- [ ] Write a Spartan Slurm script, based on `snrnaseq/stage2_seurat_simspec/stage2_spartan.slurm`.
-- [ ] Run from the deposited Stage 2 annotated object and `tuft.snv.df.csv`. This doesn't depend on the Stage 2 rerun, so it can start alongside those checks.
-- [ ] `STS_Malignant.Rmd` should find 6 clusters at resolution 0.1 (it stops otherwise).
-- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in both output folders and record the agreement (ARI, % same label) in the "Rerun" column of the Stage 3 and Stage 4 READMEs ("Comparison with the original"), and fill in the Stage 3 "Result" line. Labels no longer depend on cluster numbers; the table shows how closely the rerun clusters reproduce them.
+- [ ] v1.0.0 rerun fixes so far (2026-11-17): `clustree` after a single resolution commented out (two places); KRAS join in `STS_nonMalignant_TuftADM.Rmd` stopped with `Column chr12_25245351_G is not found`, as the deposited metadata already has the KRAS columns and the join renamed them `.x`/`.y`. Existing KRAS columns are now dropped before the join. Rerun with `CODE_DIR`; include in the next image release.
+- [x] Write a Spartan Slurm script (`stage3_spartan.slurm`; Stage 4 has `stage4_spartan.slurm`), with an optional `CODE_DIR` to run code fixed after v1.0.0.
+- [x] Run from the deposited Stage 2 annotated object and `tuft.snv.df.csv`. Completed in v1.0.0 with the fixed Rmds and `shared/` mounted (job 35233975, 2026-11-17): 42 min, peak 84.81 GB, about 1.1 of 4 CPUs. `stage3_spartan.slurm` now asks for 2 CPUs, 128G, 4 h.
+- [x] `STS_Malignant.Rmd` should find 6 clusters at resolution 0.1 (it stops otherwise). Passed in the v1.0.0 run (the original clusters are read from the deposited object).
+- [x] (Stage 3 done 2026-11-17: non-malignant `Lv.1.Anno` and `Lv.2.Anno` by cluster 100%; malignant rerun clusters ARI 0.544, 39.26%; tuft ARI 0.487. Stage 4 recorded under Stage 4.) After the first run with labels from the deposited object, check `label_agreement.tsv` in both output folders and record the agreement (ARI, % same label) in the "Rerun" column of the Stage 3 and Stage 4 READMEs ("Comparison with the original"), and fill in the Stage 3 "Result" line. Labels no longer depend on cluster numbers; the table shows how closely the rerun clusters reproduce them.
 - [ ] Compare Extended Data Fig. 1C–E and 4A/C/G/H, and Supplementary Table 3, with the manuscript.
 
 ## 3. Spatial (Python): Stage 1 added, Stages 2 and 3 waiting on inputs
@@ -107,7 +108,8 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Spatial env added to the `Dockerfile` (lock, then `pip install --no-deps -r envs/post_install_spatial.txt`), `.dockerignore`, the CI smoke test and `run.sh` (`spatial1`, `spatial2`, `spatial3`). `spatial/run_notebooks.py` runs the notebooks listed in `spatial/stageN/config.yml` with papermill.
 - [x] Build the image with the `spatial` env: `v0.3.0`. The env installed from the lock, squidpy and spatialdata installed with `--no-deps`, every package imported (`envs/session_info.py`), and the kernel `xenium.squidpy` is registered.
 - [x] Run `spatial1` on one sample in the image with the read-only `.sif` (`v0.3.0`): MH065_314 reproduced the saved object exactly (labels 100%, gene-set scores and Nhood z-scores max difference 0). The recalculated PCA test gave different numbers from the earlier runs (kept 154,196 vs 154,105; same label 100% vs 99.12%; Nhood correlation 0.9996 vs 0.9991; ARI 0.6995), as expected for that environment-sensitive test. Recorded in `spatial/stage1/README.md`.
-- [ ] Run `spatial1` on all 16 samples and the robustness summary in the image. The summary tables (`stage1_robustness_table.tsv` and others) come from the earlier runs; decide whether to keep those or report the image run's recalculated PCA values.
+- [x] (Rerun with `CODE_DIR`, job 35233126: completed.) The first full `spatial1` run in v1.0.0 (2026-11-17) stopped at MH074_314: `Clusters differ from cluster_anno: ['30']`. Ten notebooks recomputed Leiden from the saved PCA; they now read the saved clusters, like the other six. Rerun with `CODE_DIR` set in `stage1_spartan.slurm`; include in the next image release.
+- [ ] Run `spatial1` on all 16 samples and the robustness summary in the image. Completed in v1.0.0 (job 35233126, 2026-11-17): 46 min, peak 8.36 GB, about 1.1 of 8 CPUs; `stage1_spartan.slurm` now asks for 2 CPUs, 32G, 4 h. Still to check: the per-sample comparison with the saved objects (labels, gene-set scores, Nhood z-scores) and the robustness summary, then update the Stage 1 README and the top-level table. The summary tables (`stage1_robustness_table.tsv` and others) come from the earlier runs; decide whether to keep those or report the image run's recalculated PCA values.
 - [ ] Optional: run one sample with Docker as well (only the `.sif` has been tested).
 - [ ] Check whether any Stage 3 notebook needs a GPU (torch / scvi-tools are in the env). Stages 1 and 2 do not; Stage 2 runs in 64 GB.
 - [x] Stage 2: notebook added under `spatial/stage2/`. Niches match the original for 99.9994% of cells (about 18 of 2,930,241 differ); all 15 names match.
@@ -142,13 +144,22 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [x] **Rebuild with the Stage 4 additions.** `v0.2.0`: treeio 1.25.0.001 and the new packages attached, at the expected versions.
 - [x] **Keep one `sample_map.csv`.** The Stage 0 copy is removed, and its README points at `shared/`.
 
+- [x] The v1.0.0 run stopped in `STS_Malignant.Rmd` (2026-11-16) at a check that the RNA data slot equals the counts. The deposited object's RNA data slot is log-normalised (checked 2026-11-16), so the check is commented out; the ADM dot plots (Ext. Data Fig. 4A, 4H) use that slot as before.
+
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
-- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in each output folder: `Plotting/` should show 100% for the rebuilt final `Lv.1.Anno` and `Lv.2.Anno`. Record the agreement of the rerun clusters in the Stage 4 README.
+- [x] Stage 4 ran to completion in v1.0.0 with the fixed Rmds and `shared/` mounted (job 35232665, 2026-11-17): 36 min, peak 42.73 GB, about 1 of 4 CPUs. `stage4_spartan.slurm` now asks for 2 CPUs, 64G, 4 h.
+- [ ] Include the Stage 3/4 Rmd and `shared/label_checks.R` fixes in the next image release (below).
+- [x] The v1.0.0 rerun (job 35232233, 2026-11-17) stopped in `shared/label_checks.R`: `compare_labels()` failed when every cell agreed (100%), as the list of differing cells was empty. Fixed; the slurm scripts take `SHARED_DIR` to mount the fixed `shared/`. Include in the next image release.
+- [x] The v1.0.0 run stopped in `STS_Lymphoid_TNK.Rmd` (2026-11-16): `Cannot find object SCT_snn_res.0.7`. The cells read from the final object lack Stage 3's cluster columns. Fixed in the Stage 3 and 4 Rmds (metadata columns removed through `@meta.data`, which skips missing ones); rerun with `CODE_DIR` set in the slurm script, and include the fix in the next image release.
+- [x] (Rerun job 35233653, 2026-11-17: completed, 48 min, peak 42.79 GB; `Plotting/label_agreement.tsv` now 100% for both, ARI 1.) `Plotting.Rmd` rebuilds `Lv.2.Anno` with the 84 cells of sample 2215 as `PDAC`; the deposited object (and Stage 5, which drops `unassigned`) has them as `unassigned`, as `Lv.1.Anno` does. Added the `non.malig` line to the `Lv.2.Anno` step (2026-11-17); confirm 100% on the next Stage 4 run.
+- [ ] After the first run with labels from the deposited object, check `label_agreement.tsv` in each output folder: `Plotting/` should show 100% for the rebuilt final `Lv.1.Anno` and `Lv.2.Anno` (2026-11-17: `Lv.1.Anno` 100%; `Lv.2.Anno` 99.93%, only the 84 cells of sample 2215 differ; after the fix, both 100%). Record the agreement of the rerun clusters in the Stage 4 README.
 - [ ] Compare Fig. 1C and Extended Data Fig. 5A–B (now on the stored UMAPs) with the published panels. Each Fig. 1C subset also has a rerun-vs-deposited panel (`fig-1c-*-rerun-vs-deposited`).
 - [ ] Compare the figures and Supplementary Tables 4–7 with the manuscript.
 
 ### Stage 5: CellChat (env `cellchat`, `run.sh stage5`)
 - [x] Check the build: `post_install_cellchat.R` compiled in `v0.2.0`, and CellChat 2.1.2, dplyr 1.2.1 and NMF 0.27 attached.
+- [x] Run in the v1.0.0 `.sif` on Spartan (2026-11-16): every figure in `Cellchat.html` matches the published panels.
+- [x] Resources measured with `seff` (job 35138147): 5 h 46 min, peak 65.7 GB, CPU efficiency 2.3%. `stage5_spartan.slurm` now asks for 96 GB and 12 h; README updated.
 
 ### Supplementary QC (`snrnaseq/supplementary_qc/`, record only)
 - [ ] Add the three CSVs to Supplementary Table 1, from the rerun of the tidied file, each with a note on what it covers (see the folder README).

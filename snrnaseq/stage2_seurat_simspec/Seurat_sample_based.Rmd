@@ -18,7 +18,7 @@ Plots and figures are placed in `output/plots/`
 ```{r global-options, include=FALSE}
 # knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
 #                       echo=FALSE, warning=FALSE, message=FALSE)
-knitr::opts_chunk$set(echo = F, warning = F, error = F, message = F, results = "hide", eval = T)
+knitr::opts_chunk$set(echo = T, warning = F, error = F, message = F, results = "hide", eval = T)
 options(future.globals.maxSize= 1048576000)
 
 cfg <- params$cfg
@@ -95,7 +95,7 @@ sts.seurat <- SCTransform(
   sts.seurat,
   vst.flavor = "v2",
   method = "glmGamPoi",
-  verbose = TRUE) # default ncells set to 5000, can see it in verbose
+  verbose = FALSE) # default ncells set to 5000
 ```
 
 
@@ -116,7 +116,7 @@ sts.seurat <-
 ```{r pca, fig.width=10, fig.height=10}
 sts.seurat <-
   RunPCA(sts.seurat,
-         verbose = TRUE,
+         verbose = FALSE,
          assay = 'SCT',
          reduction.name = "pca",
          reduction.key = "PCA_")
@@ -145,7 +145,7 @@ sts.seurat <-
   Seurat::RunUMAP(
     sts.seurat,
     dims = 1:50,
-    verbose = TRUE,
+    verbose = FALSE,
     assay = 'SCT',
     reduction = 'pca',
     reduction.name = 'umap',
@@ -168,7 +168,7 @@ sts.seurat <-
     sts.seurat,
     reduction = 'pca',
     dims = 1:50,
-    verbose = TRUE,
+    verbose = FALSE,
     assay = 'SCT'
   )
 
@@ -308,12 +308,11 @@ Each rerun cluster at resolution 0.5, with the share of its cells in each `cell_
 compare_with_labels <- function(clusters, labels, title) {
   clusters <- as.character(clusters)
   labels <- as.character(labels)
-  ari <- bluster::pairwiseRand(labels, clusters, mode = "index")
   counts <- table(cluster = clusters, label = labels)
   shares <- prop.table(counts, margin = 1)
   pheatmap(unclass(shares), cluster_rows = FALSE, cluster_cols = FALSE,
            color = colorRampPalette(c("white", "darkred"))(50),
-           main = sprintf("%s (ARI %.3f)", title, ari))
+           main = title)
   data.frame(cluster = rownames(shares),
              cells = as.vector(rowSums(counts)),
              majority_label = colnames(shares)[apply(shares, 1, which.max)],

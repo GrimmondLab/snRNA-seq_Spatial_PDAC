@@ -32,10 +32,6 @@ library(openxlsx)
 
 # Adding metadata
 ```{r}
-# this object is repeated analysis performed in August 2024. Final run to ensure everything is the same 
-# Using Fer's codes, removing samples without malignant cells and IPMN samples not belonged to APGI cohort
-# Object was annotated using simspec integration approach on sample-based 
-# Originally read as sts.simspec_css.sample.sct.Aug24.RDS; now the deposited sts.simspec_css.sample.sct_final.RDS (the same object, with labels added)
 sts.simspec.sct <- readRDS(cfg$integrated_object)
 ```
 
@@ -61,14 +57,14 @@ dim(sts.malignant) #  26788 x 53356
 DefaultAssay(sts.malignant) <- "RNA"
 sts.malignant <- Seurat::DietSeurat(sts.malignant, assays = "RNA", data = TRUE, counts = TRUE)
 colnames(sts.malignant[[]]) #check which columns to remove
-sts.malignant[["nCount_SCT"]] <- NULL
-sts.malignant[["nFeature_SCT"]] <- NULL
-sts.malignant[["seurat_clusters"]] <- NULL
-sts.malignant[["SCT_snn_res.0.8"]] <- NULL
-sts.malignant[["SCT_snn_res.0.9"]] <- NULL
-sts.malignant[["SCT_snn_res.1"]] <- NULL
-sts.malignant[["SCT_snn_res.1.1"]] <- NULL
-sts.malignant[["SCT_snn_res.1.2"]] <- NULL
+sts.malignant@meta.data[["nCount_SCT"]] <- NULL
+sts.malignant@meta.data[["nFeature_SCT"]] <- NULL
+sts.malignant@meta.data[["seurat_clusters"]] <- NULL
+sts.malignant@meta.data[["SCT_snn_res.0.8"]] <- NULL
+sts.malignant@meta.data[["SCT_snn_res.0.9"]] <- NULL
+sts.malignant@meta.data[["SCT_snn_res.1"]] <- NULL
+sts.malignant@meta.data[["SCT_snn_res.1.1"]] <- NULL
+sts.malignant@meta.data[["SCT_snn_res.1.2"]] <- NULL
 ```
 
 ## Normalised by SCTransform on individual sample
@@ -209,9 +205,9 @@ ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating 
 
 # Remove batch effect on log-CPM
 logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
-boxplot(as.data.frame(ClstSub.cpm),main="Original")
-boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
-plotMDS(logCPM_no_batch, pch = 16, col = pat.col[ClstSub$samples$group], main="Pseudo-bulk samples")
+#boxplot(as.data.frame(ClstSub.cpm),main="Original")
+#boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+#plotMDS(logCPM_no_batch, pch = 16, col = pat.col[ClstSub$samples$group], main="Pseudo-bulk samples")
 
 ### Extract top significant genes
 library(tibble)
@@ -283,18 +279,20 @@ DefaultAssay(rare) <- "RNA"
 rare <- DietSeurat(rare, assays = "RNA", data = TRUE, counts = TRUE)
 colnames(rare[[]]) #check which columns to remove
 
-rare[["nCount_SCT"]] <- NULL
-rare[["nFeature_SCT"]] <- NULL
-rare[["seurat_clusters"]] <- NULL
-rare[["SCT_snn_res.0.8"]] <- NULL
-rare[["SCT_snn_res.0.9"]] <- NULL
-rare[["SCT_snn_res.1"]] <- NULL
-rare[["SCT_snn_res.1.1"]] <- NULL
-rare[["SCT_snn_res.1.2"]] <- NULL
+rare@meta.data[["nCount_SCT"]] <- NULL
+rare@meta.data[["nFeature_SCT"]] <- NULL
+rare@meta.data[["seurat_clusters"]] <- NULL
+rare@meta.data[["SCT_snn_res.0.8"]] <- NULL
+rare@meta.data[["SCT_snn_res.0.9"]] <- NULL
+rare@meta.data[["SCT_snn_res.1"]] <- NULL
+rare@meta.data[["SCT_snn_res.1.1"]] <- NULL
+rare@meta.data[["SCT_snn_res.1.2"]] <- NULL
 
 GetAssayData(rare, slot = "counts")
-stopifnot(identical(rare@assays$RNA@counts[1:5, 1:5],
-          rare@assays$RNA@data[1:5, 1:5]))
+# Commented out: the RNA data slot of the deposited object is log-normalised, so it never equals the counts.
+# Nothing below reads it (SCTransform uses the counts).
+#stopifnot(identical(rare@assays$RNA@counts[1:5, 1:5],
+#          rare@assays$RNA@data[1:5, 1:5]))
 ```
 
 ## Standard processing - normalise, dimentionality reduction, clustering
@@ -318,8 +316,9 @@ rare <- FindNeighbors(rare, reduction = "pca", dims = 1:50)
 #rare <- FindClusters(rare, algorithm = 3,  resolution = seq(0.1,1, by = 0.1)) # SLM
 rare <- FindClusters(rare, algorithm = 3,  resolution = 0.3) # SLM
 
-library(clustree)
-clustree::clustree(rare)
+# clustree needs at least two resolutions; only one is run here (the wider sweep above is commented out)
+#library(clustree)
+#clustree::clustree(rare)
 #saveRDS(rare, file="~/projects/PDAC_non_malignant_cell_types/output/cellbender/Aug24_objects/rareSamples.RDS")
 
 Idents(rare) <- "SCT_snn_res.0.3"

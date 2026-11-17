@@ -9,10 +9,10 @@ For the manuscript "Single-cell spatial profiling identifies recurrent spatial n
 | **snRNA-seq** | | |
 | [Stage 0](snrnaseq/stage0_cellranger_cellbender/README.md): Cell Ranger, CellBender | Count matrices (GEO) | Record only; the outputs are deposited and later stages start from them |
 | [Stage 1](snrnaseq/stage1_doublet_qc/README.md): doublets, QC | Post-QC object | **Closely.** Run in the image: 115,301 cells against the original 115,221 (0.07% more), because the original parallel steps had no seed. Later stages start from the deposited original post-QC object |
-| [Stage 2](snrnaseq/stage2_seurat_simspec/README.md): integration | Cell classes | Labels read from the deposited object by cell ID, so identical; rerun clusters compared with them. Run with this check: pending |
-| [Stage 3](snrnaseq/stage3_malignant_nonmalignant/README.md): malignant, non-malignant, tuft, ADM | Ext. Data Fig. 1C–E, 4A, 4C, 4G–H; Supp. Table 3 | Labels identical by design; run in the image: pending |
-| [Stage 4](snrnaseq/stage4_reclustering/README.md): reclustering, final annotation | Fig. 1B–C; Ext. Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C, 8E–G; Supp. Tables 4–7 | Labels identical by design; Fig. 1C drawn on the stored UMAPs; run in the image: pending |
-| [Stage 5](snrnaseq/stage5_cellchat/README.md): CellChat | Fig. 3E–F, 4G, 5F, 6G | Run in the image: pending |
+| [Stage 2](snrnaseq/stage2_seurat_simspec/README.md): integration | Cell classes | **Labels identical** by design: read from the deposited object by cell ID, as intended; rerun clusters compared with them. Run in the image (v1.0.0) |
+| [Stage 3](snrnaseq/stage3_malignant_nonmalignant/README.md): malignant, non-malignant, tuft, ADM | Ext. Data Fig. 1C–E, 4A, 4C, 4G–H; Supp. Table 3 | Labels identical by design. Run in the image (v1.0.0, with fixes needed to render); comparison pending |
+| [Stage 4](snrnaseq/stage4_reclustering/README.md): reclustering, final annotation | Fig. 1B–C; Ext. Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C, 8E–G; Supp. Tables 4–7 | Labels identical by design; Fig. 1C drawn on the stored UMAPs. Run in the image (v1.0.0, with fixes needed to render); comparison pending |
+| [Stage 5](snrnaseq/stage5_cellchat/README.md): CellChat | Fig. 3E–F, 4G, 5F, 6G | **Reproduced.** Run in the image (v1.0.0): every figure in the report matches the published panels |
 | [inferCNV](snrnaseq/supplementary_infercnv/README.md) (supplementary) | Ext. Data Fig. 1B, 4F | **Not exactly** by design: random steps without a seed. A check, not part of the main pipeline |
 | **Spatial transcriptomics (Xenium)** | | |
 | [Stage 1](spatial/stage1/README.md): QC, annotation, neighbourhood enrichment | The 16 annotated objects | **Exact.** Labels, gene-set scores and Nhood z-scores identical in all 16 samples; one sample also run in the image, identical |

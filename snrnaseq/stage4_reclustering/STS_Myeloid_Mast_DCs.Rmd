@@ -56,12 +56,12 @@ myeloid <- DietSeurat(myeloid, assays = "RNA", data = TRUE, counts = TRUE)
 
 # to remove additional columns & because we need to split individual samples and redo the SCT, so we need to remove the "^_SCT"
 colnames(myeloid[[]]) #check which columns to remove
-myeloid[["nCount_SCT"]] <- NULL
-myeloid[["nFeature_SCT"]] <- NULL
-myeloid[["seurat_clusters"]] <- NULL
+myeloid@meta.data[["nCount_SCT"]] <- NULL
+myeloid@meta.data[["nFeature_SCT"]] <- NULL
+myeloid@meta.data[["seurat_clusters"]] <- NULL
 #myeloid[["SCT_snn_res.0.5"]] <- NULL
 #myeloid[["SCT_snn_res.0.6"]] <- NULL
-myeloid[["SCT_snn_res.0.7"]] <- NULL
+myeloid@meta.data[["SCT_snn_res.0.7"]] <- NULL
 #myeloid[["SCT_snn_res.0.8"]] <- NULL
 
 #Removing outliers
@@ -111,19 +111,19 @@ DC <- DietSeurat(DC, assays = "RNA", data = TRUE, counts = TRUE)
 
 # to remove additional columns & because we need to split individual samples and redo the SCT, so we need to remove the "^_SCT"
 colnames(DC[[]]) #check which columns to remove
-DC[["nCount_SCT"]] <- NULL
-DC[["nFeature_SCT"]] <- NULL
-DC[["seurat_clusters"]] <- NULL
-DC[["SCT_snn_res.0.1"]] <- NULL
-DC[["SCT_snn_res.0.2"]] <- NULL
-DC[["SCT_snn_res.0.3"]] <- NULL
-DC[["SCT_snn_res.0.4"]] <- NULL
-DC[["SCT_snn_res.0.5"]] <- NULL
-DC[["SCT_snn_res.0.6"]] <- NULL
-DC[["SCT_snn_res.0.7"]] <- NULL
-DC[["SCT_snn_res.0.8"]] <- NULL
-DC[["SCT_snn_res.0.9"]] <- NULL
-DC[["SCT_snn_res.1"]] <- NULL
+DC@meta.data[["nCount_SCT"]] <- NULL
+DC@meta.data[["nFeature_SCT"]] <- NULL
+DC@meta.data[["seurat_clusters"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.1"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.2"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.3"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.4"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.5"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.6"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.7"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.8"]] <- NULL
+DC@meta.data[["SCT_snn_res.0.9"]] <- NULL
+DC@meta.data[["SCT_snn_res.1"]] <- NULL
 
 # SCTRANFORM
 DC.v2 <- SCTransform(DC, vst.flavor = "v2", method = "glmGamPoi", verbose = TRUE)
@@ -192,7 +192,6 @@ myeloid.v2$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
 
 # Lv.2.Anno from the deposited object
 myeloid.v2$Lv.2.Anno <- deposited_labels(myeloid.v2, "stage4_myeloid_Lv.2.Anno")
-myeloid.v2@meta.data %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
 print(knitr::kable(compare_clusters(myeloid.v2$SCT_snn_res.0.8, myeloid.v2$Lv.2.Anno,
                                     "Myeloid: rerun clusters (res 0.8) vs Lv.2.Anno", params$step_dir), row.names = FALSE))
 print(knitr::kable(compare_labels(myeloid.v2$Lv.2.Anno_by_cluster, myeloid.v2$Lv.2.Anno,
@@ -238,19 +237,19 @@ DefaultAssay(mac.only) <- "RNA"
 Idents(mac.only) <- "Lv.2.Anno" #Lv.2.Anno = has no cDC2; Lv.2.Anno_revised has cDC2 and accurate number of lDCs
 
 colnames(mac.only[[]]) #check which columns to remove
-mac.only[["nCount_SCT"]] <- NULL
-mac.only[["nFeature_SCT"]] <- NULL
-mac.only[["seurat_clusters"]] <- NULL
-mac.only[["SCT_snn_res.0.1"]] <- NULL
-mac.only[["SCT_snn_res.0.2"]] <- NULL
-mac.only[["SCT_snn_res.0.3"]] <- NULL
-mac.only[["SCT_snn_res.0.4"]] <- NULL
-mac.only[["SCT_snn_res.0.5"]] <- NULL
-mac.only[["SCT_snn_res.0.6"]] <- NULL
-mac.only[["SCT_snn_res.0.7"]] <- NULL
-mac.only[["SCT_snn_res.0.8"]] <- NULL
-mac.only[["SCT_snn_res.0.9"]] <- NULL
-mac.only[["SCT_snn_res.1"]] <- NULL
+mac.only@meta.data[["nCount_SCT"]] <- NULL
+mac.only@meta.data[["nFeature_SCT"]] <- NULL
+mac.only@meta.data[["seurat_clusters"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.1"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.2"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.3"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.4"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.5"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.6"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.7"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.8"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.0.9"]] <- NULL
+mac.only@meta.data[["SCT_snn_res.1"]] <- NULL
 
 # DietSeurat
 mac.only <- DietSeurat(mac.only)
@@ -328,7 +327,6 @@ mac.simspec.sample.sct$Lv.2.Anno_by_cluster <- metadata$Lv.2.Anno
 
 # Lv.2.Anno and the Fig. 1C UMAP from the deposited object
 mac.simspec.sample.sct$Lv.2.Anno <- deposited_labels(mac.simspec.sample.sct, "stage4_TAM_Lv.2.Anno")
-mac.simspec.sample.sct@meta.data %>% group_by(Lv.1.Anno) %>% dplyr::count(Lv.2.Anno)
 print(knitr::kable(compare_clusters(mac.simspec.sample.sct$SCT_snn_res.0.2, mac.simspec.sample.sct$Lv.2.Anno,
                                     "TAMs: rerun clusters (res 0.2) vs Lv.2.Anno", params$step_dir), row.names = FALSE))
 print(knitr::kable(compare_labels(mac.simspec.sample.sct$Lv.2.Anno_by_cluster, mac.simspec.sample.sct$Lv.2.Anno,
@@ -386,7 +384,7 @@ ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a al
 ClstSub$samples$group
 
 mac.col <- c("#FFAAA6","#00A9FF","#E68613", "#7CAE00")
-plotMDS(ClstSub, pch = 15, col = mac.col[ClstSub$samples$group], main="")
+#plotMDS(ClstSub, pch = 15, col = mac.col[ClstSub$samples$group], main="")
 
 #Design matrix
 Cls <- as.factor(ClstSub$samples$Cluster)
@@ -413,8 +411,8 @@ ClstSub.cpm <- edgeR::cpm(ClstSub, log=T, prior.count=prior.count) #calculating 
 
 # Remove batch effect on log-CPM
 logCPM_no_batch <- removeBatchEffect(ClstSub.cpm, batch=Pat, group = Cls) # for visualisation purposes only
-boxplot(as.data.frame(ClstSub.cpm),main="Original")
-boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
+#boxplot(as.data.frame(ClstSub.cpm),main="Original")
+#boxplot(as.data.frame(logCPM_no_batch),main="Batch corrected")
 plotMDS(logCPM_no_batch, pch = 16, col = mac.col[ClstSub$samples$group], main="Pseudo-bulk samples")
 
 ## Top significant genes
