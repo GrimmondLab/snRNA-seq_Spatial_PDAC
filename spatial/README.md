@@ -96,7 +96,7 @@ Besides the GEO files, the notebooks need only the files below.
 
 Stages 2 and 3 otherwise start from the Stage 1 outputs, which reproduce exactly.
 
-**Original objects used for the checks are not deposited.** Each notebook ends with a check against the original objects (the Stage 1 label tables, the original combined niche object, and the original Stage 3 subset and region objects). These checks were run, and their results are recorded in the stage READMEs and the saved notebook outputs: all matched. Without the original objects, the checks are skipped and the notebooks still run.
+**Original objects used for the checks are not deposited.** Each notebook ends with a check against the original objects (the Stage 1 label tables, the original combined niche object, and the original Stage 3 subset and region objects). These checks were run, and their results are recorded in the stage READMEs and the saved notebook outputs: all matched. Without the original objects, the checks are skipped and the notebooks still run. For Stage 2, the original niche of each cell is deposited on its own (`stage2_niche_labels_original.csv.gz`, Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)), so a rerun's niches can be compared with the original without the combined object; this is optional.
 
 ## Environment
 

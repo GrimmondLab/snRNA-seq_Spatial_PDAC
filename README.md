@@ -93,6 +93,8 @@ All three use the env `spatial`. Each stage folder has a `config.yml` with the c
 | Spatial (Xenium) data, PDAC | GEO [GSE282154](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE282154) |
 | Spatial (Xenium) data, TNBC (TLS comparison in Stage 3) | GEO [GSE281886](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE281886) |
 | Spatial (Xenium) processed objects, 16 PDAC samples (`Xenium_480.tar`, `Xenium_314.tar`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| Optional: original niche label for each cell (`stage2_niche_labels_original.csv.gz`), to compare a spatial Stage 2 rerun with the original | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
+| Original inferCNV output for sample 2215 (`infercnv_ICGC_0103_P2215.out.tar`), the record behind the 84 cells excluded from the malignant analysis | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected.csv`) | Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) |
 
 Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322), with the MD5 checksums Zenodo shows. Check a download with `md5sum <file>` (Linux) or `md5 <file>` (macOS).
@@ -104,6 +106,8 @@ Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zen
 | `tuft.snv.df.csv` | 2.11 MB | `e0217adfd5bb07c3bc1b2ecb72ccf327` | snRNA-seq Stage 3 |
 | `Xenium_480.tar` | 9.37 GB | `a50f0c7960b6c8c6bdfecaeba23154df` | Spatial Stage 1 |
 | `Xenium_314.tar` | 5.16 GB | `25f86f3e61d23400894b8c54c5e3d10b` | Spatial Stage 1 |
+| `stage2_niche_labels_original.csv.gz` | 27 MB | `a327809f642130939941a9bfdb69e8d7` | Spatial Stage 2, optional comparison (`REFERENCE_DIR`) |
+| `infercnv_ICGC_0103_P2215.out.tar` | *(add)* | `69532608c49ddb487ec2a2fb92b4a328` | Record only (inferCNV, sample 2215) |
 
 ## Build
 

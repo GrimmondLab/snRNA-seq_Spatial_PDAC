@@ -41,7 +41,7 @@ In the original inferCNV run for sample 2215 (`P2215.out`), the 84 cells of PDAC
 - Stage 3 (`STS_Malignant.Rmd`) lists the 84 cell IDs and removes them from the malignant analysis.
 - Stage 4 (`Plotting.Rmd`) gives them the level-1 label `unassigned`.
 
-The cell IDs are written into the code, so later stages do not depend on rerunning inferCNV. A rerun may not single out exactly the same cells (see [Randomness](#randomness)). The original output for sample 2215 is to be deposited as the record (**DOI_TBD**).
+The cell IDs are written into the code, so later stages do not depend on rerunning inferCNV. A rerun may not single out exactly the same cells (see [Randomness](#randomness)). The original output for sample 2215 is deposited as the record: `infercnv_ICGC_0103_P2215.out.tar` on Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322).
 
 ## Randomness
 

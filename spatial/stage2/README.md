@@ -33,6 +33,8 @@ In the project image: `run.sh spatial2`, after Stage 1 and with the same output 
 
 **Starting without Stage 1.** Stage 2 can also start from the 16 processed objects deposited on Zenodo (`Xenium_480.tar`, `Xenium_314.tar`) instead of the Stage 1 output: in `stage2_spartan.slurm`, set `STAGE1_SOURCE=deposited` and `DEPOSITED_DIR` to the folder with the extracted `.h5ad` files. The script links each file under the name Stage 2 reads, checks that every object holds the labels, coordinates and Nhood z-scores Stage 2 needs, and then runs the notebooks. In the image, Stage 1 reproduces these objects exactly, so both starts should give the same result; the deposited start has not been run yet.
 
+**Optional: compare with the original niches.** Download `stage2_niche_labels_original.csv.gz` (Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322); 27 MB, the original niche of each cell) into a folder and set `REFERENCE_DIR` in `stage2_spartan.slurm` to it. After the run, the script compares each cell's `cell_class_threshold`, K-means cluster and niche with the original and writes `stage2_image_check.tsv`. Stage 2 runs without it.
+
 <details>
 <summary>Running the notebooks directly</summary>
 
@@ -107,7 +109,7 @@ The image gives exactly the niches of the run outside it, so the same 18 cells d
 <details>
 <summary>The 18 cells with a different niche</summary>
 
-The 18 cells with a different niche come from 11 samples, with at most 4 in one sample (MH104_314). They all moved between stromal, immune and vascular niches: for example 3 from B_Lymphoid_enriched to CAFsNRT_APCs_enriched, and 3 from Vasculature_enriched to Tumour_TAMs_enriched. No cell moved into or out of Tumour_Tuft_enriched, IPMN_enriched or B_FDCs_enriched. Every cell kept its `cell_class_threshold` label. This comparison used the original niche labels for each cell (`stage2_niche_labels_original.csv.gz`).
+The 18 cells with a different niche come from 11 samples, with at most 4 in one sample (MH104_314). They all moved between stromal, immune and vascular niches: for example 3 from B_Lymphoid_enriched to CAFsNRT_APCs_enriched, and 3 from Vasculature_enriched to Tumour_TAMs_enriched. No cell moved into or out of Tumour_Tuft_enriched, IPMN_enriched or B_FDCs_enriched. Every cell kept its `cell_class_threshold` label. This comparison used the original niche labels for each cell (`stage2_niche_labels_original.csv.gz`, deposited on Zenodo [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322)).
 
 </details>
 
@@ -178,6 +180,6 @@ The 18 cells with a different niche come from 11 samples, with at most 4 in one 
 | `stage2_niches.ipynb` | The niche analysis, from the final Stage 1 objects to the niches and figures |
 | `stage2_figures.ipynb` | Manuscript figures plotted from single Stage 1 objects |
 | `stage2_neighbourhood_profiling.ipynb` | Distances, Nhood enrichment and neighbour composition around selected cell types |
-| `stage2_spartan.slurm` | Slurm script to run this stage in the image on an HPC cluster, after `../stage1/stage1_spartan.slurm` with the same output folder. If `REFERENCE_DIR` holds `stage2_niche_labels_original.csv.gz` (not in the image or this repository), it then compares each cell's niche with it and writes `stage2_image_check.tsv`; `COMPARE_ONLY=yes` runs only that comparison. `STAGE1_SOURCE=deposited` starts from the deposited processed objects instead of the Stage 1 output |
+| `stage2_spartan.slurm` | Slurm script to run this stage in the image on an HPC cluster, after `../stage1/stage1_spartan.slurm` with the same output folder. If `REFERENCE_DIR` holds `stage2_niche_labels_original.csv.gz` (Zenodo, not in the image or this repository), it then compares each cell's niche with it and writes `stage2_image_check.tsv`; `COMPARE_ONLY=yes` runs only that comparison. `STAGE1_SOURCE=deposited` starts from the deposited processed objects instead of the Stage 1 output |
 
 </details>

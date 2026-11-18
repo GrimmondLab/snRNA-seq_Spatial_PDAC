@@ -35,9 +35,9 @@ DEPOSITED_DIR=
 # Optional: the repository's spatial/stage2 folder, mounted over the copy in the image, to run notebooks
 # changed after the image was built. Leave empty to use the image's.
 CODE_DIR=
-# Optional: a folder holding stage2_niche_labels_original.csv.gz (and, if you have it, stage2_niche_labels.csv.gz
-# from the earlier rerun). These are not in the image or the repository. After the run, each cell's niche is
-# compared with them; leave empty to skip the comparison.
+# Optional: a folder holding stage2_niche_labels_original.csv.gz (Zenodo 10.5281/zenodo.23933322) and, if you have
+# it, stage2_niche_labels.csv.gz from the earlier rerun. Neither is in the image or the repository. After the run,
+# each cell's niche is compared with them; leave empty to skip the comparison.
 REFERENCE_DIR=
 # yes: skip the notebooks and only run the comparison, on the Stage 2 output already in OUTPUT_DIR
 COMPARE_ONLY=no

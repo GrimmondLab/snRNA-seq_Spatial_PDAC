@@ -1,7 +1,36 @@
 # TODO
 
-Next steps after the move to one conda-based Docker image (`Dockerfile`, `envs/`, `run.sh`).
-`v0.3.0` is published as a Docker image (13.7 GB) and a `.sif` (2.7 GB), with five envs: the four R envs for snRNA-seq Stages 1–5 and inferCNV, and `spatial` for the Xenium stages. No spatial notebook has been run in the image yet. Stages 1 and 2 have finished full runs on Spartan (exit code 0), but neither output has been checked yet (see section 2). Stage 1 needs far more memory than documented.
+Status on 2026-11-18: every snRNA-seq stage (1–5) and every spatial stage (1–3) has run in the v1.0.0 `.sif` on Spartan, and the results are compared with the manuscript in each stage README. inferCNV has not run in the image. Fixes made during those runs were mounted with `CODE_DIR`/`SHARED_DIR`; they are committed, and the `v1.0.0` tag now points at the commit that has them (70e911d).
+
+Section 0 lists what is left before submission. The other sections keep the history and the items that can wait until review.
+
+## 0. Before submission
+
+Zenodo record 10.5281/zenodo.23933322 (snRNA-seq and Xenium). Add files before publishing: a file added afterwards needs a new version of the record.
+- [x] `Xenium_314.tar` uploaded (2026-11-18, md5 25f86f3e61d23400894b8c54c5e3d10b); both archives' MD5s are in the checksum table in `README.md` ("Data"). File names are listed flat, no subfolder, and written into each Stage 1 notebook's `SAVED_OBJECT` line.
+- [x] `stage2_niche_labels_original.csv.gz` uploaded (2026-11-18, 27 MB, md5 a327809f642130939941a9bfdb69e8d7), as an optional check against the original niches; MD5 in the checksum table, and the READMEs and `stage2_spartan.slurm` point to it.
+- [x] `infercnv_ICGC_0103_P2215.out.tar` uploaded (2026-11-18, md5 69532608c49ddb487ec2a2fb92b4a328), the record behind the 84 excluded cells; MD5 in the checksum table and DOI in `snrnaseq/supplementary_infercnv/README.md`. Still to add: its size in the checksum table in `README.md`. `P2221.lv2anno.out` (Extended Data Fig. 4F) not deposited.
+- [x] Record published (2026-11-18), files embargoed until 2026-12-04. Checked: 10.5281/zenodo.23933322 is the concept DOI and opens the record (version DOI 10.5281/zenodo.23933323); every snRNA-seq and Xenium link in the repository uses 23933322.
+- [ ] **MIBI record 10.5281/zenodo.23996821 is deleted** (Zenodo returns 410 "Record deleted", removed 2026-11-11, reason "personal-data"). The repository still links it in `README.md` (Data table), `spatial_proteomics/README.md` and `CLAUDE.md`. Re-deposit `spe.rds` and `celltype_classifier_corrected.csv` (after removing the personal data), then update the three links.
+
+Image and code
+- [ ] Check the image built from the current `v1.0.0` tag: run one short stage (e.g. `spatial3`, 4 min) without `CODE_DIR`/`SHARED_DIR`, so the committed fixes are tested from the image itself. The `matrixplot_TLS_*` files listed in section 3 should appear.
+- [ ] Make the GHCR package public (package settings → visibility); the repo is private, so the package is too. Otherwise reviewers need a PAT with `read:packages`.
+- [ ] Cite the image by digest (`ghcr.io/...@sha256:...`) in the README and manuscript, not only `:1.0.0`: the tag has been moved once, a digest cannot be.
+- [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
+      `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`
+- [ ] Make the GitHub repo public (or give reviewers access), and archive the release on Zenodo for a citable code DOI. Turn on the GitHub–Zenodo integration first: it archives releases made after it is on.
+
+Data on GEO
+- [ ] When GSE282154 is public (30 November 2026), check it has `cell_feature_matrix.h5` and `cells.csv` for all 16 samples.
+- [ ] Check the TNBC sections (GSE281886) have `cell_feature_matrix.h5` and `cells.csv` for all four once public.
+
+Manuscript
+- [ ] Add the "Container" paragraph to the methods (drafted 2026-11-18: one image, one conda env per group with lock files, Docker or Apptainer, data mounted at run time, `run.sh <stage>`). Note that inferCNV uses Seurat 5.1.0 and Bioconductor 3.18; the other R envs use Seurat 4.3.0 and Bioconductor 3.17.
+- [ ] Add the three CSVs to Supplementary Table 1, from the rerun of the tidied file, each with a note on what it covers (see `snrnaseq/supplementary_qc/README.md`).
+
+MIBI (section 3b)
+- [x] Permission to publish the team's code, and credit, agreed (2026-11-18). The other open items in section 3b (questions, `sessionInfo()`, their container) are wanted but don't block submission.
 
 ## 1. Build and move the image to the HPC
 
@@ -10,7 +39,6 @@ Next steps after the move to one conda-based Docker image (`Dockerfile`, `envs/`
 - [x] Publish a `.sif` with Stages 4 and 5: `v0.2.2` pushed `:0.2.2` and `:0.2.2-sif`, and the `.sif` matches the Docker image.
 - [x] Publish an image with the `spatial` env: `v0.3.0` (run 43156695593, 53 min) built, passed the smoke test and pushed `:0.3.0` and `:0.3.0-sif`; the `.sif` matches the Docker image. Sizes: Docker 13.7 GB (`v0.2.3`: 11.5 GB), `.sif` 2.7 GB (2.1 GB).
 - [ ] Pass a `GITHUB_PAT` to the Docker build as a BuildKit secret. `install_github` runs unauthenticated, so a rebuild can fail on GitHub's rate limit (`v0.2.1` did, and a rerun passed).
-- [ ] The repo is private, so the package will be private. Make it public (package settings → visibility) before sharing with reviewers, or use a `docker login ghcr.io` with a PAT that has `read:packages` on the HPC.
 - [x] Pull the prebuilt `.sif` on the HPC and check that the runner starts (it should print usage):
       ```bash
       apptainer pull pdac-snrnaseq.sif oras://ghcr.io/grimmondlab/snrna-seq_spatial_pdac:0.3.0-sif
@@ -19,9 +47,9 @@ Next steps after the move to one conda-based Docker image (`Dockerfile`, `envs/`
       Private package: run `apptainer registry login -u <github-user> oras://ghcr.io` first, with a PAT that has `read:packages`.
       Or build locally on a linux/amd64 machine: `docker build --platform linux/amd64 -t pdac-snrnaseq:1.0 .`
 - [x] Check the read-only `.sif` works for a real stage. On Spartan, Stage 1 ran with `--cleanenv --no-home --env TMPDIR=/output/tmp` until it ran out of memory, with no file or permission errors.
-- [ ] For the paper: tag a release (`git tag v1.0.0 && git push origin v1.0.0`) to publish `:1.0.0` and `:1.0.0-sif`, and cite the image by digest (`ghcr.io/...@sha256:...`) in the README and manuscript.
+- [x] Tag `v1.0.0` to publish `:1.0.0` and `:1.0.0-sif`. All the Spartan runs below used it; the tag was moved to 70e911d on 2026-11-18 to include their fixes. Digest citation: section 0.
 
-## 1b. Run on AWS Batch (planned)
+## 1b. Run on AWS Batch (planned, not needed for submission)
 
 The plan is Batch on EC2, with data in S3.
 
@@ -59,7 +87,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Same chromosome-arm gains/losses in malignant cells, and none in the reference cells. Subcluster boundaries and HMM calls will differ: no seed is set, as in the original run.
 
 ### Stage 3: malignant / non-malignant (env `downstream`, `run.sh stage3`)
-- [ ] v1.0.0 rerun fixes so far (2026-11-17): `clustree` after a single resolution commented out (two places); KRAS join in `STS_nonMalignant_TuftADM.Rmd` stopped with `Column chr12_25245351_G is not found`, as the deposited metadata already has the KRAS columns and the join renamed them `.x`/`.y`. Existing KRAS columns are now dropped before the join. Rerun with `CODE_DIR`; include in the next image release.
+- [x] v1.0.0 rerun fixes (2026-11-17): `clustree` after a single resolution commented out (two places); KRAS join in `STS_nonMalignant_TuftADM.Rmd` stopped with `Column chr12_25245351_G is not found`, as the deposited metadata already has the KRAS columns and the join renamed them `.x`/`.y`. Existing KRAS columns are now dropped before the join. Rerun with `CODE_DIR`; committed, and in the commit `v1.0.0` now points at.
 - [x] Write a Spartan Slurm script (`stage3_spartan.slurm`; Stage 4 has `stage4_spartan.slurm`), with an optional `CODE_DIR` to run code fixed after v1.0.0.
 - [x] Run from the deposited Stage 2 annotated object and `tuft.snv.df.csv`. Completed in v1.0.0 with the fixed Rmds and `shared/` mounted (job 35233975, 2026-11-17): 42 min, peak 84.81 GB, about 1.1 of 4 CPUs. `stage3_spartan.slurm` now asks for 2 CPUs, 128G, 4 h.
 - [x] `STS_Malignant.Rmd` should find 6 clusters at resolution 0.1 (it stops otherwise). Passed in the v1.0.0 run (the original clusters are read from the deposited object).
@@ -82,7 +110,6 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] `spatial/stage3/tuft_inputs/`: `MH096_480_anno.csv.gz` (11,992 cells) and `MH099_480_umap.csv.gz` (827 cells) added; cell counts match the regions.
 - [ ] Run `stage3_tuft.ipynb` once with the two tables, to test the code that reads them (it replaced reading the original objects).
 - [x] Original objects used only for the checks are not deposited; the check results are recorded in the READMEs and saved outputs.
-- [ ] When GSE282154 is public (30 November 2026), check it has `cell_feature_matrix.h5` and `cells.csv` for all 16 samples.
 - [x] Map the GEO samples to the notebook folders: table in `spatial/README.md` ("Folder layout").
 - [x] 480-gene GEO order confirmed: `_480_1` to `_8` are MH074, MH104, MH106, MH107 (slide 0027518), then MH065, MH096, MH097, MH099 (slide 0027721).
 - [x] TNBC GSM IDs added (GSM8631780–GSM8631783). The GEO order (Xenium_1 to 4 = subjects 3946, 3962, 4497-1, 4754) is taken from the order of the identifier table; the folders follow the original analysis (`TNBC_1` = 4754, `TNBC_2` = 3946, `TNBC_3` = 4497, `TNBC_4` = 3962, as in the original paths).
@@ -91,15 +118,14 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Stage 3 PanIN: give the panels, if any, for `MH097_PanIN_signalling.pdf` and `MH097_PanIN_signalling_2.pdf`, and add the one or two remaining plots. The notebook computes a UMAP but saves no UMAP figure.
 - [x] Stage 3: TLS notebooks won't be rerun. Text outputs changed to `TRCs`; a note at the top of each says the saved plot images still show `Stromal_CCL19`.
 - [ ] Stage 3: give the manuscript panels, if any, for the TLS figures listed as unlabelled in `spatial/stage3/README.md`. Extended Data Fig. 9E is now saved, and the second `Moran_#4.pdf` is now `Moran_#5.pdf`.
-- [ ] Stage 3 `stage3_TLS_figures.ipynb`: the TLS cytokine matrix plots for TLS_097_480_n3, TLS_096_480_n1 and TNBC_4 were drawn but not saved in the original; `save=` added (2026-11-17), so `matrixplot_TLS_097_480_n3.pdf`, `matrixplot_TLS_096_480_n1.pdf` and `matrixplot_TLS_cytokines_TNBC_4.pdf` are written from the next image build.
+- [x] Stage 3 `stage3_TLS_figures.ipynb`: the TLS cytokine matrix plots for TLS_097_480_n3, TLS_096_480_n1 and TNBC_4 were drawn but not saved in the original; `save=` added (2026-11-17), so `matrixplot_TLS_097_480_n3.pdf`, `matrixplot_TLS_096_480_n1.pdf` and `matrixplot_TLS_cytokines_TNBC_4.pdf` are written from the next image build (check: section 0).
 - [x] Stage 3: the *assumed* `color_map` and subsets in `stage3_TLS_figures.ipynb` are accepted: the extra regions show the same pattern as the published ones.
 - [x] Stage 3: `Stromal_CCL19` renamed `TRCs` in `stage3_TIL_regions.ipynb` too; the check maps the original name. Its saved outputs come from before the rename (the restart-and-run-all item above covers it).
-- [x] TNBC raw Xenium output: GEO GSE281886. Check it has `cell_feature_matrix.h5` and `cells.csv` for all four sections once public.
+- [x] TNBC raw Xenium output: GEO GSE281886 (check once public: section 0).
 - [x] Commit the env records under `spatial/environment/`: `requirements_as_used.txt`, `packages_with_locations.tsv`, `conda_export.yml`, `conda_explicit.txt`, `conda_revisions.txt`, `runtime_info.json`, `system.txt` and `kernels.txt`.
 - [x] Decide which env record is correct: `spatial/environment/requirements_as_used.txt`, the versions actually loaded (scanpy 1.9.5 and squidpy 1.3.1, from `~/.local`).
 - [x] Check the imported versions of the packages with two copies inside the conda env: 8 of 10 differ from `requirements_as_used.txt`; see the corrections in `spatial/README.md`.
 - [x] Searched the code of all spatial notebooks for s3fs, aiobotocore, botocore and `s3://`: none uses them (and there are no helper `.py` files). Leave these three out of `envs/spatial.yml`.
-- [ ] Deposit the 16 processed `.h5ad` files on 10.5281/zenodo.23933322: `Xenium_480.tar` uploaded, `Xenium_314.tar` uploading. File names listed (flat, no subfolder) and written into each Stage 1 notebook's `SAVED_OBJECT` line.
 - [x] Write `envs/spatial.yml` (conda-forge/bioconda only) and lock it (`envs/spatial-linux-64.lock`, 403 packages). squidpy 1.3.1 and spatialdata 0.2.5.post0 are not on conda: `envs/post_install_spatial.txt`, installed with `pip install --no-deps`. Nearest versions where the recorded one has no Python 3.9 conda build: pandas 2.2.3 (2.3.3), tqdm 4.67.1 (4.67.3), pooch 1.8.2 (1.9.0), xarray-spatial 0.4.0 (0.5.3). Built in `v0.3.0`.
 - [x] The four version differences are recorded in the main `README.md` ("Environments"), with the spatial run instructions.
 - [x] Spatial run instructions in `README.md` updated after the one-sample Stage 1 run with the `.sif`.
@@ -110,10 +136,9 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Build the image with the `spatial` env: `v0.3.0`. The env installed from the lock, squidpy and spatialdata installed with `--no-deps`, every package imported (`envs/session_info.py`), and the kernel `xenium.squidpy` is registered.
 - [x] Run `spatial1` on one sample in the image with the read-only `.sif` (`v0.3.0`): MH065_314 reproduced the saved object exactly (labels 100%, gene-set scores and Nhood z-scores max difference 0). The recalculated PCA test gave different numbers from the earlier runs (kept 154,196 vs 154,105; same label 100% vs 99.12%; Nhood correlation 0.9996 vs 0.9991; ARI 0.6995), as expected for that environment-sensitive test. Recorded in `spatial/stage1/README.md`.
 - [x] (Rerun with `CODE_DIR`, job 35233126: completed.) The first full `spatial1` run in v1.0.0 (2026-11-17) stopped at MH074_314: `Clusters differ from cluster_anno: ['30']`. Ten notebooks recomputed Leiden from the saved PCA; they now read the saved clusters, like the other six. Rerun with `CODE_DIR` set in `stage1_spartan.slurm`; include in the next image release.
-- [x] Run `spatial1` on all 16 samples and the robustness summary in the image (2026-11-17: exact in all 16, 2,931,027 cells: labels 100%, gene-set scores and Nhood z-scores max difference 0; recalculated PCA test 98.32–100%, Nhood correlation ≥ 0.9995, recorded in the Stage 1 README; earlier-run tables kept). Completed in v1.0.0 (job 35233126, 2026-11-17): 46 min, peak 8.36 GB, about 1.1 of 8 CPUs; `stage1_spartan.slurm` now asks for 2 CPUs, 32G, 4 h. Still to check: the per-sample comparison with the saved objects (labels, gene-set scores, Nhood z-scores) and the robustness summary, then update the Stage 1 README and the top-level table. The summary tables (`stage1_robustness_table.tsv` and others) come from the earlier runs; decide whether to keep those or report the image run's recalculated PCA values.
+- [x] Run `spatial1` on all 16 samples and the robustness summary in the image (2026-11-17: exact in all 16, 2,931,027 cells: labels 100%, gene-set scores and Nhood z-scores max difference 0; recalculated PCA test 98.32–100%, Nhood correlation ≥ 0.9995, recorded in the Stage 1 README; earlier-run tables kept). Completed in v1.0.0 (job 35233126, 2026-11-17): 46 min, peak 8.36 GB, about 1.1 of 8 CPUs; `stage1_spartan.slurm` now asks for 2 CPUs, 32G, 4 h. Stage 1 README and top-level table updated. Open: the summary tables (`stage1_robustness_table.tsv` and others) come from the earlier runs; decide whether to keep those or report the image run's recalculated PCA values.
 - [ ] Optional: run one sample with Docker as well (only the `.sif` has been tested).
 - [x] Run `spatial2` in the image (`spatial/stage2/stage2_spartan.slurm`, after Stage 1 with the same `OUTPUT_DIR`). 2026-11-17, v1.0.0, job 35237912: 8 min, peak 9.0 GB, about 1.3 CPUs; the script now asks for 2 CPUs, 32G, 2 h. `stage2_image_check.tsv`: same `cell_class_threshold` for all 2,930,241 cells; same niche as the original for 99.9994% (18 cells differ) and as the earlier rerun for 100%. The label files are git-ignored (`*.csv.gz`), so the script reads them from `REFERENCE_DIR`.
-- [ ] Decide whether to deposit `stage2_niche_labels_original.csv.gz` (27 MB, Zenodo), so that reviewers can check the niches without the original combined object.
 - [ ] Test `spatial/stage2/stage2_spartan.slurm` with `STAGE1_SOURCE=deposited` (Stage 2 from the 16 deposited processed objects, without Stage 1), in a new `OUTPUT_DIR`, with `REFERENCE_DIR` set. Expect the same niches as the run from the Stage 1 output (99.9994% vs the original, 100% vs the earlier rerun). If the object check reports something missing, the deposited objects lack a field the Stage 1 output has.
 - [x] Run `spatial3` in the image (`spatial/stage3/stage3_spartan.slurm`, after Stages 1 and 2 with the same `OUTPUT_DIR`). 2026-11-17, v1.0.0, job 35240101: 4 min, peak 5.1 GB, about 1 CPU; the script now asks for 2 CPUs, 16G, 1 h. TNBC sections uploaded to `xenium_raw_tnbc/`. Every listed figure was written, including Extended Data Fig. 9E for the first time, and all match the published panels.
 - [ ] Check whether any Stage 3 notebook needs a GPU (torch / scvi-tools are in the env). Stages 1 and 2 do not; Stage 2 runs in 64 GB.
@@ -139,7 +164,7 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Removed names from the received MIBI files (2026-11-16): author lines and notes in both HTML reports, the data file names in the QC code, a comment in `Fig2_efg_CellNeighbourhood.R`, and the internal HPC path in both `sessionInfo()` outputs (now `/path/to/R/`). Names inside the plot images were not checked.
 - [x] Deposit `spe.rds` and `celltype_classifier_corrected.csv` on Zenodo: 10.5281/zenodo.23996821.
 - [ ] Add the team's Docker container for upstream image processing and QC, or a link to it.
-- [ ] Agree how to credit the team, and get permission to publish the code.
+- [x] Agree how to credit the team, and get permission to publish the code (agreed 2026-11-18).
 
 ## 4. Finish moving the downstream commit (d404957) to the single image
 
@@ -153,7 +178,7 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 
 ### Stage 4: reclustering (env `downstream`, `run.sh stage4`)
 - [x] Stage 4 ran to completion in v1.0.0 with the fixed Rmds and `shared/` mounted (job 35232665, 2026-11-17): 36 min, peak 42.73 GB, about 1 of 4 CPUs. `stage4_spartan.slurm` now asks for 2 CPUs, 64G, 4 h.
-- [ ] Include the Stage 3/4 Rmd and `shared/label_checks.R` fixes in the next image release (below).
+- [x] Include the Stage 3/4 Rmd and `shared/label_checks.R` fixes in the next image release: committed, and in the commit `v1.0.0` now points at.
 - [x] The v1.0.0 rerun (job 35232233, 2026-11-17) stopped in `shared/label_checks.R`: `compare_labels()` failed when every cell agreed (100%), as the list of differing cells was empty. Fixed; the slurm scripts take `SHARED_DIR` to mount the fixed `shared/`. Include in the next image release.
 - [x] The v1.0.0 run stopped in `STS_Lymphoid_TNK.Rmd` (2026-11-16): `Cannot find object SCT_snn_res.0.7`. The cells read from the final object lack Stage 3's cluster columns. Fixed in the Stage 3 and 4 Rmds (metadata columns removed through `@meta.data`, which skips missing ones); rerun with `CODE_DIR` set in the slurm script, and include the fix in the next image release.
 - [x] (Rerun job 35233653, 2026-11-17: completed, 48 min, peak 42.79 GB; `Plotting/label_agreement.tsv` now 100% for both, ARI 1.) `Plotting.Rmd` rebuilds `Lv.2.Anno` with the 84 cells of sample 2215 as `PDAC`; the deposited object (and Stage 5, which drops `unassigned`) has them as `unassigned`, as `Lv.1.Anno` does. Added the `non.malig` line to the `Lv.2.Anno` step (2026-11-17); confirm 100% on the next Stage 4 run.
@@ -167,20 +192,14 @@ Done: `stage3_infercnv/` replaced by `supplementary_infercnv/` (env `infercnv`, 
 - [x] Resources measured with `seff` (job 35138147): 5 h 46 min, peak 65.7 GB, CPU efficiency 2.3%. `stage5_spartan.slurm` now asks for 96 GB and 12 h; README updated.
 
 ### Supplementary QC (`snrnaseq/supplementary_qc/`, record only)
-- [ ] Add the three CSVs to Supplementary Table 1, from the rerun of the tidied file, each with a note on what it covers (see the folder README).
+- Moved to section 0 (Supplementary Table 1).
 
-## 5. Before submission
+## 5. Deposits and release (open items moved to section 0)
 - [x] Post-QC object and `tuft.snv.df.csv` deposited: 10.5281/zenodo.23933322.
 - [x] Annotated Stage 2 object (`sts.simspec_css.sample.sct.RDS`) uploaded to 10.5281/zenodo.23933322. The DOI did not resolve on 2026-11-09 (doi.org returned 404); check the record is published.
 - [x] Removed `sts.simspec_css.sample.sct.RDS` from the Zenodo record (2026-11-13). Checked on 2026-11-13: the new final object has the same cells, assays, reductions and columns, plus the 14 added ones; only `Lv.2.Anno` differs (the TAM rename). It already had `Lv.1.Anno`, `Lv.2.Anno` and `ICGC_ID`. Stages 2, 3, 4 and inferCNV now read the final object.
-- [ ] After the snRNA-seq and Xenium record is published, check its DOIs. The repository cites 10.5281/zenodo.23933322 (30 places, 9 files), taken to be the concept DOI, which opens the latest version; the version DOI given for the record is 10.5281/zenodo.23933323. Neither resolved on 2026-11-11. Once published, check that 23933322 opens the record, and update the links if it doesn't. The MIBI links use that record's version DOI (10.5281/zenodo.23996821; concept DOI 23996820).
 - [x] Rerun `snrnaseq/stage4_reclustering/add_labels_to_final_object.R` on the original objects (set the paths at the top) and deposit the object it writes as `sts.simspec_css.sample.sct_final.RDS`. The first run (2026-11-12) checked out (lymphoid 100%, TAM 84.58%, CAF 98.91% the same as the final `Lv.2.Anno`; every difference a renamed label), but showed that the final object says `TAMs_HLA+`, renamed by hand, where the manuscript and the code say `TAMs_MHC_II`. The script now renames it back; check that it prints "Renamed in Lv.2.Anno: 894 cells" and TAM 100%.
 - [x] Stages 3 and 4 read their labels from the deposited final object by cell ID (`shared/label_checks.R`), keep each original cluster mapping as a `_by_cluster` column, report agreement in `label_agreement.tsv`, and plot Fig. 1C from the stored UMAPs. Stage 4 now reads the final object instead of `sts.nonmalignant.RDS`. Not run yet (2026-11-13): the image needs rebuilding.
 - [x] Uploaded `sts.simspec_css.sample.sct_final.RDS` to 10.5281/zenodo.23933322 (2026-11-13; 8.77 GB, md5 5996b8bfd886974b46dc3d39cb6c5428). The record now holds 5 files, with checksums in `README.md` ("Data"). `sts.nonmalignant.RDS` no longer needs depositing: no stage reads it.
-- [ ] Deposit the original inferCNV output for sample 2215 (`P2215.out`), the record for the 84 excluded cells, and fill in DOI_TBD in `snrnaseq/supplementary_infercnv/README.md`. Consider also `P2221.lv2anno.out` (Extended Data Fig. 4F).
 - [x] Extended Data Fig. 1B (sample 2992, PURPLE WGS) and 4F (patient 2221 by `Lv.2.Anno`) recorded in `snrnaseq/supplementary_infercnv/original/InferCNV_extended_data_figures.R`.
 - [x] inferCNV heatmaps for 2992, 2215 and 2221 by `Lv.2.Anno` added to `snrnaseq/supplementary_infercnv/figures/` and shown in its README (the WGS plot is left out).
-- [ ] Tag a release (e.g. `v1.0`) and archive the repo on Zenodo for a citable DOI.
-- [ ] Copy `sessionInfo/*.txt` out of the final image and commit them next to the originals:
-      `docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt`
-- [ ] Add a short "Reproducibility" paragraph to the methods: one image, conda lock files, R 4.3, the known version differences (listed in each stage README).
