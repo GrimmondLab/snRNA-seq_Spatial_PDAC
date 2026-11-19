@@ -9,9 +9,9 @@ Section 0 lists what is left before submission. The other sections keep the hist
 Zenodo record 10.5281/zenodo.23933322 (snRNA-seq and Xenium). Add files before publishing: a file added afterwards needs a new version of the record.
 - [x] `Xenium_314.tar` uploaded (2026-11-18, md5 25f86f3e61d23400894b8c54c5e3d10b); both archives' MD5s are in the checksum table in `README.md` ("Data"). File names are listed flat, no subfolder, and written into each Stage 1 notebook's `SAVED_OBJECT` line.
 - [x] `stage2_niche_labels_original.csv.gz` uploaded (2026-11-18, 27 MB, md5 a327809f642130939941a9bfdb69e8d7), as an optional check against the original niches; MD5 in the checksum table, and the READMEs and `stage2_spartan.slurm` point to it.
-- [x] `infercnv_ICGC_0103_P2215.out.tar` uploaded (2026-11-18, md5 69532608c49ddb487ec2a2fb92b4a328), the record behind the 84 excluded cells; MD5 in the checksum table and DOI in `snrnaseq/supplementary_infercnv/README.md`. Still to add: its size in the checksum table in `README.md`. `P2221.lv2anno.out` (Extended Data Fig. 4F) not deposited.
+- [x] `infercnv_ICGC_0103_P2215.out.tar` uploaded (2026-11-18, md5 69532608c49ddb487ec2a2fb92b4a328), the record behind the 84 excluded cells; size (1.21 GB) and MD5 in the checksum table, DOI in `snrnaseq/supplementary_infercnv/README.md`. `P2221.lv2anno.out` (Extended Data Fig. 4F) not deposited.
 - [x] Record published (2026-11-18), files embargoed until 2026-12-04. Checked: 10.5281/zenodo.23933322 is the concept DOI and opens the record (version DOI 10.5281/zenodo.23933323); every snRNA-seq and Xenium link in the repository uses 23933322.
-- [ ] **MIBI record 10.5281/zenodo.23996821 is deleted** (Zenodo returns 410 "Record deleted", removed 2026-11-11, reason "personal-data"). The repository still links it in `README.md` (Data table), `spatial_proteomics/README.md` and `CLAUDE.md`. Re-deposit `spe.rds` and `celltype_classifier_corrected.csv` (after removing the personal data), then update the three links.
+- [x] **MIBI record re-deposited (2026-11-19):** [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405), open. Files: `spe.rds` (md5 `598e75d349e9aca23fcb8a5eadbdee6b`) and `celltype_classifier_corrected_min_patient_info.csv` (md5 `54f7797d054457117a1fea48c9223261`). It replaces 10.5281/zenodo.23996821, which Zenodo deleted on 2026-11-11 (reason "personal-data"). Links updated in `README.md`, `spatial_proteomics/README.md` and `CLAUDE.md`.
 
 Image and code
 - [ ] Check the image built from the current `v1.0.0` tag: run one short stage (e.g. `spatial3`, 4 min) without `CODE_DIR`/`SHARED_DIR`, so the committed fixes are tested from the image itself. The `matrixplot_TLS_*` files listed in section 3 should appear.
@@ -160,9 +160,9 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. It is unclear whether the Fig. 2E–G clustering used all cells or excluded "Other".
 - [x] Added the QC report (`QC_9.12.2025.html`), the cell–cell interaction report and script (Fig. 5G) and the interaction `sessionInfo()` to `spatial_proteomics/`, and described the QC, FOV filtering and interaction test in its README (2026-11-16).
 - [ ] Get `sessionInfo()` for the cell neighbourhood (Fig. 2E–G) and distance (Extended Data Fig. 6F) scripts. The QC and interaction versions are in the README.
-- [ ] Ask the team how `spe.rds` was built from the QC output: does it hold only the 29 FOVs kept by QC (54,463 cells) and the patient E Vimentin correction? Same question for `celltype_classifier_corrected.csv`.
+- [ ] Ask the team how `spe.rds` was built from the QC output: does it hold only the 29 FOVs kept by QC (54,463 cells) and the patient E Vimentin correction? Same question for the per-cell table (`celltype_classifier_corrected_min_patient_info.csv`).
 - [x] Removed names from the received MIBI files (2026-11-16): author lines and notes in both HTML reports, the data file names in the QC code, a comment in `Fig2_efg_CellNeighbourhood.R`, and the internal HPC path in both `sessionInfo()` outputs (now `/path/to/R/`). Names inside the plot images were not checked.
-- [x] Deposit `spe.rds` and `celltype_classifier_corrected.csv` on Zenodo: 10.5281/zenodo.23996821.
+- [x] Deposit `spe.rds` and the per-cell table on Zenodo: 10.5281/zenodo.24360405 (replaces the deleted 23996821; see section 0).
 - [ ] Add the team's Docker container for upstream image processing and QC, or a link to it.
 - [x] Agree how to credit the team, and get permission to publish the code (agreed 2026-11-18).
 

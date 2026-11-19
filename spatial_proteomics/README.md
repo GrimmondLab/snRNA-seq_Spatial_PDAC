@@ -86,12 +86,12 @@ From `Fig5g_heatmap_cell_cell_comm.R`, and the team's rendered report comparing 
 
 ## Input
 
-The input files are on Zenodo, [10.5281/zenodo.23996821](https://doi.org/10.5281/zenodo.23996821) ("MIBI data of pancreatic cancer"):
+The input files are on Zenodo, [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) ("Spatial MIBI data of pancreatic cancer"):
 
 | File | Contents |
 |---|---|
 | `spe.rds` | Processed `SpatialExperiment` of the MIBI cells, read by the figure scripts as `rdata/spe.rds` |
-| `celltype_classifier_corrected.csv` | Per-cell table used for plotting |
+| `celltype_classifier_corrected_min_patient_info.csv` | Per-cell table used for plotting, with patient information reduced to the minimum (not read by the scripts here) |
 
 ## R versions
 
