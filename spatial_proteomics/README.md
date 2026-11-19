@@ -10,16 +10,18 @@ This part has no Docker container and is not in the project image or `run.sh`. A
 
 | Step | Record | What it does |
 |---|---|---|
-| 1. QC and cell types | `QC_9.12.2025.html` (rendered report, 9 Dec 2025) | Reads the per-cell table from cell phenotyping, corrects one marker call, removes low-quality FOVs, groups cell types and plots marker heatmaps (see [QC](#qc)) |
+| 1. QC and cell types | `QC_9.12.2025.pdf` (rendered report, 9 Dec 2025) | Reads the per-cell table from cell phenotyping, corrects one marker call, removes low-quality FOVs, groups cell types and plots marker heatmaps (see [QC](#qc)) |
 | 2. `SpatialExperiment` | not in this folder | Builds `spe.rds` (deposited on Zenodo), with the columns made in step 1 (`FOV_by_patient`, `parent_cell_type`) |
 | 3. Cell neighbourhoods | `Fig2_efg_CellNeighbourhood.R`, `create_spatial_clusters.R` | Fig. 2E–G |
-| 4. Cell–cell interactions | `Cell_interaction_10Dec2025.html` (rendered report, 10 Dec 2025), `Fig5g_heatmap_cell_cell_comm.R` | Fig. 5G (see [Cell–cell interactions](#cellcell-interactions)) |
+| 4. Cell–cell interactions | `Fig5g_heatmap_cell_cell_comm.R` | Fig. 5G (see [Cell–cell interactions](#cellcell-interactions)) |
 | 5. Cell distances | `ExtFig6f_boxplots_cell_distance.R` | Extended Data Fig. 6F |
 
 ## Manuscript outputs
 
 | Output | Script |
 |---|---|
+| Fig. 1F: cell type composition | `QC_9.12.2025.pdf` (QC report) |
+| Extended Data Fig. 2E: cell type composition | `QC_9.12.2025.pdf` (QC report) |
 | Fig. 2E: heatmap of cell types per cell neighbourhood | `Fig2_efg_CellNeighbourhood.R` |
 | Fig. 2F: cell neighbourhood composition per patient | `Fig2_efg_CellNeighbourhood.R` |
 | Fig. 2G: cell neighbourhoods across all FOVs | `Fig2_efg_CellNeighbourhood.R` |
@@ -30,17 +32,16 @@ This part has no Docker container and is not in the project image or `run.sh`. A
 
 | File | Purpose |
 |---|---|
-| `QC_9.12.2025.html` | Rendered QC report, with its code and `sessionInfo()` |
+| `QC_9.12.2025.pdf` | Rendered QC report, with its code and `sessionInfo()`. Printed from `QC_9.12.2025.html` with all code shown, so it can be read on GitHub. Includes the cell type composition plots for Fig. 1F and Extended Data Fig. 2E |
 | `create_spatial_clusters.R` | Functions that find each cell's nearest neighbours and cluster cells by neighbour composition. Sourced by `Fig2_efg_CellNeighbourhood.R` |
 | `Fig2_efg_CellNeighbourhood.R` | Defines 9 cell neighbourhoods with k-means (10 nearest neighbours, up to 50 µm apart) and plots Fig. 2E–G |
-| `Cell_interaction_10Dec2025.html` | Rendered report of the cell–cell interaction tests, comparing spatial graphs and normalisations |
 | `Fig5g_heatmap_cell_cell_comm.R` | Runs the interaction test used for Fig. 5G and plots the heatmap |
 | `Cell_cell_interaction_sessioninfo.txt` | `sessionInfo()` of the cell–cell interaction analysis |
 | `ExtFig6f_boxplots_cell_distance.R` | Computes distances to epithelial cells and to MHCII+ macrophages, and plots Extended Data Fig. 6F |
 
 ## QC
 
-From `QC_9.12.2025.html`.
+From `QC_9.12.2025.pdf`.
 
 **Cohort.** 8 patients, 33 FOVs and 56,904 cells before filtering. Cell types come from XGBoost phenotyping (19 types, including "Other" for cells without marker staining).
 
@@ -76,7 +77,7 @@ The report also plots cell type proportions per patient and FOV, CAF, myeloid an
 
 ## Cell–cell interactions
 
-From `Cell_interaction_10Dec2025.html` and `Fig5g_heatmap_cell_cell_comm.R`.
+From `Fig5g_heatmap_cell_cell_comm.R`, and the team's rendered report comparing spatial graphs and normalisations (10 Dec 2025, not in this repository).
 
 - **Cell types.** CD8 T cells that are GrzB+ become `CycotoxicCD8T` (spelling as in the code), and macrophages are split into `MacrophagesMHCII+` and `MacrophagesMHCII-`. `Vim+` and `Vim+CD68+` are merged.
 - **Spatial graphs** (`imcRtools::buildSpatialGraph`, per FOV, run on HPC): expansion with a 30 µm and a 50 µm radius, and 20 nearest neighbours.
