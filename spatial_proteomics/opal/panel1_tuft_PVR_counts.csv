@@ -1,0 +1,33 @@
+sample_id,pou2f3_pos_pct,pvr_pos_pct,pou2f3_pvr_pos_pct,pou2f3_pvr_pos_present,status
+197,8.548,25.87,0.4343,yes,analysed
+210,0.02661,46.89,0,no,analysed
+211,0.2186,12.02,0.02825,yes,analysed
+1231,0.04782,9.805,0.001379,yes,analysed
+1486,0.05492,33.33,0.002858,yes,analysed
+1776,1.093,46.27,0.04596,yes,analysed
+1792,0.001785,7.261,0.000206,yes,analysed
+1816,0.01898,22.04,0.01274,yes,analysed
+1862,,,,,not analysed: sample not found
+1962,0.2496,47.92,0.01843,yes,analysed
+2000,0.3342,27.64,0.1176,yes,analysed
+2054,0.7892,41.63,0.003906,yes,analysed
+2055,0.3239,46.25,0.008849,yes,analysed
+2189,0.4362,52.31,0,no,analysed
+2239,0.02655,22.33,0.01628,yes,analysed
+2267,18.05,6.11,1.592,yes,analysed
+2328,,,,,not analysed: image error
+2351,22.03,71.56,7.051,yes,analysed
+2603,0.0001406,13.16,0,no,analysed
+2614,3.5,31.5,1.292,yes,analysed
+2771,4.205,18.84,0.7207,yes,analysed
+2777,1.139,64.99,0.245,yes,analysed
+2842,0.7676,42.36,0.1719,yes,analysed
+2843,6.234,61.88,3.31,yes,analysed
+2846,7.069,65.04,5.889,yes,analysed
+3056,1.311,43.94,0.4608,yes,analysed
+3529,0.01939,21.29,0.008079,yes,analysed
+3562,0.4764,38.64,0.1563,yes,analysed
+3722,0.02664,21.69,0.007165,yes,analysed
+4947,0.3079,21.99,0.01409,yes,analysed
+5770,0.6964,65.91,0.2937,yes,analysed
+7119,12.66,49.27,5.939,yes,analysed

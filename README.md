@@ -18,14 +18,15 @@ For the manuscript "Single-cell spatial profiling identifies recurrent spatial n
 | [Stage 1](spatial/stage1/README.md): QC, annotation, neighbourhood enrichment | The 16 annotated objects | **Exact.** Labels, gene-set scores and Nhood z-scores identical in all 16 samples. Run in the image (v1.0.0): all 16 samples, also identical |
 | [Stage 2](spatial/stage2/README.md): niches, profiling | Fig. 1D, 2A–D, 4B–F, 5B–E; Ext. Data Fig. 2D, 3, 5C–D, 6D–E, 8H–I | **Near-exact.** 99.9994% of cells in the same niche (18 of 2,930,241 differ). Run in the image (v1.0.0): niches identical to the run outside it |
 | [Stage 3](spatial/stage3/README.md): TILs, Tuft, TLS, PanIN | Fig. 3B–D, 3G, 4H, 5H–I, 6B, 6F–G; Ext. Data Fig. 4B–D, 7C, 7F–G, 9D–F, 9I | **Exact.** Identical cells, labels, DE and Nhood z-scores. Run in the image (v1.0.0): every listed figure matches the published panels |
-| **Spatial proteomics (MIBI)** | | |
-| [MIBI](spatial_proteomics/README.md) | Fig. 2E–G, 5G; Ext. Data Fig. 6F | Record of the collaborators' code and reports; not rerun here |
+| **Spatial proteomics (MIBI and OPAL)** | | |
+| [MIBI](spatial_proteomics/mibi/README.md) | Fig. 1F, 2E–G, 5G; Ext. Data Fig. 2E, 6F | Record of the collaborators' code and reports; not rerun here. Containers from the WEHI team |
+| [OPAL](spatial_proteomics/opal/README.md) | Fig. 3H, 6H; Ext. Data Fig. 9J | Workflow, settings and panel 1 counts; containers and settings from the WEHI team |
 
 The spatial results come from the original Python environment; all three stages have also been run in the image. Each linked README has the full comparison.
 
 This repository holds:
 
-- **Code for every analysis in the manuscript:** snRNA-seq, inferCNV, spatial transcriptomics (Xenium) and spatial proteomics (MIBI).
+- **Code for every analysis in the manuscript:** snRNA-seq, inferCNV, spatial transcriptomics (Xenium) and spatial proteomics (MIBI and OPAL).
 - **A container to rerun the snRNA-seq and Xenium analyses:** one Docker image (also as an Apptainer `.sif`) with pinned conda environments.
 - **Checks against the original analysis:** each stage README compares the rerun with the original objects and explains any difference.
 - **A map from figures to code:** the stage READMEs list which notebook or Rmd makes each manuscript panel.
@@ -35,7 +36,7 @@ This repository holds:
 |---|---|---|
 | `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5, and the supplementary inferCNV analysis |
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
-| `spatial_proteomics/` | R | Record of the MIBI QC report and figure code; no Docker container (see `spatial_proteomics/README.md`) |
+| `spatial_proteomics/` | R | MIBI QC report and figure code (`mibi/`) and the OPAL workflow (`opal/`), done with the WEHI team's pipelines; their containers are deposited separately (see `spatial_proteomics/README.md`) |
 
 The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image from `v0.3.0`, and all three Xenium stages have run in it (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
@@ -96,6 +97,8 @@ All three use the env `spatial`. Each stage folder has a `config.yml` with the c
 | Optional: original niche label for each cell (`stage2_niche_labels_original.csv.gz`), to compare a spatial Stage 2 rerun with the original | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Original inferCNV output for sample 2215 (`infercnv_ICGC_0103_P2215.out.tar`), the record behind the 84 cells excluded from the malignant analysis | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected_min_patient_info.csv`) | Zenodo, [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) |
+| Spatial proteomics (MIBI) raw images | *(TBD, deposited by the WEHI team)* |
+| OPAL images, panel 1 (30 samples) and panel 2 (31 samples), with the Phenochart, inForm and QuPath settings files | *(TBD, deposited by the WEHI team)* |
 
 Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322), with the MD5 checksums Zenodo shows. Check a download with `md5sum <file>` (Linux) or `md5 <file>` (macOS).
 

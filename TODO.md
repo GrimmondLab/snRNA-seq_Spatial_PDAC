@@ -11,7 +11,7 @@ Zenodo record 10.5281/zenodo.23933322 (snRNA-seq and Xenium). Add files before p
 - [x] `stage2_niche_labels_original.csv.gz` uploaded (2026-11-18, 27 MB, md5 a327809f642130939941a9bfdb69e8d7), as an optional check against the original niches; MD5 in the checksum table, and the READMEs and `stage2_spartan.slurm` point to it.
 - [x] `infercnv_ICGC_0103_P2215.out.tar` uploaded (2026-11-18, md5 69532608c49ddb487ec2a2fb92b4a328), the record behind the 84 excluded cells; size (1.21 GB) and MD5 in the checksum table, DOI in `snrnaseq/supplementary_infercnv/README.md`. `P2221.lv2anno.out` (Extended Data Fig. 4F) not deposited.
 - [x] Record published (2026-11-18), files embargoed until 2026-12-04. Checked: 10.5281/zenodo.23933322 is the concept DOI and opens the record (version DOI 10.5281/zenodo.23933323); every snRNA-seq and Xenium link in the repository uses 23933322.
-- [x] **MIBI record re-deposited (2026-11-19):** [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405), open. Files: `spe.rds` (md5 `598e75d349e9aca23fcb8a5eadbdee6b`) and `celltype_classifier_corrected_min_patient_info.csv` (md5 `54f7797d054457117a1fea48c9223261`). It replaces 10.5281/zenodo.23996821, which Zenodo deleted on 2026-11-11 (reason "personal-data"). Links updated in `README.md`, `spatial_proteomics/README.md` and `CLAUDE.md`.
+- [x] **MIBI record re-deposited (2026-11-19):** [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405), open. Files: `spe.rds` (md5 `598e75d349e9aca23fcb8a5eadbdee6b`) and `celltype_classifier_corrected_min_patient_info.csv` (md5 `54f7797d054457117a1fea48c9223261`). It replaces 10.5281/zenodo.23996821, which Zenodo deleted on 2026-11-11 (reason "personal-data"). Links updated in `README.md`, `spatial_proteomics/mibi/README.md` and `CLAUDE.md`.
 
 Image and code
 - [ ] Check the image built from the current `v1.0.0` tag: run one short stage (e.g. `spatial3`, 4 min) without `CODE_DIR`/`SHARED_DIR`, so the committed fixes are tested from the image itself. The `matrixplot_TLS_*` files listed in section 3 should appear.
@@ -31,6 +31,22 @@ Manuscript
 
 MIBI (section 3b)
 - [x] Permission to publish the team's code, and credit, agreed (2026-11-18). The other open items in section 3b (questions, `sessionInfo()`, their container) are wanted but don't block submission.
+
+Reviewer points 3.1–4: MIBI and OPAL containers and documentation (started 2026-11-20)
+- [x] Split `spatial_proteomics/` into `mibi/` (the existing files, moved) and `opal/`, with an overview README linking the WEHI pipelines. Added container, parameter and reproduce sections to `mibi/README.md`, and `opal/README.md` (panels, figures, software, settings) with *(TBD)* slots for the WEHI details. Top-level `README.md` and `CLAUDE.md` updated.
+- [x] Added `spatial_proteomics/opal/panel1_tuft_PVR_counts.csv` (2026-11-20) from the team's sheet `Panel 1_data.xlsx`: 32 samples, 30 analysed, percentages only (clinical columns left out).
+- [x] Count checked (2026-11-20): 27 of 30 analysed samples have POU2F3+ PVR+ cells (0% in 210, 2189, 2603); 1862 and 2328 not analysed (highlighted in the sheet). Matches the manuscript (27/30).
+- [x] Kept `Panel 1_data.xlsx` out of the repository (moved to the folder above it, 2026-11-20): it has survival and grade per patient, an author name in its file properties and a personal name in its notes.
+- [ ] Confirm the sample IDs in the CSV match those used in the manuscript, and what the percentages are of (all cells or CK+ cells).
+- [ ] From the WEHI team, fill in the *(TBD)* slots:
+  - container DOIs and image digests: `sp_segment`, `sp_celltype_train`/`apply`, the MIBI R analysis, QuPath
+  - versions (release tag or commit) of the three pipelines used for this manuscript, and the Nextflow version
+  - the params file for `sp_segment` and the options file for `sp_celltype_train`, to commit under `mibi/`; the trained model and training table, deposited
+  - how `spe.rds` was built (step 2), or a link to their documentation
+  - OPAL: acquisition settings, Phenochart annotations, inForm spectral library and project file, stitching and cell detection settings, POU2F3/PVR thresholds, display settings, and which samples are in Fig. 3H, 6H and Ext. Data Fig. 9J
+  - accessions for the raw MIBI images and the OPAL images (check headers and file names for patient details before upload)
+- [ ] Optional: ask the WEHI team to link this repository from each pipeline README as a worked example with public data (reviewer 3.1).
+- [ ] Write the response to points 3.1, 3.2, 3.3 and 4 (draft: `../reviewer_response_spatial_proteomics.md`, outside the repository).
 
 ## 1. Build and move the image to the HPC
 
@@ -156,14 +172,14 @@ Now runs on R 4.3 with Matrix 1.5-4.1, instead of R 4.4.0 with Matrix 1.7-5.
 - [x] Stage 2 `stage2_figures.ipynb`: Fig. 4B with `cell_class_threshold` reproduces the original plot (confirmed by the analyst).
 - [x] Stage 2 `stage2_figures.ipynb`: figures first made from earlier objects compared with the published panels (by the analyst).
 
-## 3b. Spatial proteomics (MIBI): record only, waiting on the collaborating team
+## 3b. Spatial proteomics (MIBI): waiting on the collaborating team (files now in `spatial_proteomics/mibi/`)
 - [ ] Get answers to the questions emailed to the team, then update `spatial_proteomics/`. It is unclear whether the Fig. 2E–G clustering used all cells or excluded "Other".
 - [x] Added the QC report (`QC_9.12.2025.html`), the cell–cell interaction report and script (Fig. 5G) and the interaction `sessionInfo()` to `spatial_proteomics/`, and described the QC, FOV filtering and interaction test in its README (2026-11-16).
 - [ ] Get `sessionInfo()` for the cell neighbourhood (Fig. 2E–G) and distance (Extended Data Fig. 6F) scripts. The QC and interaction versions are in the README.
 - [ ] Ask the team how `spe.rds` was built from the QC output: does it hold only the 29 FOVs kept by QC (54,463 cells) and the patient E Vimentin correction? Same question for the per-cell table (`celltype_classifier_corrected_min_patient_info.csv`).
 - [x] Removed names from the received MIBI files (2026-11-16): author lines and notes in both HTML reports, the data file names in the QC code, a comment in `Fig2_efg_CellNeighbourhood.R`, and the internal HPC path in both `sessionInfo()` outputs (now `/path/to/R/`). Names inside the plot images were not checked.
 - [x] Deposit `spe.rds` and the per-cell table on Zenodo: 10.5281/zenodo.24360405 (replaces the deleted 23996821; see section 0).
-- [ ] Add the team's Docker container for upstream image processing and QC, or a link to it.
+- [ ] Add the team's Docker container for upstream image processing and QC, or a link to it (now tracked in section 0, reviewer points 3.1–4).
 - [x] Agree how to credit the team, and get permission to publish the code (agreed 2026-11-18).
 
 ## 4. Finish moving the downstream commit (d404957) to the single image
