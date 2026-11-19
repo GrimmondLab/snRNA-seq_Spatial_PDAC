@@ -16,7 +16,7 @@ Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and 
   - The notebooks have `/path/to/...` placeholders in their parameters cell. `stageN/config.yml` gives the container paths for them and lists the notebooks in run order; `run_notebooks.py` runs them with papermill (`run.sh spatial1|spatial2|spatial3`). Env `spatial` (`envs/spatial.yml` + lock; squidpy and spatialdata from PyPI with `--no-deps`, `envs/post_install_spatial.txt`). `environment/` is not in the image.
 - `spatial_proteomics/`: not in the image or `run.sh`; analyses done with the WEHI team's pipelines (`sp_segment`, `sp_celltype_train`, `sp_celltype_apply`), whose containers the team deposits.
   - `mibi/`: MIBI QC report and figure code from the team, kept as received.
-  - `opal/`: OPAL workflow, settings and the panel 1 per-sample counts (`panel1_tuft_PVR_counts.csv`). Panel 2 is representative images only.
+  - `opal/`: OPAL panels, figures and the panel 1 per-sample counts (`panel1_tuft_PVR_counts.csv`); workflow and settings are in the WEHI team's documentation. Panel 2 is representative images only.
 - `shared/`: tables used by several stages.
 - `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits, plus CRAN source packages for `cellchat`); `session_info.R`.
 - `Dockerfile` + `run.sh`: **one** image holding all envs. `run.sh <stage> [config]` maps a stage to its env and folder.

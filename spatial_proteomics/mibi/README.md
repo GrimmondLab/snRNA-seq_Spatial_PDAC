@@ -2,24 +2,18 @@
 
 This folder holds the code used to generate the MIBI figures in the manuscript. The analysis was done by collaborators at WEHI with their spatial proteomics pipelines (see [`../README.md`](../README.md)). The scripts and reports here are kept as received, except that personal names and internal paths were removed (2026-11-16). They have not been rerun in this repository.
 
-## Containers
+## Images, pipelines and containers
 
-The MIBI analysis is not in the project image or `run.sh`. Its containers are deposited by the WEHI team:
-
-| Steps | Container | Zenodo | Image digest |
-|---|---|---|---|
-| 0a. Segmentation (`sp_segment` *(version TBD)*) | per-step containers pulled by `-profile docker` or `-profile singularity` | *(DOI TBD)* | *(TBD)* |
-| 0b. Cell typing (`sp_celltype_train`, `sp_celltype_apply` *(version TBD)*) | *(TBD)* | *(DOI TBD)* | *(TBD)* |
-| 1–5. QC, `SpatialExperiment` and figure scripts (R) | *(TBD)* | *(DOI TBD)* | *(TBD)* |
+The raw MIBI images, segmentation and cell typing (steps 0a–0b), the `SpatialExperiment` build (step 2) and the containers are deposited and documented by the WEHI team: *(link TBD)*. This analysis is not in the project image or `run.sh`.
 
 ## Workflow
 
 | Step | Record | What it does |
 |---|---|---|
-| 0a. Segmentation | [`sp_segment`](https://github.com/WEHI-SODA-Hub/sp_segment), params file *(TBD)* | Segments cells in the raw MIBI images and measures marker intensities per cell |
-| 0b. Cell typing | [`sp_celltype_train`](https://github.com/WEHI-SODA-Hub/sp_celltype_train), [`sp_celltype_apply`](https://github.com/WEHI-SODA-Hub/sp_celltype_apply), options file *(TBD)* | Trains an XGBoost classifier on labelled cells and applies it to all cells, giving the per-cell table |
+| 0a. Segmentation | [`sp_segment`](https://github.com/WEHI-SODA-Hub/sp_segment) | Segments cells in the raw MIBI images and measures marker intensities per cell |
+| 0b. Cell typing | [`sp_celltype_train`](https://github.com/WEHI-SODA-Hub/sp_celltype_train), [`sp_celltype_apply`](https://github.com/WEHI-SODA-Hub/sp_celltype_apply) | Trains an XGBoost classifier on labelled cells and applies it to all cells, giving the per-cell table |
 | 1. QC and cell types | `QC_9.12.2025.pdf` (rendered report, 9 Dec 2025) | Reads the per-cell table from cell phenotyping, corrects one marker call, removes low-quality FOVs, groups cell types and plots marker heatmaps (see [QC](#qc)) |
-| 2. `SpatialExperiment` | WEHI documentation *(link TBD)* | Builds `spe.rds` (deposited on Zenodo), with the columns made in step 1 (`FOV_by_patient`, `parent_cell_type`) |
+| 2. `SpatialExperiment` | WEHI team (see above) | Builds `spe.rds` (deposited on Zenodo), with the columns made in step 1 (`FOV_by_patient`, `parent_cell_type`) |
 | 3. Cell neighbourhoods | `Fig2_efg_CellNeighbourhood.R`, `create_spatial_clusters.R` | Fig. 2E–G |
 | 4. Cell–cell interactions | `Fig5g_heatmap_cell_cell_comm.R` | Fig. 5G (see [Cell–cell interactions](#cellcell-interactions)) |
 | 5. Cell distances | `ExtFig6f_boxplots_cell_distance.R` | Extended Data Fig. 6F |
@@ -102,11 +96,9 @@ From `Fig5g_heatmap_cell_cell_comm.R`, and the team's rendered report comparing 
 | Interaction test (Fig. 5G) | `testInteractions` | classic method, `group_by = "sample_id"`, imcRtools defaults otherwise (`iter = 1000` permutations, `p_threshold = 0.01`) | `Fig5g_heatmap_cell_cell_comm.R` |
 | Cell distances (Ext. Data Fig. 6F) | radius | 50 µm | `ExtFig6f_boxplots_cell_distance.R` |
 
-The interaction test sets no random seed, so a rerun gives slightly different p-values near the threshold; the summed `sigval` values in Fig. 5G may differ by a small amount. Segmentation and cell typing parameters are in the WEHI params and options files *(TBD)*.
+The interaction test sets no random seed, so a rerun gives slightly different p-values near the threshold; the summed `sigval` values in Fig. 5G may differ by a small amount. Segmentation and cell typing parameters are in the WEHI team's documentation.
 
 ## Input
-
-The raw MIBI images, the input to step 0a, are on *(repository and accession TBD, deposited by the WEHI team)*.
 
 The processed files, the input to steps 1–5, are on Zenodo, [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) ("Spatial MIBI data of pancreatic cancer"):
 
@@ -117,7 +109,7 @@ The processed files, the input to steps 1–5, are on Zenodo, [10.5281/zenodo.24
 
 ## Reproduce the figures
 
-From the deposited `spe.rds`, in the R container *(TBD)*:
+From the deposited `spe.rds`, with the R versions below (or the WEHI team's R container):
 
 ```bash
 mkdir -p rdata
@@ -127,7 +119,7 @@ Rscript Fig5g_heatmap_cell_cell_comm.R
 Rscript ExtFig6f_boxplots_cell_distance.R
 ```
 
-Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). From the raw images, run steps 0a–2 as described in the WEHI documentation *(link TBD)*.
+Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). From the raw images, steps 0a–2 are in the WEHI team's documentation.
 
 ## R versions
 

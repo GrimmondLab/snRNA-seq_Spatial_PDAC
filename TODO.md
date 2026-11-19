@@ -33,20 +33,15 @@ MIBI (section 3b)
 - [x] Permission to publish the team's code, and credit, agreed (2026-11-18). The other open items in section 3b (questions, `sessionInfo()`, their container) are wanted but don't block submission.
 
 Reviewer points 3.1–4: MIBI and OPAL containers and documentation (started 2026-11-20)
-- [x] Split `spatial_proteomics/` into `mibi/` (the existing files, moved) and `opal/`, with an overview README linking the WEHI pipelines. Added container, parameter and reproduce sections to `mibi/README.md`, and `opal/README.md` (panels, figures, software, settings) with *(TBD)* slots for the WEHI details. Top-level `README.md` and `CLAUDE.md` updated.
+- [x] Split `spatial_proteomics/` into `mibi/` (the existing files, moved) and `opal/`, with an overview README linking the WEHI pipelines. Added parameter and reproduce sections to `mibi/README.md` and a short `opal/README.md` (panels, figures, panel 1 counts). Images, workflow settings and containers are left to the WEHI team's documentation, linked once deposited. Top-level `README.md` and `CLAUDE.md` updated.
 - [x] Added `spatial_proteomics/opal/panel1_tuft_PVR_counts.csv` (2026-11-20) from the team's sheet `Panel 1_data.xlsx`: 32 samples, 30 analysed, percentages only (clinical columns left out).
 - [x] Count checked (2026-11-20): 27 of 30 analysed samples have POU2F3+ PVR+ cells (0% in 210, 2189, 2603); 1862 and 2328 not analysed (highlighted in the sheet). Matches the manuscript (27/30).
 - [x] Kept `Panel 1_data.xlsx` out of the repository (moved to the folder above it, 2026-11-20): it has survival and grade per patient, an author name in its file properties and a personal name in its notes.
-- [ ] Confirm the sample IDs in the CSV match those used in the manuscript, and what the percentages are of (all cells or CK+ cells).
-- [ ] From the WEHI team, fill in the *(TBD)* slots:
-  - container DOIs and image digests: `sp_segment`, `sp_celltype_train`/`apply`, the MIBI R analysis, QuPath
-  - versions (release tag or commit) of the three pipelines used for this manuscript, and the Nextflow version
-  - the params file for `sp_segment` and the options file for `sp_celltype_train`, to commit under `mibi/`; the trained model and training table, deposited
-  - how `spe.rds` was built (step 2), or a link to their documentation
-  - OPAL: acquisition settings, Phenochart annotations, inForm spectral library and project file, stitching and cell detection settings, POU2F3/PVR thresholds, display settings, and which samples are in Fig. 3H, 6H and Ext. Data Fig. 9J
-  - accessions for the raw MIBI images and the OPAL images (check headers and file names for patient details before upload)
+- [x] All three percentages in the CSV are of CK+ cells (confirmed 2026-11-20).
+- [ ] Confirm the sample IDs in the CSV match those used in the manuscript.
+- [ ] When the WEHI team has deposited their documentation (raw images, pipeline settings, containers), replace the *(link TBD)* in `spatial_proteomics/README.md`, `mibi/README.md`, `opal/README.md` and the Data table in `README.md`.
 - [ ] Optional: ask the WEHI team to link this repository from each pipeline README as a worked example with public data (reviewer 3.1).
-- [ ] Write the response to points 3.1, 3.2, 3.3 and 4 (draft: `../reviewer_response_spatial_proteomics.md`, outside the repository).
+- [ ] Write the response to points 3.1, 3.2, 3.3 and 4.
 
 ## 1. Build and move the image to the HPC
 
