@@ -383,7 +383,7 @@ ClstSub <- ClstSub[keep, , keep=F]
 ClstSub <- calcNormFactors(ClstSub) # to calculate normalisation factors to a algin columns of a count matrix
 ClstSub$samples$group
 
-mac.col <- c("#FFAAA6","#00A9FF","#E68613", "#7CAE00")
+mac.col <- c('#c5b0d5', "#442883","#DD51AD",'#17becf')
 #plotMDS(ClstSub, pch = 15, col = mac.col[ClstSub$samples$group], main="")
 
 #Design matrix

@@ -374,7 +374,8 @@ markers.ann <- left_join(malignant.markers, gene.entrez, by = "gene")
 dgea.ls <- split(markers.ann, f=markers.ann$cluster)
 
 #focus on up-regulated genes
-dgea.up.filtered <- purrr::map(dgea.ls, ~ dplyr::filter(., avg_log2FC >= 0.25, p_val_adj < 0.001,!is.na(ENTREZID)))
+dgea.up.filtered <- purrr::map(dgea.ls, ~ dplyr::filter(., avg_log2FC >= 0.25, p_val_adj < 0.001,!is.na(ENTREZID))) # for exploratory
+dgea.up.filtered <- purrr::map(dgea.ls, ~ dplyr::filter(., avg_log2FC >= 1, p_val_adj < 0.05,!is.na(ENTREZID))) # used in the final analysis / manuscript
 dgea.ls.up.entrez.id <- purrr::map(dgea.up.filtered, ~ dplyr::pull(., ENTREZID)) #pulling a gene list
 
 universe <- bitr(gene.symbols,
@@ -392,6 +393,6 @@ hallmark <- compareCluster(
   maxGSSize = 500,
   universe = universe$ENTREZID,
   TERM2GENE = Hallmark.entrez)
-dotplot(hallmark, showCategory = 6, title="Hallmark | p_val_adj < 0.001")  + RotatedAxis() + scale_colour_gradient(low="coral3", high = "steelblue")
+dotplot(hallmark, showCategory = 6, title="Hallmark | p_val_adj < 0.05; log2FC > 1")  + RotatedAxis() + scale_colour_gradient(low="coral3", high = "steelblue")
 ```
 
