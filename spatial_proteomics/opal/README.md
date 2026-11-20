@@ -9,7 +9,7 @@ OPAL multiplex immunofluorescence was done in collaboration with a team at WEHI.
 
 ## Images, workflow and containers
 
-Panel 2 is on Zenodo, [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841):
+Panel 2 is on Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840):
 
 | File | Contents |
 |---|---|

@@ -1,0 +1,45 @@
+Bootstrap: docker
+# bioconductor/bioconductor_docker:3.21-R-4.5.1 (R 4.5.1, Bioconductor 3.21, Ubuntu 24.04), pinned by digest
+From: bioconductor/bioconductor_docker@sha256:2647f5f66bf8c10d38661c8f5005d8f938df844433259c930b325ddc11569e8f
+
+# Container for the MIBI cell-cell interaction analysis (Fig. 5G): R 4.5.1 with the package versions recorded in
+# Cell_cell_interaction_sessioninfo.txt. The build stops if any recorded package version differs.
+#
+# Build from spatial_proteomics/mibi (the paths in %files are relative to the folder you build from):
+#   cd spatial_proteomics/mibi
+#   apptainer build --fakeroot mibi_interactions.sif container/mibi_interactions.def
+#
+# Run (see container/README.md):
+#   apptainer run --cleanenv --no-home -B <spe.rds folder>:/data:ro -B <output folder>:/output \
+#     mibi_interactions.sif /data/spe.rds /output [workers] [seed]
+
+%labels
+    org.opencontainers.image.title MIBI cell-cell interaction analysis (Fig. 5G)
+    org.opencontainers.image.version 1.0.0
+    org.opencontainers.image.source https://github.com/GrimmondLab/snRNA-seq_Spatial_PDAC
+    org.opencontainers.image.base.name docker.io/bioconductor/bioconductor_docker:3.21-R-4.5.1
+
+%files
+    container/install_packages.R /opt/mibi/install_packages.R
+    container/run_fig5g.R /opt/mibi/run_fig5g.R
+    Fig5g_heatmap_cell_cell_comm.R /opt/mibi/Fig5g_heatmap_cell_cell_comm.R
+    Cell_cell_interaction_sessioninfo.txt /opt/mibi/Cell_cell_interaction_sessioninfo_original.txt
+
+%post
+    set -eu
+    Rscript /opt/mibi/install_packages.R
+    Rscript -e 'suppressMessages({library(imcRtools); library(SpatialExperiment); library(BiocParallel); library(dplyr); library(ggplot2); library(scales)}); writeLines(capture.output(sessionInfo()), "/opt/mibi/sessionInfo_container.txt")'
+    rm -rf /tmp/Rtmp* /tmp/downloaded_packages
+
+%environment
+    export LANG=en_US.UTF-8
+    export LC_ALL=en_US.UTF-8
+
+%runscript
+    exec Rscript /opt/mibi/run_fig5g.R "$@"
+
+%help
+    MIBI cell-cell interaction analysis (Fig. 5G), R 4.5.1 and Bioconductor 3.21.
+    Usage: apptainer run -B <spe.rds folder>:/data:ro -B <output folder>:/output mibi_interactions.sif \
+             /data/spe.rds /output [workers, default 8] [seed, default none as in the original analysis]
+    Installed versions: /opt/mibi/package_versions.tsv and /opt/mibi/sessionInfo_container.txt

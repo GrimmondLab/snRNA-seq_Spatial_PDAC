@@ -1,10 +1,10 @@
 # Spatial proteomics: MIBI
 
-This folder holds the code used to generate the MIBI figures in the manuscript. The analysis was done by collaborators at WEHI with their spatial proteomics pipelines (see [`../README.md`](../README.md)). The scripts and reports here are kept as received, except that personal names and internal paths were removed (2026-11-16) and `library(scales)` was added to `Fig5g_heatmap_cell_cell_comm.R`, which uses `muted()` from that package (2026-11-20). They have not been rerun in this repository.
+This folder holds the code used to generate the MIBI figures in the manuscript. The analysis was done by collaborators at WEHI with their spatial proteomics pipelines (see [`../README.md`](../README.md)). The scripts and reports here are kept as received, except that personal names and internal paths were removed (2026-11-16) and `library(scales)` was added to `Fig5g_heatmap_cell_cell_comm.R`, which uses `muted()` from that package (2026-11-20). The cell–cell interaction analysis (Fig. 5G) has been rerun in a container (see [Reproduce the figures](#reproduce-the-figures)); the other scripts have not been rerun in this repository.
 
 ## Images, pipelines and containers
 
-The raw MIBI images (33 FOVs), the segmentation and cell typing (steps 0a–0b) with the saved models and expected outputs, and their container (`mibi-pdac-repro.sif`) are on Zenodo, [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841). `mibi_README.md` in that record explains how to rerun steps 0a–0b. The `SpatialExperiment` (step 2) is on Zenodo [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) (see [Input](#input)). This analysis is not in the project image or `run.sh`.
+The raw MIBI images (33 FOVs), the segmentation and cell typing (steps 0a–0b) with the saved models and expected outputs, and their container (`mibi-pdac-repro.sif`) are on Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840). `mibi_README.md` in that record explains how to rerun steps 0a–0b. The `SpatialExperiment` (step 2) is on Zenodo [10.5281/zenodo.24360404](https://doi.org/10.5281/zenodo.24360404) (see [Input](#input)). This analysis is not in the project image or `run.sh`.
 
 ## Workflow
 
@@ -96,11 +96,11 @@ From `Fig5g_heatmap_cell_cell_comm.R`, and the team's rendered report comparing 
 | Interaction test (Fig. 5G) | `testInteractions` | classic method, `group_by = "sample_id"`, imcRtools defaults otherwise (`iter = 1000` permutations, `p_threshold = 0.01`) | `Fig5g_heatmap_cell_cell_comm.R` |
 | Cell distances (Ext. Data Fig. 6F) | radius | 50 µm | `ExtFig6f_boxplots_cell_distance.R` |
 
-The interaction test sets no random seed, so a rerun gives slightly different p-values near the threshold; the summed `sigval` values in Fig. 5G may differ by a small amount. Segmentation and cell typing parameters are in `mibi_README.md` in Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841).
+The interaction test sets no random seed, so a rerun gives slightly different p-values near the threshold; the summed `sigval` values in Fig. 5G may differ by a small amount. Segmentation and cell typing parameters are in `mibi_README.md` in Zenodo [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840).
 
 ## Input
 
-The processed files, the input to steps 1–5, are on Zenodo, [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) ("Spatial MIBI data of pancreatic cancer"):
+The processed files, the input to steps 1–5, are on Zenodo, [10.5281/zenodo.24360404](https://doi.org/10.5281/zenodo.24360404) ("Spatial MIBI data of pancreatic cancer"):
 
 | File | Contents |
 |---|---|
@@ -126,13 +126,15 @@ install.packages(c("dplyr", "tidyr", "ggplot2", "scales", "RColorBrewer",
 
 ```bash
 mkdir -p rdata
-# download spe.rds from Zenodo 10.5281/zenodo.24360405 into rdata/
+# download spe.rds from Zenodo 10.5281/zenodo.24360404 into rdata/
 Rscript Fig2_efg_CellNeighbourhood.R
 Rscript Fig5g_heatmap_cell_cell_comm.R
 Rscript ExtFig6f_boxplots_cell_distance.R
 ```
 
-Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). Steps 0a–0b from the raw images: see `mibi_README.md` in Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841).
+Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). Steps 0a–0b from the raw images: see `mibi_README.md` in Zenodo [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840).
+
+**Container for Fig. 5G.** [`container/`](container/README.md) holds an Apptainer definition that runs the cell–cell interaction analysis with the package versions of the original run (R 4.5.1, Bioconductor 3.21, and the CRAN versions from a dated snapshot), and a script to build and run it on Spartan. The built container (`mibi_interactions.sif`) is on Zenodo, *DOI TBD*. Built and run on Spartan (2026-11-20) from the deposited `spe.rds`: all recorded package versions match, and the heatmap matches Fig. 5G.
 
 ## R versions
 

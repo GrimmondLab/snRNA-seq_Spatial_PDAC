@@ -19,8 +19,8 @@ For the manuscript "Single-cell spatial profiling identifies recurrent spatial n
 | [Stage 2](spatial/stage2/README.md): niches, profiling | Fig. 1D, 1F (Xenium panel), 2A–D, 4B–F, 5B–E; Ext. Data Fig. 2D, 3, 5C–D, 6D–E, 8H–I | **Near-exact.** 99.9994% of cells in the same niche (18 of 2,930,241 differ). Run in the image (v1.0.0): niches identical to the run outside it |
 | [Stage 3](spatial/stage3/README.md): TILs, Tuft, TLS, PanIN | Fig. 3B–D, 3G, 4H, 5H–I, 6B, 6F–G; Ext. Data Fig. 4B–D, 7C, 7F–G, 9D–F, 9I | **Exact.** Identical cells, labels, DE and Nhood z-scores. Run in the image (v1.0.0): every listed figure matches the published panels |
 | **Spatial proteomics (MIBI and OPAL)** | | |
-| [MIBI](spatial_proteomics/mibi/README.md) | Fig. 1F, 2E–G, 5G; Ext. Data Fig. 2E, 6F | Record of the collaborators' code and reports; not rerun here. Images, segmentation and cell-typing container: Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) |
-| [OPAL](spatial_proteomics/opal/README.md) | Fig. 3H, 6H; Ext. Data Fig. 9J | Panel 1 per-sample counts. Panel 2 pipeline, containers, per-cell calls and spatial analysis: Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) |
+| [MIBI](spatial_proteomics/mibi/README.md) | Fig. 1F, 2E–G, 5G; Ext. Data Fig. 2E, 6F | Record of the collaborators' code and reports. **Fig. 5G reproduced** in a container with the original package versions ([`mibi/container/`](spatial_proteomics/mibi/container/README.md); built and run on Spartan, the heatmap matches). Images, segmentation and cell-typing container: Zenodo [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) |
+| [OPAL](spatial_proteomics/opal/README.md) | Fig. 3H, 6H; Ext. Data Fig. 9J | Panel 1 per-sample counts. Panel 2 pipeline, containers, per-cell calls and spatial analysis: Zenodo [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) |
 
 
 The spatial results come from the original Python environment; all three stages have also been run in the image. Each linked README has the full comparison.
@@ -31,13 +31,13 @@ This repository holds:
 - **A container to rerun the snRNA-seq and Xenium analyses:** one Docker image (also as an Apptainer `.sif`) with pinned conda environments.
 - **Checks against the original analysis:** each stage README compares the rerun with the original objects and explains any difference.
 - **A map from figures to code:** the stage READMEs list which notebook or Rmd makes each manuscript panel.
-- **Records of steps that are not rerun here:** Cell Ranger and CellBender (snRNA-seq Stage 0), the MIBI QC and figure code, and saved values used where a step doesn't reproduce exactly (for example the Xenium PCA and UMAP).
+- **Records of steps that are not rerun here:** Cell Ranger and CellBender (snRNA-seq Stage 0), the MIBI QC and figure code (except Fig. 5G, rerun in its own container), and saved values used where a step doesn't reproduce exactly (for example the Xenium PCA and UMAP).
 
 | Folder | Language | Contents |
 |---|---|---|
 | `snrnaseq/` | R | snRNA-seq analysis, Stages 0–5, and the supplementary inferCNV analysis |
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
-| `spatial_proteomics/` | R | MIBI QC report and figure code (`mibi/`) and OPAL panel 1 counts (`opal/`); images, pipelines and containers on Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) (see `spatial_proteomics/README.md`) |
+| `spatial_proteomics/` | R | MIBI QC report and figure code (`mibi/`) and OPAL panel 1 counts (`opal/`); images, pipelines and containers on Zenodo [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) (see `spatial_proteomics/README.md`) |
 
 The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image, and all three Xenium stages have run in it (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
@@ -97,8 +97,9 @@ All three use the env `spatial`. Each stage folder has a `config.yml` with the c
 | Spatial (Xenium) processed objects, 16 PDAC samples (`Xenium_480.tar`, `Xenium_314.tar`) | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Optional: original niche label for each cell (`stage2_niche_labels_original.csv.gz`), to compare a spatial Stage 2 rerun with the original | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Original inferCNV output for sample 2215 (`infercnv_ICGC_0103_P2215.out.tar`), the record behind the 84 cells excluded from the malignant analysis | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
-| Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected_min_patient_info.csv`) | Zenodo, [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) |
-| Spatial proteomics: MIBI raw images (33 FOVs), segmentation and cell-typing container, saved models and expected outputs; OPAL Panel 2 pipeline, containers, per-cell marker calls, spatial analysis and one example image | Zenodo, [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) |
+| Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected_min_patient_info.csv`) | Zenodo, [10.5281/zenodo.24360404](https://doi.org/10.5281/zenodo.24360404) |
+| Spatial proteomics: MIBI raw images (33 FOVs), segmentation and cell-typing container, saved models and expected outputs; OPAL Panel 2 pipeline, containers, per-cell marker calls, spatial analysis and one example image | Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) |
+| Spatial proteomics: MIBI cell–cell interaction container (`mibi_interactions.sif`, Fig. 5G) | Zenodo, *(DOI TBD)* |
 | Spatial proteomics: full OPAL images (214 image tiles) and segmented cells (113 GB) | On request (see `spatial_proteomics/opal/README.md`) |
 
 Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322), with the MD5 checksums Zenodo shows. Check a download with `md5sum <file>` (Linux) or `md5 <file>` (macOS).
