@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 for snRNA-seq, GSE282154 for spatial PDAC, GSE281886 for spatial TNBC (TLS comparison), + Zenodo, 10.5281/zenodo.23933322 (snRNA-seq objects and the 16 processed Xenium objects), 10.5281/zenodo.24360405 (MIBI) and DOI_TBD).
+Code and environments for the PDAC snRNA-seq + spatial (Xenium) manuscript. Goal: every manuscript figure reproducible from deposited data. Data and analysis objects are not in the repo (GEO GSE282918 for snRNA-seq, GSE282154 for spatial PDAC, GSE281886 for spatial TNBC (TLS comparison), + Zenodo, 10.5281/zenodo.23933322 (snRNA-seq objects and the 16 processed Xenium objects), 10.5281/zenodo.24360405 (MIBI `spe.rds` and per-cell table) and 10.5281/zenodo.24356841 (WEHI team: MIBI images and container, OPAL Panel 2 pipeline, containers and spatial analysis)).
 
 Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and open work), the READMEs under `snrnaseq/*/`, `spatial/` and `spatial_proteomics/`.
 
@@ -14,9 +14,9 @@ Read first: `README.md` (layout, envs, build/run), `TODO.md` (current state and 
   - `stage3/`: malignant–TIL, Tuft, TIL regions, TLS regions, TLS figures and MH097 PanIN notebooks, run in that order; `tuft_inputs/` holds the two small saved inputs the Tuft notebook needs (MH096 clusters, MH099 UMAP).
   - `environment/`: the env records, including `requirements_as_used.txt` (corrections in `spatial/README.md`).
   - The notebooks have `/path/to/...` placeholders in their parameters cell. `stageN/config.yml` gives the container paths for them and lists the notebooks in run order; `run_notebooks.py` runs them with papermill (`run.sh spatial1|spatial2|spatial3`). Env `spatial` (`envs/spatial.yml` + lock; squidpy and spatialdata from PyPI with `--no-deps`, `envs/post_install_spatial.txt`). `environment/` is not in the image.
-- `spatial_proteomics/`: not in the image or `run.sh`; analyses done with the WEHI team's pipelines (`sp_segment`, `sp_celltype_train`, `sp_celltype_apply`), whose containers the team deposits.
+- `spatial_proteomics/`: not in the image or `run.sh`; analyses done with the WEHI team's tools (MIBI: QuPath MIBI extension, `sp_celltype_train`, `sp_celltype_apply`; OPAL Panel 2: `sp_segment`, `sp-classify`); images, containers and settings in Zenodo 10.5281/zenodo.24356841.
   - `mibi/`: MIBI QC report and figure code from the team, kept as received.
-  - `opal/`: OPAL panels, figures and the panel 1 per-sample counts (`panel1_tuft_PVR_counts.csv`); workflow and settings are in the WEHI team's documentation. Panel 2 is representative images only.
+  - `opal/`: OPAL panels, figures and the panel 1 per-sample counts (`panel1_tuft_PVR_counts.csv`); Panel 2 is representative images in the figures; its cell-level analysis (pipeline, containers, spatial analysis) is in Zenodo 10.5281/zenodo.24356841.
 - `shared/`: tables used by several stages.
 - `envs/`: one conda env per group of stages (`snrnaseq`: stages 1–2; `downstream`: stages 3–4; `cellchat`: stage 5; `infercnv`: supplementary inferCNV), each `<env>.yml` + committed explicit lock `<env>-linux-64.lock`; `post_install*.R` (GitHub-only packages at pinned commits, plus CRAN source packages for `cellchat`); `session_info.R`.
 - `Dockerfile` + `run.sh`: **one** image holding all envs. `run.sh <stage> [config]` maps a stage to its env and folder.

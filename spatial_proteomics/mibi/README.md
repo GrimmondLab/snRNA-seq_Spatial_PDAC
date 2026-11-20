@@ -4,13 +4,13 @@ This folder holds the code used to generate the MIBI figures in the manuscript. 
 
 ## Images, pipelines and containers
 
-The raw MIBI images, segmentation and cell typing (steps 0a–0b), the `SpatialExperiment` build (step 2) and the containers are deposited and documented by the WEHI team: *(link TBD)*. This analysis is not in the project image or `run.sh`.
+The raw MIBI images (33 FOVs), the segmentation and cell typing (steps 0a–0b) with the saved models and expected outputs, and their container (`mibi-pdac-repro.sif`) are on Zenodo, [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841). `mibi_README.md` in that record explains how to rerun steps 0a–0b. The `SpatialExperiment` (step 2) is on Zenodo [10.5281/zenodo.24360405](https://doi.org/10.5281/zenodo.24360405) (see [Input](#input)). This analysis is not in the project image or `run.sh`.
 
 ## Workflow
 
 | Step | Record | What it does |
 |---|---|---|
-| 0a. Segmentation | [`sp_segment`](https://github.com/WEHI-SODA-Hub/sp_segment) | Segments cells in the raw MIBI images and measures marker intensities per cell |
+| 0a. Segmentation | QuPath 0.3.2 with the [MIBI extension](https://github.com/WEHI-SODA-Hub/MIBI_extension) (Mesmer, DeepCell `MultiplexSegmentation` version 9) | Segments cells in the raw MIBI images and measures marker intensities per cell |
 | 0b. Cell typing | [`sp_celltype_train`](https://github.com/WEHI-SODA-Hub/sp_celltype_train), [`sp_celltype_apply`](https://github.com/WEHI-SODA-Hub/sp_celltype_apply) | Trains an XGBoost classifier on labelled cells and applies it to all cells, giving the per-cell table |
 | 1. QC and cell types | `QC_9.12.2025.pdf` (rendered report, 9 Dec 2025) | Reads the per-cell table from cell phenotyping, corrects one marker call, removes low-quality FOVs, groups cell types and plots marker heatmaps (see [QC](#qc)) |
 | 2. `SpatialExperiment` | WEHI team (see above) | Builds `spe.rds` (deposited on Zenodo), with the columns made in step 1 (`FOV_by_patient`, `parent_cell_type`) |
@@ -96,7 +96,7 @@ From `Fig5g_heatmap_cell_cell_comm.R`, and the team's rendered report comparing 
 | Interaction test (Fig. 5G) | `testInteractions` | classic method, `group_by = "sample_id"`, imcRtools defaults otherwise (`iter = 1000` permutations, `p_threshold = 0.01`) | `Fig5g_heatmap_cell_cell_comm.R` |
 | Cell distances (Ext. Data Fig. 6F) | radius | 50 µm | `ExtFig6f_boxplots_cell_distance.R` |
 
-The interaction test sets no random seed, so a rerun gives slightly different p-values near the threshold; the summed `sigval` values in Fig. 5G may differ by a small amount. Segmentation and cell typing parameters are in the WEHI team's documentation.
+The interaction test sets no random seed, so a rerun gives slightly different p-values near the threshold; the summed `sigval` values in Fig. 5G may differ by a small amount. Segmentation and cell typing parameters are in `mibi_README.md` in Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841).
 
 ## Input
 
@@ -109,7 +109,7 @@ The processed files, the input to steps 1–5, are on Zenodo, [10.5281/zenodo.24
 
 ## Reproduce the figures
 
-From the deposited `spe.rds`, with the R versions below (or the WEHI team's R container):
+From the deposited `spe.rds`, with the R versions below:
 
 ```bash
 mkdir -p rdata
@@ -119,7 +119,7 @@ Rscript Fig5g_heatmap_cell_cell_comm.R
 Rscript ExtFig6f_boxplots_cell_distance.R
 ```
 
-Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). From the raw images, steps 0a–2 are in the WEHI team's documentation.
+Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). Steps 0a–0b from the raw images: see `mibi_README.md` in Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841).
 
 ## R versions
 
