@@ -11,7 +11,7 @@ Reproduces Fig. 1D, 1F (Xenium panel), 2A–D, 4B–F, 5B–E and Extended Data 
 | Output | Notebook | File |
 |---|---|---|
 | Fig. 2A–D, Extended Data Fig. 3 | `stage2_niches.ipynb` | `figures/` (see Details) |
-| Fig. 1F (Xenium panel) | `stage2_niches.ipynb` | `figures/Fig1f_Xenium_broad_cell_class_composition.pdf`, with `Fig1f_Xenium_broad_cell_class_proportions.csv` (broad cell classes per sample; added 2026-11-20, not yet run) |
+| Fig. 1F (Xenium panel) | `stage2_niches.ipynb` | `figures/Fig1f_Xenium_broad_cell_class_composition.pdf`, with `Fig1f_Xenium_broad_cell_class_proportions.csv` (broad cell classes per sample) |
 | Fig. 1D | `stage2_figures.ipynb` | `umap_Fig1d_MH065_314.png`, `Fig1d_MH065_314_scatterplot.png` (MH065_314) |
 | Fig. 4B | `stage2_figures.ipynb` | `dotplot_Fig4b_TAMs_CAFs_Tu.pdf` (MH107_480) |
 | Fig. 4C | `stage2_neighbourhood_profiling.ipynb` | `Fig4c_Malignant_cells_cross_sample_median.pdf`, with its `.tsv` |
