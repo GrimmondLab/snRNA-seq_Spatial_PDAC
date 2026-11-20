@@ -39,7 +39,9 @@ Reviewer points 3.1–4: MIBI and OPAL containers and documentation (started 202
 - [x] Kept `Panel 1_data.xlsx` out of the repository (moved to the folder above it, 2026-11-20): it has survival and grade per patient, an author name in its file properties and a personal name in its notes.
 - [x] All three percentages in the CSV are of CK+ cells (confirmed 2026-11-20).
 - [ ] Confirm the sample IDs in the CSV match those used in the manuscript.
-- [ ] When the WEHI team has deposited their documentation (raw images, pipeline settings, containers), replace the *(link TBD)* in `spatial_proteomics/README.md`, `mibi/README.md`, `opal/README.md` and the Data table in `README.md`.
+- [x] WEHI team record published (2026-11-20): 10.5281/zenodo.24356841 (MIBI images, segmentation and cell-typing container; OPAL Panel 2 pipeline, containers, per-cell calls, spatial analysis, example image). Replaced the *(link TBD)* in `spatial_proteomics/README.md`, `mibi/README.md`, `opal/README.md`, the Data table in `README.md` and `CLAUDE.md`. MIBI step 0a corrected: segmentation was QuPath 0.3.2 with the MIBI extension (Mesmer), not `sp_segment`. OPAL Panel 2 markers: MS4A1 added.
+- [ ] OPAL Panel 1: the WEHI team is regenerating the analysis (target cells per patient). When done, replace `panel1_tuft_PVR_counts.csv`, check the 27/30 statement in the manuscript, and the team adds the Panel 1 files to the Zenodo record as a new version.
+- [ ] OPAL Panel 2 spatial analysis (target cells and B cells, Zenodo `opal_spatial_analysis.zip`): add to the manuscript Results and Methods, main text or Supplementary Information (authors to decide).
 - [ ] Optional: ask the WEHI team to link this repository from each pipeline README as a worked example with public data (reviewer 3.1).
 - [ ] Write the response to points 3.1, 3.2, 3.3 and 4.
 
