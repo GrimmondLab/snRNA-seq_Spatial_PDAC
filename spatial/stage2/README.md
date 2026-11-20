@@ -2,7 +2,7 @@
 
 Groups the cells of all 16 samples into 15 niches by the cell types around them (`stage2_niches.ipynb`), profiles the neighbours of selected cell types (`stage2_neighbourhood_profiling.ipynb`), and plots the figures drawn from single samples (`stage2_figures.ipynb`). All three notebooks start from the final Stage 1 objects.
 
-Reproduces Fig. 1D, 2A–D, 4B–F, 5B–E and Extended Data Fig. 2D, 3, 5C–D, 6D–E and 8H–I.
+Reproduces Fig. 1D, 1F (Xenium panel), 2A–D, 4B–F, 5B–E and Extended Data Fig. 2D, 3, 5C–D, 6D–E and 8H–I.
 
 **Result: near-exact.** Cell labels and K-means input are identical; niche assignment matches for 99.9994% of cells, with 18 borderline cells (of 2,930,241) assigned to a neighbouring niche. All 15 clusters match their original niche names. The run in the project image (v1.0.0) gives the same niche for every cell as the run outside it. The profiling and single-sample figures are computed from the Stage 1 objects, which reproduce exactly, and have no random steps; the Fig. 4E statistics are as in the original (F = 25.0082, p < 0.0001).
 
@@ -11,6 +11,7 @@ Reproduces Fig. 1D, 2A–D, 4B–F, 5B–E and Extended Data Fig. 2D, 3, 5C–D,
 | Output | Notebook | File |
 |---|---|---|
 | Fig. 2A–D, Extended Data Fig. 3 | `stage2_niches.ipynb` | `figures/` (see Details) |
+| Fig. 1F (Xenium panel) | `stage2_niches.ipynb` | `figures/Fig1f_Xenium_broad_cell_class_composition.pdf`, with `Fig1f_Xenium_broad_cell_class_proportions.csv` (broad cell classes per sample; added 2026-11-20, not yet run) |
 | Fig. 1D | `stage2_figures.ipynb` | `umap_Fig1d_MH065_314.png`, `Fig1d_MH065_314_scatterplot.png` (MH065_314) |
 | Fig. 4B | `stage2_figures.ipynb` | `dotplot_Fig4b_TAMs_CAFs_Tu.pdf` (MH107_480) |
 | Fig. 4C | `stage2_neighbourhood_profiling.ipynb` | `Fig4c_Malignant_cells_cross_sample_median.pdf`, with its `.tsv` |
@@ -145,6 +146,7 @@ The 18 cells with a different niche come from 11 samples, with at most 4 in one 
 | `Niches_composition_celltype_v2.pdf` | Enrichment of each cell type across niches (z-score) |
 | `Niches_log2FC.pdf` | Enrichment or depletion of each cell type in each niche, against the overall mean |
 | `Niches_composition_CLR_reorder.pdf` | Niche composition of each sample |
+| `Fig1f_Xenium_broad_cell_class_composition.pdf` | Broad cell class composition of each sample (Fig. 1F, Xenium panel), with the proportions in `Fig1f_Xenium_broad_cell_class_proportions.csv`. Uses `cell_class_threshold` grouped into 20 broad classes, not the niches |
 | `Samplecontributionperniche.pdf` | Share of each niche's cells from each sample |
 | `Representative_niches_<sample>.pdf` | Niches in MH097_480, MH096_314, MH106_314 and MH107_480 |
 | `PieCharts.pdf` | Top 10 cell types in each niche |
