@@ -22,7 +22,7 @@ The raw MIBI images (33 FOVs), the segmentation and cell typing (steps 0a–0b) 
 
 | Output | Script |
 |---|---|
-| Fig. 1F: cell type composition | `QC_9.12.2025.pdf` (QC report) |
+| Fig. 1F (MIBI panel): cell type composition | `QC_9.12.2025.pdf` (QC report) |
 | Extended Data Fig. 2E: cell type composition | `QC_9.12.2025.pdf` (QC report) |
 | Fig. 2E: heatmap of cell types per cell neighbourhood | `Fig2_efg_CellNeighbourhood.R` |
 | Fig. 2F: cell neighbourhood composition per patient | `Fig2_efg_CellNeighbourhood.R` |

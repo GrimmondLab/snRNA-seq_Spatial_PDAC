@@ -16,11 +16,12 @@ For the manuscript "Single-cell spatial profiling identifies recurrent spatial n
 | [inferCNV](snrnaseq/supplementary_infercnv/README.md) (supplementary) | Ext. Data Fig. 1B, 4F | **Not exactly** by design: random steps without a seed. A check, not part of the main pipeline |
 | **Spatial transcriptomics (Xenium)** | | |
 | [Stage 1](spatial/stage1/README.md): QC, annotation, neighbourhood enrichment | The 16 annotated objects | **Exact.** Labels, gene-set scores and Nhood z-scores identical in all 16 samples. Run in the image (v1.0.0): all 16 samples, also identical |
-| [Stage 2](spatial/stage2/README.md): niches, profiling | Fig. 1D, 2A–D, 4B–F, 5B–E; Ext. Data Fig. 2D, 3, 5C–D, 6D–E, 8H–I | **Near-exact.** 99.9994% of cells in the same niche (18 of 2,930,241 differ). Run in the image (v1.0.0): niches identical to the run outside it |
+| [Stage 2](spatial/stage2/README.md): niches, profiling | Fig. 1D, 1F (Xenium panel), 2A–D, 4B–F, 5B–E; Ext. Data Fig. 2D, 3, 5C–D, 6D–E, 8H–I | **Near-exact.** 99.9994% of cells in the same niche (18 of 2,930,241 differ). Run in the image (v1.0.0): niches identical to the run outside it |
 | [Stage 3](spatial/stage3/README.md): TILs, Tuft, TLS, PanIN | Fig. 3B–D, 3G, 4H, 5H–I, 6B, 6F–G; Ext. Data Fig. 4B–D, 7C, 7F–G, 9D–F, 9I | **Exact.** Identical cells, labels, DE and Nhood z-scores. Run in the image (v1.0.0): every listed figure matches the published panels |
 | **Spatial proteomics (MIBI and OPAL)** | | |
 | [MIBI](spatial_proteomics/mibi/README.md) | Fig. 1F, 2E–G, 5G; Ext. Data Fig. 2E, 6F | Record of the collaborators' code and reports; not rerun here. Images, segmentation and cell-typing container: Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) |
 | [OPAL](spatial_proteomics/opal/README.md) | Fig. 3H, 6H; Ext. Data Fig. 9J | Panel 1 per-sample counts. Panel 2 pipeline, containers, per-cell calls and spatial analysis: Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) |
+
 
 The spatial results come from the original Python environment; all three stages have also been run in the image. Each linked README has the full comparison.
 
