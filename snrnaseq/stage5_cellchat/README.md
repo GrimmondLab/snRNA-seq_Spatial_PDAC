@@ -76,7 +76,7 @@ docker run --rm \
   --cpus 20 --memory 96g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 stage5
+  pdac-snrnaseq:1.0.0 stage5
 ```
 
 With Apptainer/Singularity:

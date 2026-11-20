@@ -60,14 +60,14 @@ docker run --rm --cpus 12 --memory 300g \
   -v /path/to/geo_files:/data/geo:ro \
   -v /path/to/meta:/data/meta:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 stage1
+  pdac-snrnaseq:1.0.0 stage1
 
 # Original CellBender folders
 docker run --rm --cpus 12 --memory 300g \
   -v /path/to/cellBender/samples:/data/cellbender:ro \
   -v /path/to/meta:/data/meta:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 stage1 config_local.yml
+  pdac-snrnaseq:1.0.0 stage1 config_local.yml
 ```
 
 Results are written to `/output/Preprocessing_DoubleDetection/` and `/output/Preprocessing_QC/` (HTML reports and `.RDS` objects).
@@ -88,7 +88,7 @@ Results are written to `/output/Preprocessing_DoubleDetection/` and `/output/Pre
 | | |
 |---|---|
 | Where | Spartan HPC (University of Melbourne), partition `sapphire`, Slurm job 34375352 |
-| Image | `ghcr.io/grimmondlab/snrna-seq_spatial_pdac:0.1.2-sif` (Apptainer), run with `--cleanenv --no-home --env TMPDIR=/output/tmp` |
+| Image | `ghcr.io/grimmondlab/snrna-seq_spatial_pdac:1.0.0-sif` (Apptainer; the run used a pre-release build with the same `snrnaseq` env and Stage 1 code), run with `--cleanenv --no-home --env TMPDIR=/output/tmp` |
 | Input | Local mode (`config_local.yml`): the original CellBender output, `*_cellbender_filtered.h5`. GEO mode has not been run in the image |
 | Resources | 12 CPUs, 400 GB requested; peak memory 258.32 GB; 1 h 37 min; about 1.9 cores used on average |
 | Result | Finished (exit code 0) |

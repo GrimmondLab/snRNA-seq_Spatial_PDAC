@@ -69,7 +69,7 @@ These shift PCA, UMAP and clustering slightly; see **Cell labels** above.
 docker run --rm --cpus 4 --memory 160g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 stage2
+  pdac-snrnaseq:1.0.0 stage2
 ```
 
 Results are written to `/output/Seurat_sample_based/` and `/output/PDAC_STS_simspec_integration/` (HTML reports and `.RDS` objects).

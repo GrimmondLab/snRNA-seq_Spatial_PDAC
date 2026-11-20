@@ -156,7 +156,7 @@ In MH099_480, 9 original Tuft cells were in clusters removed by the test, and 1 
 <details>
 <summary>Run in the project image</summary>
 
-One sample, MH065_314, was run in the project image (`.sif` of `v0.3.0`, Apptainer, November 2026) through `run.sh spatial1` with a config listing only that notebook.
+One sample, MH065_314, was run first in the project image (`.sif`, Apptainer, November 2026; a pre-release build with the same `spatial` env) through `run.sh spatial1` with a config listing only that notebook.
 
 The first full run in the image (`v1.0.0`, 17 November 2026) stopped at MH074_314: ten notebooks recomputed the Leiden clusters from the saved PCA, and in the image this gave one cluster more than the annotation map (`cluster_anno`). On the original machine it had reproduced the saved clusters exactly. Those ten notebooks now read the clusters from the saved object, as the other six already did; the check against `cluster_anno` is kept.
 

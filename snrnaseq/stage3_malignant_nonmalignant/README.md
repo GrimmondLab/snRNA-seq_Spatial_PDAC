@@ -2,7 +2,7 @@
 
 Reproduces Extended Data Fig. 1C–E, Extended Data Fig. 4A, 4C, 4G and 4H, and Supplementary Table 3, from the deposited final object.
 
-**Result: reproduced.** Run in the project image (v1.0.0, on Spartan, 2026-11-17), with fixes needed to render made after the image was built. Extended Data Fig. 1C–E, 4A, 4C, 4G and 4H, and Supplementary Table 3 match the manuscript exactly. Labels are identical by design; the original cluster-to-label mappings, applied to the rerun clusters, give the deposited non-malignant labels for every cell. The malignant clusters differ in the rerun; the analysis uses the original ones. See [Comparison with the original](#comparison-with-the-original).
+**Result: reproduced.** Run in the project image (v1.0.0, on Spartan, 2026-11-17). The fixes needed to render are in the image. Extended Data Fig. 1C–E, 4A, 4C, 4G and 4H, and Supplementary Table 3 match the manuscript exactly. Labels are identical by design; the original cluster-to-label mappings, applied to the rerun clusters, give the deposited non-malignant labels for every cell. The malignant clusters differ in the rerun; the analysis uses the original ones. See [Comparison with the original](#comparison-with-the-original).
 
 R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage3.R`
 
@@ -57,7 +57,7 @@ docker run --rm \
   --cpus 2 --memory 128g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 stage3
+  pdac-snrnaseq:1.0.0 stage3
 ```
 
 With Apptainer/Singularity:

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Runs spatial Stage 1 on Spartan from the published .sif (v0.3.0 or later: earlier images have no spatial env).
+# Runs spatial Stage 1 on Spartan from the published .sif (v1.0.0).
 # Edit the three paths and SAMPLES below, then: sbatch stage1_spartan.slurm
 # Log: <submit dir>/pdac_spatial1_<job id>.log. Peak memory afterwards: seff <job id>
 #

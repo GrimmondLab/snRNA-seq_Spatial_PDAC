@@ -131,7 +131,7 @@ docker run --rm \
   --cpus 4 --memory 64g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 infercnv
+  pdac-snrnaseq:1.0.0 infercnv
 ```
 
 With Apptainer/Singularity:

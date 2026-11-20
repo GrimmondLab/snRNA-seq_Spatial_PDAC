@@ -10,8 +10,8 @@ For the manuscript "Single-cell spatial profiling identifies recurrent spatial n
 | [Stage 0](snrnaseq/stage0_cellranger_cellbender/README.md): Cell Ranger, CellBender | Count matrices (GEO) | Record only; the outputs are deposited and later stages start from them |
 | [Stage 1](snrnaseq/stage1_doublet_qc/README.md): doublets, QC | Post-QC object | **Closely.** Run in the image: 115,301 cells against the original 115,221 (0.07% more), because the original parallel steps had no seed. Later stages start from the deposited original post-QC object |
 | [Stage 2](snrnaseq/stage2_seurat_simspec/README.md): integration | Cell classes | **Labels identical** by design: read from the deposited object by cell ID, as intended; rerun clusters compared with them. Run in the image (v1.0.0) |
-| [Stage 3](snrnaseq/stage3_malignant_nonmalignant/README.md): malignant, non-malignant, tuft, ADM | Ext. Data Fig. 1C–E, 4A, 4C, 4G–H; Supp. Table 3 | **Reproduced.** Run in the image (v1.0.0, with fixes needed to render): every listed figure and Supp. Table 3 match the manuscript exactly; labels identical by design |
-| [Stage 4](snrnaseq/stage4_reclustering/README.md): reclustering, final annotation | Fig. 1B–C; Ext. Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C, 8E–G; Supp. Tables 4–7 | **Reproduced.** Run in the image (v1.0.0, with fixes needed to render): every listed figure and Supp. Tables 4–7 match the manuscript exactly; labels identical by design |
+| [Stage 3](snrnaseq/stage3_malignant_nonmalignant/README.md): malignant, non-malignant, tuft, ADM | Ext. Data Fig. 1C–E, 4A, 4C, 4G–H; Supp. Table 3 | **Reproduced.** Run in the image (v1.0.0): every listed figure and Supp. Table 3 match the manuscript exactly; labels identical by design |
+| [Stage 4](snrnaseq/stage4_reclustering/README.md): reclustering, final annotation | Fig. 1B–C; Ext. Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C, 8E–G; Supp. Tables 4–7 | **Reproduced.** Run in the image (v1.0.0): every listed figure and Supp. Tables 4–7 match the manuscript exactly; labels identical by design |
 | [Stage 5](snrnaseq/stage5_cellchat/README.md): CellChat | Fig. 3E–F, 4G, 5F, 6G | **Reproduced.** Run in the image (v1.0.0): every figure in the report matches the published panels |
 | [inferCNV](snrnaseq/supplementary_infercnv/README.md) (supplementary) | Ext. Data Fig. 1B, 4F | **Not exactly** by design: random steps without a seed. A check, not part of the main pipeline |
 | **Spatial transcriptomics (Xenium)** | | |
@@ -39,7 +39,7 @@ This repository holds:
 | `spatial/` | Python | Spatial (Xenium) analysis, Stages 1–3 (see `spatial/README.md`) |
 | `spatial_proteomics/` | R | MIBI QC report and figure code (`mibi/`) and OPAL panel 1 counts (`opal/`); images, pipelines and containers on Zenodo [10.5281/zenodo.24356841](https://doi.org/10.5281/zenodo.24356841) (see `spatial_proteomics/README.md`) |
 
-The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image from `v0.3.0`, and all three Xenium stages have run in it (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
+The snRNA-seq analysis uses one conda env per group of stages, and the Xenium analysis one env for all its stages. All envs go in **one Docker image**, built from bioconda and conda-forge only, from the lock files in `envs/`. `run.sh` runs a stage inside its env. The Xenium env (`spatial`) is in the image, and all three Xenium stages have run in it (see `spatial/README.md`). Data and analysis objects are not stored in this repository; they are on GEO and Zenodo (see [Data](#data)).
 
 ## Environments
 
@@ -116,10 +116,10 @@ Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zen
 ## Build
 
 ```bash
-docker build --platform linux/amd64 -t pdac-snrnaseq:1.0 .
+docker build --platform linux/amd64 -t pdac-snrnaseq:1.0.0 .
 ```
 
-The image is linux/amd64 only, because bioconda's R 4.3 builds are only available for linux-64. On an Apple Silicon Mac it builds and runs under emulation, which is slower. `v0.3.0` is 13.7 GB as a Docker image and 2.7 GB as a `.sif`.
+The image is linux/amd64 only, because bioconda's R 4.3 builds are only available for linux-64. On an Apple Silicon Mac it builds and runs under emulation, which is slower. It is about 13.7 GB as a Docker image and 2.7 GB as a `.sif`.
 
 ### Prebuilt image (GitHub Actions)
 
@@ -144,7 +144,7 @@ apptainer pull pdac-snrnaseq.sif oras://ghcr.io/grimmondlab/snrna-seq_spatial_pd
 ## Run
 
 ```bash
-docker run --rm -v <input>:/data/...:ro -v <output>:/output pdac-snrnaseq:1.0 <stage> [config.yml]
+docker run --rm -v <input>:/data/...:ro -v <output>:/output pdac-snrnaseq:1.0.0 <stage> [config.yml]
 ```
 
 - `<stage>` is `stage1`, `stage2`, `stage3`, `stage4`, `stage5` or `infercnv` (snRNA-seq), or `spatial1`, `spatial2` or `spatial3` (Xenium).
@@ -154,12 +154,12 @@ docker run --rm -v <input>:/data/...:ro -v <output>:/output pdac-snrnaseq:1.0 <s
 To copy the recorded session information out of the image:
 
 ```bash
-docker run --rm --entrypoint cat pdac-snrnaseq:1.0 /pipeline/sessionInfo/snrnaseq.txt
+docker run --rm --entrypoint cat pdac-snrnaseq:1.0.0 /pipeline/sessionInfo/snrnaseq.txt
 ```
 
 ### Running the spatial stages
 
-The `spatial` env is in the image from `v0.3.0`. Stage 1 has run on all 16 samples with the `.sif` and Apptainer (v1.0.0, Spartan), and reproduced the saved objects exactly in every sample (labels, gene-set scores and Nhood z-scores) (see `spatial/stage1/README.md`, "Run in the project image" under "Details"). Stage 2 has also run there (v1.0.0, Spartan) and gives the same niche for every cell as the run outside the image (see `spatial/stage2/README.md`). Stage 3 has also run there (v1.0.0, Spartan), and every listed figure matches the published panels (see `spatial/stage3/README.md`). The Docker commands have not been run with the spatial stages yet.
+Stage 1 has run on all 16 samples with the `.sif` and Apptainer (v1.0.0, Spartan), and reproduced the saved objects exactly in every sample (labels, gene-set scores and Nhood z-scores) (see `spatial/stage1/README.md`, "Run in the project image" under "Details"). Stage 2 has also run there (v1.0.0, Spartan) and gives the same niche for every cell as the run outside the image (see `spatial/stage2/README.md`). Stage 3 has also run there (v1.0.0, Spartan), and every listed figure matches the published panels (see `spatial/stage3/README.md`). The Docker commands have not been run with the spatial stages yet.
 
 Put the inputs in one folder, laid out as below, and mount it at `/data/input`. The sample folder names are in `spatial/README.md` ("Folder layout").
 
@@ -173,9 +173,9 @@ Put the inputs in one folder, laid out as below, and mount it at `/data/input`. 
 Run the stages in order, with the same output folder: Stages 2 and 3 read the Stage 1 output from `/output/spatial/stage1`, and Stage 3 also reads the combined object that Stage 2 writes.
 
 ```bash
-docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0 spatial1
-docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0 spatial2
-docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0 spatial3
+docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0.0 spatial1
+docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0.0 spatial2
+docker run --rm -v <input>:/data/input:ro -v <output>:/output pdac-snrnaseq:1.0.0 spatial3
 ```
 
 With Apptainer:
@@ -192,7 +192,7 @@ Each stage writes to `/output/spatial/stage<N>/`: the results and figures of eac
   ```bash
   docker run --rm -v <input>:/data/input:ro -v <output>:/output \
     -v $PWD/my_config.yml:/config/my_config.yml:ro \
-    pdac-snrnaseq:1.0 spatial1 /config/my_config.yml
+    pdac-snrnaseq:1.0.0 spatial1 /config/my_config.yml
   ```
 
   The Stage 1 robustness summary needs all 16 samples, and in Stage 3 the TIL regions notebook needs the malignant–TIL output and the TLS figures notebook the TLS regions.
@@ -216,8 +216,8 @@ While the package is private, log in first with a GitHub PAT that has `read:pack
 To convert a locally built image instead:
 
 ```bash
-docker save pdac-snrnaseq:1.0 -o pdac-snrnaseq_1.0.tar
-apptainer build pdac-snrnaseq.sif docker-archive://pdac-snrnaseq_1.0.tar
+docker save pdac-snrnaseq:1.0.0 -o pdac-snrnaseq_1.0.0.tar
+apptainer build pdac-snrnaseq.sif docker-archive://pdac-snrnaseq_1.0.0.tar
 ```
 
 ### Interactive shell (debugging)
@@ -227,7 +227,7 @@ The image's entrypoint is `run.sh`, so override it to get a shell. Mount the sam
 ```bash
 docker run --rm -it --entrypoint bash \
   -v <input>:/data/...:ro -v <output>:/output \
-  pdac-snrnaseq:1.0
+  pdac-snrnaseq:1.0.0
 ```
 
 The shell starts in `/pipeline`, which holds `run.sh`, `snrnaseq/`, `spatial/`, `envs/` and `sessionInfo/`. No env is active. Put one first on `PATH`, the same way `run.sh` does:

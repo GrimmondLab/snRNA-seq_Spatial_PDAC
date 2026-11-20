@@ -2,7 +2,7 @@
 
 Reproduces Fig. 1B and 1C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7, from the deposited final object, and rebuilds the final annotated object used by Stage 5.
 
-**Result: reproduced.** Run in the project image (v1.0.0, on Spartan, 2026-11-17), with fixes needed to render made after the image was built (see [Details](#details)). Fig. 1B–C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7 match the manuscript exactly, and the rebuilt final `Lv.1.Anno` and `Lv.2.Anno` are 100% the same as the deposited object (see [Comparison with the original](#comparison-with-the-original)).
+**Result: reproduced.** Run in the project image (v1.0.0, on Spartan, 2026-11-17). The fixes needed to render (see [Details](#details)) are in the image. Fig. 1B–C, Extended Data Fig. 1A, 2A, 5A–B, 6A–C, 8A, 8C and 8E–G, and Supplementary Tables 4–7 match the manuscript exactly, and the rebuilt final `Lv.1.Anno` and `Lv.2.Anno` are 100% the same as the deposited object (see [Comparison with the original](#comparison-with-the-original)).
 
 R 4.3 · Seurat 4.3.0 · conda env `downstream` · master script `run_stage4.R`
 
@@ -67,7 +67,7 @@ docker run --rm \
   --cpus 2 --memory 64g \
   -v /path/to/input:/data/input:ro \
   -v /path/to/output:/output \
-  pdac-snrnaseq:1.0 stage4
+  pdac-snrnaseq:1.0.0 stage4
 ```
 
 With Apptainer/Singularity:
