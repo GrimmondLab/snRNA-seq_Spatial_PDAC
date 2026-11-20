@@ -1,6 +1,6 @@
 # Spatial proteomics: MIBI
 
-This folder holds the code used to generate the MIBI figures in the manuscript. The analysis was done by collaborators at WEHI with their spatial proteomics pipelines (see [`../README.md`](../README.md)). The scripts and reports here are kept as received, except that personal names and internal paths were removed (2026-11-16). They have not been rerun in this repository.
+This folder holds the code used to generate the MIBI figures in the manuscript. The analysis was done by collaborators at WEHI with their spatial proteomics pipelines (see [`../README.md`](../README.md)). The scripts and reports here are kept as received, except that personal names and internal paths were removed (2026-11-16) and `library(scales)` was added to `Fig5g_heatmap_cell_cell_comm.R`, which uses `muted()` from that package (2026-11-20). They have not been rerun in this repository.
 
 ## Images, pipelines and containers
 
@@ -109,7 +109,20 @@ The processed files, the input to steps 1–5, are on Zenodo, [10.5281/zenodo.24
 
 ## Reproduce the figures
 
-From the deposited `spe.rds`, with the R versions below:
+From the deposited `spe.rds`, with the R versions below.
+
+**Install.** The cell–cell interaction analysis ran on R 4.5.1 with Bioconductor 3.21. Bioconductor releases are fixed, so installing release 3.21 on R 4.5 gives the same Bioconductor package versions (imcRtools 1.14, SpatialExperiment 1.18), apart from bug-fix updates within the release. CRAN packages install at their current versions; they are used for data handling and plotting only.
+
+```r
+install.packages("BiocManager")
+BiocManager::install(version = "3.21")
+BiocManager::install(c("imcRtools", "SpatialExperiment", "SingleCellExperiment",
+                       "SummarizedExperiment", "S4Vectors", "BiocParallel"))
+install.packages(c("dplyr", "tidyr", "ggplot2", "scales", "RColorBrewer",
+                   "pheatmap", "patchwork", "gridExtra", "RANN"))
+```
+
+**Run.**
 
 ```bash
 mkdir -p rdata

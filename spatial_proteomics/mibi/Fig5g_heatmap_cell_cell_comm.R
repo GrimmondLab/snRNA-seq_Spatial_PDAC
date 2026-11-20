@@ -6,6 +6,7 @@ library(imcRtools)
 library(BiocParallel)
 library(dplyr)
 library(ggplot2)
+library(scales)  # for muted(); added 2026-11-20, missing in the original script
 
 bpp <- SnowParam(workers = 8, type = "SOCK")
 spe <- readRDS("rdata/spe.rds")
