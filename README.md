@@ -4,7 +4,7 @@ For the manuscript "Single-cell spatial profiling identifies recurrent spatial n
 
 ## Reproducibility at a glance
 
-| Analysis | Manuscript outputs | Reproduced? |
+| Analysis | Manuscript outputs | Reproducibility notes |
 |---|---|---|
 | **snRNA-seq** | | |
 | [Stage 0](snrnaseq/stage0_cellranger_cellbender/README.md): Cell Ranger, CellBender | Count matrices (GEO) | Record only; the outputs are deposited and later stages start from them |
