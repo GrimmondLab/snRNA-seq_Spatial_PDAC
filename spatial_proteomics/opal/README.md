@@ -1,6 +1,6 @@
 # Spatial proteomics: OPAL
 
-OPAL multiplex immunofluorescence was done in collaboration with a team at WEHI. Panel 1 was analysed with Phenochart 2.2.0, inForm 3.0.0 and QuPath 0.6.0. Panel 2 was segmented with `sp_segment` (Cellpose-SAM) and classified with `sp-classify` (see [Images, workflow and containers](#images-workflow-and-containers)). Two panels were used.
+OPAL multiplex immunofluorescence was done in collaboration with a team at WEHI. Panel 1 was analysed with Phenochart 2.2.0, inForm 3.0.0 and QuPath 0.6.0 (see [Panel 1 workflow](#panel-1-workflow)). Panel 2 was segmented with `sp_segment` (Cellpose-SAM) and classified with `sp-classify` (see [Images, workflow and containers](#images-workflow-and-containers)). Two panels were used.
 
 | Panel | Markers | Samples analysed | Use in the manuscript |
 |---|---|---|---|
@@ -20,6 +20,17 @@ Panel 2 is on Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.2
 | `opal_spatial_analysis.zip` | Spatial analysis of target cells (CCL19+ CK19− CXCL12+) and B cells (MS4A1+): scripts, per-patient tables, figures |
 
 The record's README gives the segmentation settings. Patients in the record are identified as P01–P31. The full images and the segmented cells of all tiles (113 GB) are too large to deposit and are available on request. The slides were stained and imaged in three batches; in Batches 2 and 3 CCL19 staining was too weak to identify CCL19+ cells reliably, so the Panel 2 per-patient results are informative for Batch 1 (9 patients) only.
+
+## Panel 1 workflow
+
+Phenochart and inForm (Akoya Biosciences) are licensed Windows applications and cannot be put in a container; QuPath is free and open source.
+
+| Step | Software | Settings |
+|---|---|---|
+| 1. Annotation, pre-processing and stitching | Phenochart 2.2.0, inForm 3.0.0, QuPath 0.6.0 | Scanned images annotated, pre-processed and stitched |
+| 2. Cell detection | QuPath 0.6.0, cell detection tool | Across the stitched images; DAPI intensity threshold 5 |
+| 3. Cell classification | QuPath 0.6.0, one object classifier per image channel | Thresholds: CK 2.0, PVR 2.84, POU2F3 0.5 |
+| 4. Quantification | From the classified cells | Percentage of POU2F3+, PVR+ and POU2F3+ PVR+ cells among CK+ cells, per patient (see [Panel 1 counts](#panel-1-counts)) |
 
 ## Panel 1 counts
 
