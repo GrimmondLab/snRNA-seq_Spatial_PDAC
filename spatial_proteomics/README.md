@@ -5,7 +5,7 @@ The MIBI and OPAL analyses were done in collaboration with a team at WEHI, using
 - MIBI: QuPath 0.3.2 with the [MIBI extension](https://github.com/WEHI-SODA-Hub/MIBI_extension) (Mesmer segmentation and measurements), then [`sp_celltype_train`](https://github.com/WEHI-SODA-Hub/sp_celltype_train) and [`sp_celltype_apply`](https://github.com/WEHI-SODA-Hub/sp_celltype_apply) (cell typing).
 - OPAL Panel 2: [`sp_segment`](https://github.com/WEHI-SODA-Hub/sp_segment) (Cellpose-SAM segmentation and measurements), then [`sp-classify`](https://github.com/mikemcka/qupath-extension-sp-classify) marker classifiers, run by a Nextflow pipeline.
 
-Neither analysis is in the project image or `run.sh`. The images, settings, containers and expected results are on Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) ("MIBI and OPAL PDAC analysis, containers and data"); the record's README lists every file. The MIBI cell–cell interaction analysis (Fig. 5G) also has its own container, defined in [`mibi/container/`](mibi/container/README.md) (Zenodo *DOI TBD*).
+Neither analysis is in the project image or `run.sh`. The images, settings, containers and expected results are on Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) ("MIBI and OPAL PDAC analysis, containers and data"); the record's README lists every file. The MIBI cell–cell interaction analysis (Fig. 5G) also has its own container, defined in [`mibi/container/`](mibi/container/README.md) (Zenodo [10.5281/zenodo.24394013](https://doi.org/10.5281/zenodo.24394013)).
 
 | Folder | Data | Manuscript figures |
 |---|---|---|

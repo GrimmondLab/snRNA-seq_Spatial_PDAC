@@ -6,7 +6,7 @@ An Apptainer container that runs `Fig5g_heatmap_cell_cell_comm.R` with the R and
 
 ## Download
 
-The built container, `mibi_interactions.sif`, is on Zenodo: *DOI TBD* (1.7 GB). To use it, download it with `spe.rds` and go to [Run](#run); building is only needed to check or change the environment.
+The built container, `mibi_interactions.sif`, is on Zenodo, [10.5281/zenodo.24394013](https://doi.org/10.5281/zenodo.24394013) (1.7 GB; md5 `6af775b660a4bfc805fb1de6d6f03557`, as listed on Zenodo). To use it, download it with `spe.rds` and go to [Run](#run); building is only needed to check or change the environment.
 
 Check the download:
 

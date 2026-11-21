@@ -134,7 +134,7 @@ Rscript ExtFig6f_boxplots_cell_distance.R
 
 Run from this folder (`Fig2_efg_CellNeighbourhood.R` sources `create_spatial_clusters.R` by relative path). Steps 0a–0b from the raw images: see `mibi_README.md` in Zenodo [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840).
 
-**Container for Fig. 5G.** [`container/`](container/README.md) holds an Apptainer definition that runs the cell–cell interaction analysis with the package versions of the original run (R 4.5.1, Bioconductor 3.21, and the CRAN versions from a dated snapshot), and a script to build and run it on Spartan. The built container (`mibi_interactions.sif`) is on Zenodo, *DOI TBD*. Built and run on Spartan (2026-11-20) from the deposited `spe.rds`: all recorded package versions match, and the heatmap matches Fig. 5G.
+**Container for Fig. 5G.** [`container/`](container/README.md) holds an Apptainer definition that runs the cell–cell interaction analysis with the package versions of the original run (R 4.5.1, Bioconductor 3.21, and the CRAN versions from a dated snapshot), and a script to build and run it on Spartan. The built container (`mibi_interactions.sif`) is on Zenodo, [10.5281/zenodo.24394013](https://doi.org/10.5281/zenodo.24394013). Built and run on Spartan (2026-11-20) from the deposited `spe.rds`: all recorded package versions match, and the heatmap matches Fig. 5G.
 
 ## R versions
 

@@ -21,8 +21,6 @@ Panel 2 is on Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.2
 
 The record's README gives the segmentation settings. Patients in the record are identified as P01–P31. The full images and the segmented cells of all tiles (113 GB) are too large to deposit and are available on request. The slides were stained and imaged in three batches; in Batches 2 and 3 CCL19 staining was too weak to identify CCL19+ cells reliably, so the Panel 2 per-patient results are informative for Batch 1 (9 patients) only.
 
-Panel 1 files will be added to the record in a later version.
-
 ## Panel 1 counts
 
 [`panel1_tuft_PVR_counts.csv`](panel1_tuft_PVR_counts.csv) has one row per sample stained (32), taken from the team's panel 1 data sheet. Clinical columns in that sheet (grade, survival) are not included.

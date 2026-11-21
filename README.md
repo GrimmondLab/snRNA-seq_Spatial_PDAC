@@ -99,7 +99,7 @@ All three use the env `spatial`. Each stage folder has a `config.yml` with the c
 | Original inferCNV output for sample 2215 (`infercnv_ICGC_0103_P2215.out.tar`), the record behind the 84 cells excluded from the malignant analysis | Zenodo, [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322) |
 | Spatial proteomics (MIBI) processed object (`spe.rds`) and per-cell table for plotting (`celltype_classifier_corrected_min_patient_info.csv`) | Zenodo, [10.5281/zenodo.24360404](https://doi.org/10.5281/zenodo.24360404) |
 | Spatial proteomics: MIBI raw images (33 FOVs), segmentation and cell-typing container, saved models and expected outputs; OPAL Panel 2 pipeline, containers, per-cell marker calls, spatial analysis and one example image | Zenodo, [10.5281/zenodo.24356840](https://doi.org/10.5281/zenodo.24356840) |
-| Spatial proteomics: MIBI cell–cell interaction container (`mibi_interactions.sif`, Fig. 5G) | Zenodo, *(DOI TBD)* |
+| Spatial proteomics: MIBI cell–cell interaction container (`mibi_interactions.sif`, Fig. 5G) | Zenodo, [10.5281/zenodo.24394013](https://doi.org/10.5281/zenodo.24394013) |
 | Spatial proteomics: full OPAL images (214 image tiles) and segmented cells (113 GB) | On request (see `spatial_proteomics/opal/README.md`) |
 
 Files in the Zenodo record [10.5281/zenodo.23933322](https://doi.org/10.5281/zenodo.23933322), with the MD5 checksums Zenodo shows. Check a download with `md5sum <file>` (Linux) or `md5 <file>` (macOS).
