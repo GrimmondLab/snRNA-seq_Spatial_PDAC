@@ -18,7 +18,7 @@ From the WEHI team's methods. The container `mibi-pdac-repro.sif` (sha256 `377bf
 | Review of predictions | QuPath | Two rounds of visual review: Treg predictions in all FOVs (219 cells reassigned), and NK, epithelial and other cells in the FOVs of five patients (1,126 reassigned). 1,343 cells (2.4%) reassigned in total |
 | Functional markers | Same pipelines, one binary classifier per marker | MHC II (HLA-DP-DR-DQ; defines MHC-II+ macrophages), CD206, granzyme B, MHC I, Ki67 and vimentin. Annotations from images across the cohort; minimum, maximum and median statistics excluded; hyperparameters chosen by ROC AUC |
 
-In the deposited data the CAF classes are named `Vim+` (CAFs), `Vim+CD68+` (CD68+ CAFs), `myCAF` and `EndomyCAF`; cells annotated as CD56+ or CD56+ Vim+ are in "Other".
+Cells annotated as CD56+ or CD56+ Vim+ are in "Other".
 
 ## Workflow
 
@@ -88,6 +88,13 @@ After filtering, 29 FOVs and 54,463 cells remain:
 | Myeloid (macrophages, dendritic cells, mast cells, other myeloid) | 4,711 | 4,548 |
 | Other | 20,461 | 19,627 |
 | **Total** | **56,904** | **54,463** |
+
+These groups (`parent_cell_type`) are the QC report's and are used only for its summaries, the FOV filtering and to leave out "Other" cells. They put vascular smooth muscle cells (`EndomyCAF`) with the CAFs and pericytes (`EndoMT`) with the endothelial cells. The figures use the individual cell types instead, with the CAF classes grouped as below; vascular smooth muscle cells and pericytes are always shown apart from the CAFs.
+
+| Figures | CAF classes | Code |
+|---|---|---|
+| Fig. 1F (MIBI panel): cell type composition | `Vim+` (CAFs), `Vim+CD68+` (CD68+ CAFs) and `myCAF` combined as "CAFs" | `QC_9.12.2025.pdf`, section 2.3.2 |
+| Fig. 2E–G, 5G; Extended Data Fig. 6F | `Vim+` and `Vim+CD68+` combined as Vim+ CAFs (labelled `Vim+`), separate from `myCAF` | `Fig2_efg_CellNeighbourhood.R`, `Fig5g_heatmap_cell_cell_comm.R`, `ExtFig6f_boxplots_cell_distance.R` |
 
 The report also plots cell type proportions per patient and FOV, CAF, myeloid and T cell subsets, cells in fibrotic areas (collagen I), and heatmaps of mean marker intensity per cell type (`Vim+` and `Vim+CD68+` merged). It saves `celltype_intensities_df.rds`, `meta.rds` and the colour tables to `rdata/`, and the heatmaps to `plots_filt_FOVs/`; none of these are deposited.
 
